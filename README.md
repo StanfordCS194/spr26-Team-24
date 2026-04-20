@@ -1,12 +1,85 @@
 # Nexa
 
-Welcome to the **Nexa** team repository for Stanford CS 194 (Spring 2026).
+A Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, etc.).
 
-## Wiki
+## Prerequisites
 
-For full team documentation, member matrix, and project details, visit our [Wiki](https://github.com/StanfordCS194/spr26-Team-24/wiki).
+- [Node.js](https://nodejs.org/) v22 or later
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
+## Getting Started
 
-## Name
+### 1. Clone the repository
 
-Sarah Hashash
+```bash
+git clone https://github.com/your-org/spr26-Team-24.git
+cd spr26-Team-24
+```
+
+### 2. Install dependencies
+
+```bash
+cd nexa
+npm install
+```
+
+### 3. Set up environment variables
+
+Create a `.env` file in the `nexa/` directory:
+
+```bash
+cp .env.example .env
+```
+
+The default values will work with the Docker database out of the box.
+
+### 4. Start the database
+
+From the **root of the repository** (`spr26-Team-24/`):
+
+```bash
+cd ..
+docker compose up -d
+```
+
+This starts a PostgreSQL 16 container on port 5432.
+
+> **Note:** If you have a local PostgreSQL server already running on port 5432, stop it first or it will conflict with the Docker container.
+
+To verify the database is running:
+
+```bash
+docker ps
+```
+
+You should see a container named `nexa-db`.
+
+### 5. Run database migrations
+
+In the `nexa/` directory:
+
+```bash
+cd nexa
+npx prisma migrate dev
+```
+
+This applies all migrations and generates the Prisma client.
+
+### 6. Start the development server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Useful Commands
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the Next.js dev server (from `nexa/`) |
+| `npm run build` | Build for production (from `nexa/`) |
+| `npx prisma studio` | Open a visual database browser (from `nexa/`) |
+| `npx prisma migrate dev` | Apply pending migrations (from `nexa/`) |
+| `docker compose up -d` | Start the database (from repo root) |
+| `docker compose down` | Stop the database (from repo root) |
