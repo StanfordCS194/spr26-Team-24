@@ -11,3 +11,71 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reports   Report[]
+}
+
+model Report {
+  id                 String       @id @default(cuid())
+  userId             String?
+  user               User?        @relation(fields: [userId], references: [id])
+  imageUrl           String?
+  description        String?
+  aiDescription      String?
+  issueType          IssueType?
+  latitude           Float?
+  longitude          Float?
+  address            String?
+  status             ReportStatus @default(DRAFT)
+  agencyId           String?
+  agency             Agency?      @relation(fields: [agencyId], references: [id])
+  externalTrackingId String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+}
+
+model Agency {
+  id           String       @id @default(cuid())
+  name         String
+  jurisdiction String
+  issueTypes   IssueType[]
+  intakeMethod IntakeMethod
+  intakeUrl    String?
+  intakeEmail  String?
+  reports      Report[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+enum IssueType {
+  ROAD_DAMAGE
+  STREETLIGHT_OUTAGE
+  ILLEGAL_DUMPING
+  VEHICLE_EMISSIONS
+  OTHER
+}
+
+enum ReportStatus {
+  DRAFT
+  CLASSIFYING
+  CONFIRMED
+  SUBMITTING
+  SUBMITTED
+  ACKNOWLEDGED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum IntakeMethod {
+  API
+  WEB_FORM
+  EMAIL
+  PHONE
+}
