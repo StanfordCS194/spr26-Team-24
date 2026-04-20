@@ -107,3 +107,6 @@ You can verify the backend is working by visiting [http://localhost:3000/api/hea
 | `npx prisma migrate dev` | Apply pending migrations (from `nexa/`) |
 | `docker compose up -d` | Start the database (from repo root) |
 | `docker compose down` | Stop the database (from repo root) |
+
+## Name
+Neil Shen
