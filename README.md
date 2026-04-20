@@ -1,6 +1,32 @@
 # Nexa
 
-A Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, etc.).
+A full-stack Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, etc.).
+
+## Tech Stack
+
+- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui
+- **Backend**: Next.js API Routes (under `src/app/api/`)
+- **Database**: PostgreSQL 16 (via Docker), Prisma ORM
+- **CI**: GitHub Actions (lint, type-check, format check on PRs)
+
+## Project Structure
+
+```
+spr26-Team-24/
+├── docker-compose.yml        # PostgreSQL database
+├── .github/workflows/ci.yml  # CI pipeline
+└── nexa/                     # Next.js application
+    ├── src/
+    │   ├── app/              # Pages and API routes
+    │   │   └── api/          # Backend API endpoints
+    │   ├── components/       # React components
+    │   ├── lib/              # Utility functions
+    │   ├── hooks/            # Custom React hooks
+    │   └── types/            # TypeScript type definitions
+    └── prisma/
+        ├── schema.prisma     # Database schema
+        └── migrations/       # Database migrations
+```
 
 ## Prerequisites
 
@@ -12,33 +38,15 @@ A Next.js application for reporting and tracking civic issues (road damage, stre
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/spr26-Team-24.git
+git clone https://github.com/StanfordCS194/spr26-Team-24.git
 cd spr26-Team-24
 ```
 
-### 2. Install dependencies
+### 2. Start the database
+
+From the root of the repository:
 
 ```bash
-cd nexa
-npm install
-```
-
-### 3. Set up environment variables
-
-Create a `.env` file in the `nexa/` directory:
-
-```bash
-cp .env.example .env
-```
-
-The default values will work with the Docker database out of the box.
-
-### 4. Start the database
-
-From the **root of the repository** (`spr26-Team-24/`):
-
-```bash
-cd ..
 docker compose up -d
 ```
 
@@ -54,12 +62,24 @@ docker ps
 
 You should see a container named `nexa-db`.
 
-### 5. Run database migrations
-
-In the `nexa/` directory:
+### 3. Install dependencies
 
 ```bash
 cd nexa
+npm install
+```
+
+### 4. Set up environment variables
+
+```bash
+cp .env.example .env
+```
+
+The default values will work with the Docker database out of the box.
+
+### 5. Run database migrations
+
+```bash
 npx prisma migrate dev
 ```
 
@@ -73,12 +93,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+You can verify the backend is working by visiting [http://localhost:3000/api/health](http://localhost:3000/api/health).
+
 ## Useful Commands
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start the Next.js dev server (from `nexa/`) |
+| `npm run dev` | Start the dev server (from `nexa/`) |
 | `npm run build` | Build for production (from `nexa/`) |
+| `npm run lint` | Run ESLint (from `nexa/`) |
+| `npm run format` | Format code with Prettier (from `nexa/`) |
 | `npx prisma studio` | Open a visual database browser (from `nexa/`) |
 | `npx prisma migrate dev` | Apply pending migrations (from `nexa/`) |
 | `docker compose up -d` | Start the database (from repo root) |
