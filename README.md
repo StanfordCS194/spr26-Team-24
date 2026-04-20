@@ -1,4 +1,5 @@
 # Nexa
+David Lu
 
 A full-stack Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, etc.).
 
