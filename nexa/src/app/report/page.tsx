@@ -45,11 +45,15 @@ export default function ReportPage() {
   const [classifying, setClassifying] = useState(false);
   const [classification, setClassification] =
     useState<ClassificationResult | null>(null);
-  const [selectedIssueType, setSelectedIssueType] = useState<string | null>(null);
+  const [selectedIssueType, setSelectedIssueType] = useState<string | null>(
+    null,
+  );
   const [classifyError, setClassifyError] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
-  const [createdReport, setCreatedReport] = useState<CreatedReport | null>(null);
+  const [createdReport, setCreatedReport] = useState<CreatedReport | null>(
+    null,
+  );
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleClassify = async () => {
@@ -129,9 +133,7 @@ export default function ReportPage() {
             classifying={classifying}
             classifyError={classifyError}
             canSubmit={!!(image.imageBase64 || description.trim())}
-            onImageClick={() =>
-              document.getElementById("photo-input")?.click()
-            }
+            onImageClick={() => document.getElementById("photo-input")?.click()}
             onDrop={image.handleDrop}
             onClearImage={image.clearImage}
             onDescriptionChange={setDescription}
@@ -157,10 +159,7 @@ export default function ReportPage() {
         )}
 
         {step === "confirmed" && createdReport && (
-          <ConfirmedStep
-            report={createdReport}
-            onReportAnother={resetForm}
-          />
+          <ConfirmedStep report={createdReport} onReportAnother={resetForm} />
         )}
       </div>
 

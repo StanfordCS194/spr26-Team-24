@@ -43,8 +43,8 @@ export function FeaturesSection() {
           </div>
           <div className="flex items-end">
             <p className="max-w-md text-sm leading-relaxed text-muted-foreground lg:ml-auto">
-              One app that works everywhere. Report issues, track progress,
-              hold your city accountable — all from your phone.
+              One app that works everywhere. Report issues, track progress, hold
+              your city accountable — all from your phone.
             </p>
           </div>
         </div>

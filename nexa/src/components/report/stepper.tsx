@@ -34,11 +34,7 @@ export function Stepper({ current }: { current: ReportStep }) {
                       : "border border-border bg-background text-muted-foreground"
                 }`}
               >
-                {isDone ? (
-                  <CheckCircle2 className="size-3.5" />
-                ) : (
-                  step.number
-                )}
+                {isDone ? <CheckCircle2 className="size-3.5" /> : step.number}
               </div>
               <span
                 className={`hidden font-mono text-xs uppercase tracking-wider sm:block ${

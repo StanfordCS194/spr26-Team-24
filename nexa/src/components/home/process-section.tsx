@@ -10,8 +10,7 @@ const STEPS = [
   {
     icon: Zap,
     title: "AI classifies & routes",
-    description:
-      "Identifies issue type, severity, and the responsible agency.",
+    description: "Identifies issue type, severity, and the responsible agency.",
   },
   {
     icon: CheckCircle2,

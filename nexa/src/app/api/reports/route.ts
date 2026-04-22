@@ -5,16 +5,23 @@ import { IssueType } from "@/generated/prisma/enums";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { description, aiDescription, issueType, latitude, longitude, address, imageUrl } =
-      body as {
-        description?: string;
-        aiDescription?: string;
-        issueType?: string;
-        latitude?: number;
-        longitude?: number;
-        address?: string;
-        imageUrl?: string;
-      };
+    const {
+      description,
+      aiDescription,
+      issueType,
+      latitude,
+      longitude,
+      address,
+      imageUrl,
+    } = body as {
+      description?: string;
+      aiDescription?: string;
+      issueType?: string;
+      latitude?: number;
+      longitude?: number;
+      address?: string;
+      imageUrl?: string;
+    };
 
     const validIssueType =
       issueType && Object.values(IssueType).includes(issueType as IssueType)
