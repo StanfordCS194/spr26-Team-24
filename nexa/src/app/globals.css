@@ -7,9 +7,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading:
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +41,11 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-ep-green: var(--ep-green);
+  --color-ep-green-light: var(--ep-green-light);
+  --color-ep-purple: var(--ep-purple);
+  --color-ep-purple-light: var(--ep-purple-light);
+  --color-ep-cta-bg: var(--ep-cta-bg);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -81,6 +88,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  --ep-green: #22c55e;
+  --ep-green-light: #f0fdf4;
+  --ep-purple: #9b87f5;
+  --ep-purple-light: #f3f0ff;
+  --ep-cta-bg: #1a3a2a;
 }
 
 .dark {
@@ -115,6 +128,12 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  --ep-green: #22c55e;
+  --ep-green-light: #052e16;
+  --ep-purple: #9b87f5;
+  --ep-purple-light: #1e1b4b;
+  --ep-cta-bg: #0f2318;
 }
 
 @layer base {
@@ -127,4 +146,143 @@
   html {
     @apply font-sans;
   }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family:
+      var(--font-geist-sans),
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      sans-serif !important;
+  }
+}
+
+/* Custom component styles — outside @layer so Tailwind 4 includes them */
+
+.section-label {
+  font-family: var(--font-geist-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-geist-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 0.5rem;
+  transition: all 150ms ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-cta-purple {
+  background: #e0d4fc;
+  color: #1a1a2e;
+}
+.btn-cta-purple svg {
+  color: #7c5ce0;
+}
+.btn-cta-purple:hover {
+  background: #d4c5fa;
+}
+
+.btn-cta-dark {
+  background: var(--foreground);
+  color: var(--background);
+}
+.btn-cta-dark:hover {
+  opacity: 0.85;
+}
+
+.btn-cta-outline {
+  background: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+.btn-cta-outline:hover {
+  background: var(--muted);
+}
+
+.btn-cta-white-outline {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.btn-cta-white-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.ep-card {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+}
+
+.section-gray {
+  background: #f7f7f7;
+}
+
+.corner-card {
+  position: relative;
+  background: var(--card);
+  padding: 2.5rem;
+}
+
+.corner-card::before,
+.corner-card::after,
+.corner-card > .corner-bl::before,
+.corner-card > .corner-bl::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.corner-card::before {
+  top: 0;
+  left: 0;
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+}
+
+.corner-card::after {
+  top: 0;
+  right: 0;
+  border-top: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+}
+
+.corner-card > .corner-bl::before {
+  bottom: 0;
+  left: 0;
+  border-bottom: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+}
+
+.corner-card > .corner-bl::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 1px solid #ccc;
+  border-right: 1px solid #ccc;
 }
