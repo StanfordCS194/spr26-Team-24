@@ -13,12 +13,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  reports   Report[]
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  // bcrypt hash of the user's password — never store plain-text passwords
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  reports      Report[]
 }
 
 model Report {
