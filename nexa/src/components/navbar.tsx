@@ -1,8 +1,5 @@
 "use client";
 
-// Navbar is a client component because it uses usePathname() for active-link styling
-// and useEffect to fetch the current user after the page loads.
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -35,16 +32,14 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // undefined = still loading, null = not logged in, object = logged in
   const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
 
-  // Fetch the current user once on mount — the browser automatically sends the session cookie
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then(setUser)
       .catch(() => setUser(null));
-  }, [pathname]); // re-check auth whenever the route changes (e.g. after login/logout)
+  }, [pathname]);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });

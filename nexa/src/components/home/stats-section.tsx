@@ -1,5 +1,3 @@
-import { CornerCard } from "@/components/corner-card";
-
 const STATS = [
   { value: "30s", label: "Average report time" },
   { value: "80%", label: "Routing accuracy target" },
@@ -9,7 +7,7 @@ const STATS = [
 const NARRATIVE = [
   {
     label: "/ Challenge",
-    text: "No single place to report civic issues. Potholes, dumping, broken lights — each goes to a different agency with a different form.",
+    text: "No single place to report civic issues. Potholes, dumping, broken lights — each goes to a different agency with a different process.",
   },
   {
     label: "/ Solution",
@@ -23,52 +21,42 @@ const NARRATIVE = [
 
 export function StatsSection() {
   return (
-    <section id="stats" className="section-gray w-full px-6 py-12 lg:py-16">
+    <section id="stats" className="w-full border-y border-border bg-muted/30 px-6 py-20 lg:py-28">
       <div className="mx-auto max-w-[1440px]">
-        <div className="mb-12">
+        <div className="mb-16">
           <span className="section-label">/ By The Numbers</span>
-          <h2 className="mt-4 text-3xl font-normal leading-[1.15] tracking-tight text-foreground/85 sm:text-4xl lg:text-5xl">
-            Reporting made radically
-            <br />
-            simpler.
+          <h2 className="mt-4 max-w-lg text-3xl font-normal leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
+            Reporting made radically simpler.
           </h2>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <CornerCard>
-            <h3 className="text-lg font-semibold text-foreground">
-              The problem today
-            </h3>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              &ldquo;We went from noticing a pothole every day on our commute to
-              actually filing a proper report in under a minute. No googling, no
-              phone trees.&rdquo;
-            </p>
-
-            <div className="mt-8 grid grid-cols-3 gap-6">
+          <div className="ep-card p-8 lg:p-10">
+            <div className="grid grid-cols-3 gap-6">
               {STATS.map((stat) => (
                 <div key={stat.label}>
                   <div className="text-3xl font-normal text-ep-green lg:text-4xl">
                     {stat.value}
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
+                  <div className="mt-2 text-xs text-muted-foreground">
                     {stat.label}
                   </div>
                 </div>
               ))}
             </div>
-          </CornerCard>
+          </div>
 
-          <CornerCard className="flex flex-col gap-8">
-            {NARRATIVE.map((item) => (
+          <div className="ep-card flex flex-col gap-6 p-8 lg:p-10">
+            {NARRATIVE.map((item, i) => (
               <div key={item.label}>
+                {i > 0 && <div className="mb-6 h-px bg-border" />}
                 <span className="section-label">{item.label}</span>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   {item.text}
                 </p>
               </div>
             ))}
-          </CornerCard>
+          </div>
         </div>
       </div>
     </section>

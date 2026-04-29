@@ -225,64 +225,8 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-.grid-bg {
-  background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
 .ep-card {
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: var(--card);
-}
-
-.section-gray {
-  background: #f7f7f7;
-}
-
-.corner-card {
-  position: relative;
-  background: var(--card);
-  padding: 2.5rem;
-}
-
-.corner-card::before,
-.corner-card::after,
-.corner-card > .corner-bl::before,
-.corner-card > .corner-bl::after {
-  content: "";
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  pointer-events: none;
-}
-
-.corner-card::before {
-  top: 0;
-  left: 0;
-  border-top: 1px solid #ccc;
-  border-left: 1px solid #ccc;
-}
-
-.corner-card::after {
-  top: 0;
-  right: 0;
-  border-top: 1px solid #ccc;
-  border-right: 1px solid #ccc;
-}
-
-.corner-card > .corner-bl::before {
-  bottom: 0;
-  left: 0;
-  border-bottom: 1px solid #ccc;
-  border-left: 1px solid #ccc;
-}
-
-.corner-card > .corner-bl::after {
-  bottom: 0;
-  right: 0;
-  border-bottom: 1px solid #ccc;
-  border-right: 1px solid #ccc;
 }

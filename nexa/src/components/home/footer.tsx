@@ -6,7 +6,7 @@ export function Footer() {
       <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 sm:flex-row">
         <Logo className="text-lg" />
         <p className="text-sm text-muted-foreground">
-          Making civic reporting as easy as posting to Instagram.
+          A Stanford CS 194 project.
         </p>
       </div>
     </footer>
