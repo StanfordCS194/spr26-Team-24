@@ -53,9 +53,9 @@ export function DescribeStep({
         </h2>
       </div>
 
-      <div className="ep-card overflow-hidden">
+      <div>
         <div
-          className="grid-bg relative flex min-h-52 cursor-pointer flex-col items-center justify-center gap-3 p-8 transition-colors hover:bg-muted/30"
+          className="relative flex min-h-52 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/20 p-8 transition-colors hover:bg-muted/40"
           onDragOver={(e) => e.preventDefault()}
           onDrop={onDrop}
           onClick={onImageClick}

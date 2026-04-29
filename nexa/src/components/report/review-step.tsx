@@ -63,11 +63,17 @@ export function ReviewStep({
                 classification.issueType}
             </h3>
           </div>
-          <div
-            className={`text-2xl font-normal ${SEVERITY_COLORS[classification.severity] || "text-muted-foreground"}`}
+          <span
+            className={`inline-flex items-center rounded-full px-3 py-1 font-mono text-xs font-medium uppercase tracking-wider ${
+              classification.severity === "high"
+                ? "bg-red-50 text-red-600"
+                : classification.severity === "medium"
+                  ? "bg-yellow-50 text-yellow-600"
+                  : "bg-ep-green-light text-ep-green"
+            }`}
           >
             {classification.severity}
-          </div>
+          </span>
         </div>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           {classification.aiDescription}
