@@ -73,10 +73,14 @@ npm install
 ### 4. Set up environment variables
 
 ```bash
-cp .env.example .env
+cp .env.example .env.local
 ```
 
-The default values will work with the Docker database out of the box.
+Open `.env.local` and fill in any API keys you have (`OPENAI_API_KEY`,
+`ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `NEXT_PUBLIC_POSTHOG_KEY`). The
+`DATABASE_URL` and `JWT_SECRET` defaults already work against the Docker DB.
+
+For production deployment, see [`nexa/VERCEL_SETUP.md`](nexa/VERCEL_SETUP.md).
 
 ### 5. Run database migrations
 
