@@ -1,96 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Stepper, type ReportStep } from "@/components/report/stepper";
 import { DescribeStep } from "@/components/report/describe-step";
 import { ReviewStep } from "@/components/report/review-step";
 import { ConfirmedStep } from "@/components/report/confirmed-step";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { saveReport, type StoredReport } from "@/lib/reports-store";
 
 interface ClassificationResult {
   issueType: string;
   aiDescription: string;
   severity: "low" | "medium" | "high";
+  confidence?: number;
 }
 
-interface CreatedReport {
-  id: string;
-  issueType: string | null;
-  description: string | null;
-  aiDescription: string | null;
-  createdAt: string;
+interface ProviderResult extends ClassificationResult {
+  provider: string;
+  latencyMs: number;
 }
 
-const MOCK_CLASSIFICATIONS: Record<
-  string,
-  {
-    issueType: string;
-    description: string;
-    severity: "low" | "medium" | "high";
-  }
-> = {
-  pothole: {
-    issueType: "ROAD_DAMAGE",
-    description:
-      "Pothole detected on roadway surface. Estimated diameter suggests moderate vehicle hazard. Recommended for priority repair by Public Works.",
-    severity: "medium",
-  },
-  default: {
-    issueType: "OTHER",
-    description:
-      "Civic issue identified from submitted photo and description. Requires review by the appropriate municipal department for classification and routing.",
-    severity: "low",
-  },
-};
-
-function pickMockClassification(text: string): ClassificationResult {
-  const lower = text.toLowerCase();
-  if (lower.match(/pothole|crack|road|pavement|asphalt/)) {
-    const m = MOCK_CLASSIFICATIONS.pothole;
-    return {
-      issueType: m.issueType,
-      aiDescription: m.description,
-      severity: m.severity,
-    };
-  }
-  if (lower.match(/light|lamp|street\s?light|dark/)) {
-    return {
-      issueType: "STREETLIGHT_OUTAGE",
-      aiDescription:
-        "Streetlight outage reported. Location flagged for electrical inspection by the city's lighting maintenance division.",
-      severity: "medium",
-    };
-  }
-  if (lower.match(/dump|trash|garbage|waste|litter/)) {
-    return {
-      issueType: "ILLEGAL_DUMPING",
-      aiDescription:
-        "Illegal dumping activity detected. Materials appear to include household waste. Flagged for environmental services cleanup.",
-      severity: "high",
-    };
-  }
-  if (lower.match(/smog|exhaust|emission|smoke|vehicle/)) {
-    return {
-      issueType: "VEHICLE_EMISSIONS",
-      aiDescription:
-        "Excessive vehicle emissions reported. Details forwarded to air quality compliance for follow-up investigation.",
-      severity: "low",
-    };
-  }
-  const m = MOCK_CLASSIFICATIONS.default;
-  return {
-    issueType: m.issueType,
-    aiDescription: m.description,
-    severity: m.severity,
-  };
+interface ComparisonResponse {
+  winner: ClassificationResult;
+  allResults: ProviderResult[];
+  consensus: boolean;
+  method: string;
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+type CreatedReport = StoredReport;
 
 export default function ReportPage() {
+  const posthog = usePostHog();
+  const flowStartedAt = useRef(0);
+  useEffect(() => {
+    flowStartedAt.current = Date.now();
+  }, []);
+
   const [step, setStep] = useState<ReportStep>("describe");
   const [description, setDescription] = useState("");
 
@@ -100,6 +47,7 @@ export default function ReportPage() {
   const [classifying, setClassifying] = useState(false);
   const [classification, setClassification] =
     useState<ClassificationResult | null>(null);
+  const [comparison, setComparison] = useState<ComparisonResponse | null>(null);
   const [selectedIssueType, setSelectedIssueType] = useState<string | null>(
     null,
   );
@@ -115,13 +63,33 @@ export default function ReportPage() {
     setClassifying(true);
     setClassifyError(null);
     try {
-      await delay(1500);
-      const result = pickMockClassification(description);
-      setClassification(result);
-      setSelectedIssueType(result.issueType);
+      const res = await fetch("/api/reports/classify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description,
+          imageBase64: image.imageBase64,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Classification failed");
+      }
+
+      const data: ComparisonResponse = await res.json();
+      setComparison(data);
+      setClassification(data.winner);
+      setSelectedIssueType(data.winner.issueType);
       setStep("review");
-    } catch {
-      setClassifyError("Something went wrong");
+      posthog?.capture("report_classified", {
+        issue_type: data.winner.issueType,
+        severity: data.winner.severity,
+        has_image: !!image.imageBase64,
+        has_location: !!geo.latitude,
+      });
+    } catch (e) {
+      setClassifyError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setClassifying(false);
     }
@@ -132,16 +100,27 @@ export default function ReportPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await delay(1000);
-      const report: CreatedReport = {
-        id: `demo_${Date.now().toString(36)}`,
-        issueType: selectedIssueType,
+      const report = saveReport({
+        issueType: selectedIssueType || classification.issueType,
         description,
         aiDescription: classification.aiDescription,
-        createdAt: new Date().toISOString(),
-      };
+        severity: classification.severity,
+        address: geo.address,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        imagePreview: image.imagePreview,
+        agency: null,
+      });
       setCreatedReport(report);
       setStep("confirmed");
+      posthog?.capture("report_submitted", {
+        report_id: report.id,
+        issue_type: selectedIssueType,
+        time_to_submit_ms: Date.now() - flowStartedAt.current,
+        user_edited_type: selectedIssueType !== classification.issueType,
+        has_image: !!image.imageBase64,
+        has_location: !!geo.latitude,
+      });
     } catch {
       setSubmitError("Something went wrong");
     } finally {
@@ -150,11 +129,13 @@ export default function ReportPage() {
   };
 
   const resetForm = () => {
+    flowStartedAt.current = Date.now();
     setStep("describe");
     setDescription("");
     image.clearImage();
     geo.reset();
     setClassification(null);
+    setComparison(null);
     setSelectedIssueType(null);
     setCreatedReport(null);
     setClassifyError(null);
@@ -177,7 +158,9 @@ export default function ReportPage() {
             address={geo.address}
             latitude={geo.latitude}
             longitude={geo.longitude}
+            accuracy={geo.accuracy}
             locationLoading={geo.loading}
+            locationError={geo.error}
             classifying={classifying}
             classifyError={classifyError}
             canSubmit={!!(image.imageBase64 || description.trim())}
@@ -192,18 +175,74 @@ export default function ReportPage() {
         )}
 
         {step === "review" && classification && (
-          <ReviewStep
-            classification={classification}
-            imagePreview={image.imagePreview}
-            description={description}
-            address={geo.address}
-            selectedIssueType={selectedIssueType}
-            submitting={submitting}
-            submitError={submitError}
-            onIssueTypeChange={setSelectedIssueType}
-            onBack={() => setStep("describe")}
-            onSubmit={handleSubmit}
-          />
+          <>
+            <ReviewStep
+              classification={classification}
+              imagePreview={image.imagePreview}
+              description={description}
+              address={geo.address}
+              selectedIssueType={selectedIssueType}
+              submitting={submitting}
+              submitError={submitError}
+              onIssueTypeChange={setSelectedIssueType}
+              onDescriptionChange={setDescription}
+              onAddressChange={geo.setAddress}
+              onBack={() => setStep("describe")}
+              onSubmit={handleSubmit}
+            />
+
+            {comparison && comparison.allResults.length > 1 && (
+              <div className="mt-10">
+                <span className="section-label">/ AI Comparison</span>
+                <p className="mt-2 mb-4 text-sm text-muted-foreground">
+                  Decision method:{" "}
+                  <span className="font-medium text-foreground">
+                    {comparison.method}
+                  </span>
+                  {comparison.consensus && " (models agreed)"}
+                </p>
+                <div className="flex flex-col gap-3">
+                  {comparison.allResults.map((r) => (
+                    <div
+                      key={r.provider}
+                      className={`ep-card p-4 ${r.issueType === comparison.winner.issueType ? "ring-2 ring-ep-green/40" : "opacity-60"}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-medium uppercase tracking-wider">
+                          {r.provider}
+                        </span>
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {r.latencyMs}ms
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-center gap-3">
+                        <span className="text-sm font-semibold">
+                          {r.issueType}
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 font-mono text-xs uppercase ${
+                            r.severity === "high"
+                              ? "bg-red-50 text-red-600"
+                              : r.severity === "medium"
+                                ? "bg-yellow-50 text-yellow-600"
+                                : "bg-ep-green-light text-ep-green"
+                          }`}
+                        >
+                          {r.severity}
+                        </span>
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {Math.round((r.confidence ?? 0) * 100)}% confident
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {r.aiDescription}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {step === "confirmed" && createdReport && (

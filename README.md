@@ -1,14 +1,35 @@
 # Nexa
-David Lu
 
-A full-stack Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, etc.).
+A full-stack Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, etc.). AI-powered classification compares results across multiple LLMs to make the best judgment.
 
 ## Tech Stack
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui
 - **Backend**: Next.js API Routes (under `src/app/api/`)
+- **AI Classification**: Multi-provider consensus engine (OpenAI GPT-4o-mini, Anthropic Claude Sonnet, Google Gemini 2.0 Flash)
 - **Database**: PostgreSQL 16 (via Docker), Prisma ORM
+- **Telemetry**: PostHog (passive event tracking, session replays)
+- **Deployment**: Vercel
 - **CI**: GitHub Actions (lint, type-check, format check on PRs)
+
+## AI Classification — How It Works
+
+When a user submits a report, the `/api/reports/classify` endpoint sends the image and description to **three LLM providers in parallel**:
+
+| Provider | Model | Strengths |
+|---|---|---|
+| OpenAI | `gpt-4o-mini` | Fast, strong vision, low cost |
+| Anthropic | `claude-sonnet` | Careful reasoning, good at ambiguous cases |
+| Google | `gemini-2.0-flash` | Fast, good at structured output |
+
+A **consensus engine** then picks the best result:
+
+1. **Unanimous** — all 3 agree on the issue type → use the highest-confidence answer
+2. **Majority** — 2 of 3 agree → use the majority answer with highest confidence
+3. **Highest confidence** — all disagree → use the single most confident result
+4. **Fallback** — all providers fail → return "OTHER" for manual review
+
+The review step shows the user the winning classification **and** a comparison panel showing how each model responded, including latency and confidence scores.
 
 ## Project Structure
 
@@ -19,9 +40,18 @@ spr26-Team-24/
 └── nexa/                     # Next.js application
     ├── src/
     │   ├── app/              # Pages and API routes
-    │   │   └── api/          # Backend API endpoints
+    │   │   ├── api/          # Backend API endpoints
+    │   │   ├── dashboard/    # Report tracking dashboard
+    │   │   └── report/       # Report submission flow
     │   ├── components/       # React components
-    │   ├── lib/              # Utility functions
+    │   ├── lib/
+    │   │   ├── classify/     # Multi-LLM classification engine
+    │   │   │   ├── types.ts           # Shared types and prompt
+    │   │   │   ├── openai-provider.ts
+    │   │   │   ├── anthropic-provider.ts
+    │   │   │   ├── google-provider.ts
+    │   │   │   └── consensus.ts       # Voting / comparison logic
+    │   │   └── ...           # Auth, Prisma, constants
     │   ├── hooks/            # Custom React hooks
     │   └── types/            # TypeScript type definitions
     └── prisma/
@@ -32,7 +62,7 @@ spr26-Team-24/
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v22 or later
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (optional — only needed for local Postgres)
 
 ## Getting Started
 
@@ -43,34 +73,14 @@ git clone https://github.com/StanfordCS194/spr26-Team-24.git
 cd spr26-Team-24
 ```
 
-### 2. Start the database
-
-From the root of the repository:
-
-```bash
-docker compose up -d
-```
-
-This starts a PostgreSQL 16 container on port 5432.
-
-> **Note:** If you have a local PostgreSQL server already running on port 5432, stop it first or it will conflict with the Docker container.
-
-To verify the database is running:
-
-```bash
-docker ps
-```
-
-You should see a container named `nexa-db`.
-
-### 3. Install dependencies
+### 2. Install dependencies
 
 ```bash
 cd nexa
 npm install
 ```
 
-### 4. Set up environment variables
+### 3. Set up environment variables
 
 ```bash
 cp .env.example .env.local
@@ -80,17 +90,18 @@ Open `.env.local` and fill in any API keys you have (`OPENAI_API_KEY`,
 `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `NEXT_PUBLIC_POSTHOG_KEY`). The
 `DATABASE_URL` and `JWT_SECRET` defaults already work against the Docker DB.
 
+| Key | Required | Purpose |
+|---|---|---|
+| `OPENAI_API_KEY` | Yes | GPT-4o-mini classification |
+| `ANTHROPIC_API_KEY` | Yes | Claude Sonnet classification |
+| `GOOGLE_API_KEY` | Yes | Gemini Flash classification |
+| `JWT_SECRET` | Yes | Session token signing |
+| `DATABASE_URL` | For DB features | PostgreSQL connection string |
+| `NEXT_PUBLIC_POSTHOG_KEY` | For telemetry | PostHog analytics |
+
 For production deployment, see [`nexa/VERCEL_SETUP.md`](nexa/VERCEL_SETUP.md).
 
-### 5. Run database migrations
-
-```bash
-npx prisma migrate dev
-```
-
-This applies all migrations and generates the Prisma client.
-
-### 6. Start the development server
+### 4. Start the development server
 
 ```bash
 npm run dev
@@ -98,7 +109,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can verify the backend is working by visiting [http://localhost:3000/api/health](http://localhost:3000/api/health).
+### 5. (Optional) Start the database
+
+Only needed if you want real data persistence instead of localStorage:
+
+```bash
+# From repo root
+docker compose up -d
+cd nexa
+npx prisma migrate dev
+```
 
 ## Daily Startup Checklist
 
@@ -133,3 +153,10 @@ npm run dev
 | `npx prisma migrate dev` | Apply pending migrations (from `nexa/`) |
 | `docker compose up -d` | Start the database (from repo root) |
 | `docker compose down` | Stop the database (from repo root) |
+
+## Wiki
+
+- [Home](https://github.com/StanfordCS194/spr26-Team-24/wiki)
+- [PRD](https://github.com/StanfordCS194/spr26-Team-24/wiki/PRD)
+- [Measure For Success (OKRs/KPIs)](https://github.com/StanfordCS194/spr26-Team-24/wiki/Measure-For-Success)
+- [Customer Discovery Summary](https://github.com/StanfordCS194/spr26-Team-24/wiki/Customer-Discovery-Summary)
