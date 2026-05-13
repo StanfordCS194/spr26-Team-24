@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOpenAI } from "@/lib/openai";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { IssueType } from "@/generated/prisma/enums";
+import { resolveJurisdiction } from "@/lib/jurisdictions/resolve";
 
 type Confidence = "low" | "medium" | "high";
 
@@ -191,10 +192,17 @@ function extractFormLookupJson(raw: string): string | null {
   return text.slice(start, end + 1);
 }
 
+type ResolvedLocation = {
+  cityName: string | null;
+  stateName: string | null;
+  latitude: number | null;
+  longitude: number | null;
+};
+
 async function reverseLookupCity(
   latitude: number,
   longitude: number,
-): Promise<{ cityName: string | null; stateName: string | null }> {
+): Promise<ResolvedLocation> {
   const response = await fetch(
     `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${latitude}&lon=${longitude}`,
     {
@@ -206,20 +214,19 @@ async function reverseLookupCity(
   );
 
   if (!response.ok) {
-    return { cityName: null, stateName: null };
+    return { cityName: null, stateName: null, latitude, longitude };
   }
 
   const data = (await response.json()) as { address?: NominatimAddress };
-  const cityName = parseCityName(data.address);
   return {
-    cityName,
+    cityName: parseCityName(data.address),
     stateName: data.address?.state ?? null,
+    latitude,
+    longitude,
   };
 }
 
-async function geocodeAddress(
-  address: string,
-): Promise<{ cityName: string | null; stateName: string | null }> {
+async function geocodeAddress(address: string): Promise<ResolvedLocation> {
   const response = await fetch(
     `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&q=${encodeURIComponent(address)}`,
     {
@@ -231,33 +238,46 @@ async function geocodeAddress(
   );
 
   if (!response.ok) {
-    return { cityName: null, stateName: null };
+    return { cityName: null, stateName: null, latitude: null, longitude: null };
   }
 
-  const data = (await response.json()) as Array<{ address?: NominatimAddress }>;
+  const data = (await response.json()) as Array<{
+    address?: NominatimAddress;
+    lat?: string;
+    lon?: string;
+  }>;
   const first = data[0];
-  const cityName = parseCityName(first?.address);
+  const lat = first?.lat ? Number(first.lat) : NaN;
+  const lon = first?.lon ? Number(first.lon) : NaN;
   return {
-    cityName,
+    cityName: parseCityName(first?.address),
     stateName: first?.address?.state ?? null,
+    latitude: Number.isFinite(lat) ? lat : null,
+    longitude: Number.isFinite(lon) ? lon : null,
   };
 }
 
-async function resolveCity(
+async function resolveLocation(
   address: string | undefined,
   latitude: number | undefined,
   longitude: number | undefined,
-): Promise<{ cityName: string | null; stateName: string | null }> {
+): Promise<ResolvedLocation> {
   if (typeof latitude === "number" && typeof longitude === "number") {
     const reverse = await reverseLookupCity(latitude, longitude);
     if (reverse.cityName) return reverse;
+    // Coords are still useful for the polygon resolver even without a city name.
+    if (address?.trim()) {
+      const forward = await geocodeAddress(address.trim());
+      return { ...forward, latitude, longitude };
+    }
+    return reverse;
   }
 
   if (address?.trim()) {
     return geocodeAddress(address.trim());
   }
 
-  return { cityName: null, stateName: null };
+  return { cityName: null, stateName: null, latitude: null, longitude: null };
 }
 
 async function lookupOfficialForm(params: {
@@ -375,8 +395,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const city = await resolveCity(address, latitude, longitude);
-    if (!city.cityName) {
+    const location = await resolveLocation(address, latitude, longitude);
+
+    // 1. Curated polygon registry (deterministic). Wins when we have a
+    //    verified portal for the matched jurisdiction.
+    if (
+      typeof location.latitude === "number" &&
+      typeof location.longitude === "number"
+    ) {
+      const match = resolveJurisdiction(
+        location.latitude,
+        location.longitude,
+        issueType,
+      );
+      if (match?.portal) {
+        const result: FormLinkResult = {
+          status: "found",
+          cityName: match.jurisdiction.displayName,
+          formUrl: match.portal.url,
+          reason: match.portal.reason,
+          confidence: match.portal.confidence,
+        };
+        return NextResponse.json(result);
+      }
+      // Matched a polygon but the portal is unverified — fall through to
+      // the LLM lookup using the jurisdiction display name as the hint.
+      if (match && !location.cityName) {
+        location.cityName = match.jurisdiction.displayName;
+      }
+    }
+
+    // 2. LLM fallback for anywhere we don't have polygon coverage.
+    if (!location.cityName) {
       const result: FormLinkResult = {
         status: "not_found",
         cityName: null,
@@ -387,8 +437,8 @@ export async function POST(request: NextRequest) {
     }
 
     const lookup = await lookupOfficialForm({
-      cityName: city.cityName,
-      stateName: city.stateName,
+      cityName: location.cityName,
+      stateName: location.stateName,
       issueType: issueType as IssueType,
       address,
     });
@@ -396,7 +446,7 @@ export async function POST(request: NextRequest) {
     if (lookup.status === "found") {
       const result: FormLinkResult = {
         status: "found",
-        cityName: city.cityName,
+        cityName: location.cityName,
         formUrl: lookup.formUrl,
         reason: lookup.reason,
         confidence: lookup.confidence,
@@ -406,7 +456,7 @@ export async function POST(request: NextRequest) {
 
     const result: FormLinkResult = {
       status: "not_found",
-      cityName: city.cityName,
+      cityName: location.cityName,
       message: "No official city form found.",
       reason: lookup.reason,
     };
