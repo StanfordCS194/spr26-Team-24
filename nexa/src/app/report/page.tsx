@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Stepper, type ReportStep } from "@/components/report/stepper";
 import { DescribeStep } from "@/components/report/describe-step";
 import { ReviewStep } from "@/components/report/review-step";
@@ -24,7 +25,11 @@ interface CreatedReport {
 
 const MOCK_CLASSIFICATIONS: Record<
   string,
-  { issueType: string; description: string; severity: "low" | "medium" | "high" }
+  {
+    issueType: string;
+    description: string;
+    severity: "low" | "medium" | "high";
+  }
 > = {
   pothole: {
     issueType: "ROAD_DAMAGE",
@@ -44,7 +49,11 @@ function pickMockClassification(text: string): ClassificationResult {
   const lower = text.toLowerCase();
   if (lower.match(/pothole|crack|road|pavement|asphalt/)) {
     const m = MOCK_CLASSIFICATIONS.pothole;
-    return { issueType: m.issueType, aiDescription: m.description, severity: m.severity };
+    return {
+      issueType: m.issueType,
+      aiDescription: m.description,
+      severity: m.severity,
+    };
   }
   if (lower.match(/light|lamp|street\s?light|dark/)) {
     return {
@@ -71,7 +80,11 @@ function pickMockClassification(text: string): ClassificationResult {
     };
   }
   const m = MOCK_CLASSIFICATIONS.default;
-  return { issueType: m.issueType, aiDescription: m.description, severity: m.severity };
+  return {
+    issueType: m.issueType,
+    aiDescription: m.description,
+    severity: m.severity,
+  };
 }
 
 function delay(ms: number) {
@@ -79,6 +92,12 @@ function delay(ms: number) {
 }
 
 export default function ReportPage() {
+  const posthog = usePostHog();
+  const flowStartedAt = useRef(0);
+  useEffect(() => {
+    flowStartedAt.current = Date.now();
+  }, []);
+
   const [step, setStep] = useState<ReportStep>("describe");
   const [description, setDescription] = useState("");
 
@@ -108,6 +127,12 @@ export default function ReportPage() {
       setClassification(result);
       setSelectedIssueType(result.issueType);
       setStep("review");
+      posthog?.capture("report_classified", {
+        issue_type: result.issueType,
+        severity: result.severity,
+        has_image: !!image.imageBase64,
+        has_location: !!geo.latitude,
+      });
     } catch {
       setClassifyError("Something went wrong");
     } finally {
@@ -130,6 +155,14 @@ export default function ReportPage() {
       };
       setCreatedReport(report);
       setStep("confirmed");
+      posthog?.capture("report_submitted", {
+        report_id: report.id,
+        issue_type: selectedIssueType,
+        time_to_submit_ms: Date.now() - flowStartedAt.current,
+        user_edited_type: selectedIssueType !== classification.issueType,
+        has_image: !!image.imageBase64,
+        has_location: !!geo.latitude,
+      });
     } catch {
       setSubmitError("Something went wrong");
     } finally {
@@ -138,6 +171,7 @@ export default function ReportPage() {
   };
 
   const resetForm = () => {
+    flowStartedAt.current = Date.now();
     setStep("describe");
     setDescription("");
     image.clearImage();

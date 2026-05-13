@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ErrorBanner } from "@/components/error-banner";
-import { ISSUE_TYPE_LABELS, SEVERITY_COLORS } from "@/lib/constants";
+import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 
 interface ClassificationResult {
   issueType: string;
