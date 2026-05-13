@@ -13,7 +13,9 @@ interface DescribeStepProps {
   address: string;
   latitude: number | null;
   longitude: number | null;
+  accuracy: number | null;
   locationLoading: boolean;
+  locationError: string | null;
   classifying: boolean;
   classifyError: string | null;
   canSubmit: boolean;
@@ -32,7 +34,9 @@ export function DescribeStep({
   address,
   latitude,
   longitude,
+  accuracy,
   locationLoading,
+  locationError,
   classifying,
   classifyError,
   canSubmit,
@@ -137,10 +141,22 @@ export function DescribeStep({
             {locationLoading ? "..." : "Detect"}
           </Button>
         </div>
+        {locationError && (
+          <p className="mt-3 text-xs text-red-500">{locationError}</p>
+        )}
         {latitude && longitude && (
-          <p className="mt-3 font-mono text-xs text-muted-foreground">
-            GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
+            <span>
+              GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+            </span>
+            {accuracy && (
+              <span
+                className={`rounded-full px-2 py-0.5 ${accuracy <= 20 ? "bg-ep-green-light text-ep-green" : accuracy <= 100 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"}`}
+              >
+                ±{Math.round(accuracy)}m
+              </span>
+            )}
+          </div>
         )}
       </div>
 
