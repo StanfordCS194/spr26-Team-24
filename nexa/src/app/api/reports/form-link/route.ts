@@ -39,7 +39,45 @@ type NominatimAddress = {
   hamlet?: string;
   municipality?: string;
   state?: string;
+  postcode?: string;
+  county?: string;
 };
+
+/**
+ * Nominatim often puts housing complexes and micro-places in `hamlet`, which is
+ * not a municipality for 311 search. Prefer incorporated-style fields only.
+ */
+function parseFormalMunicipality(
+  address: NominatimAddress | undefined,
+): string | null {
+  if (!address) return null;
+  return (
+    address.city ??
+    address.town ??
+    address.village ??
+    address.municipality ??
+    null
+  );
+}
+
+/** US ZIPs where Nominatim returns no city (e.g. Stanford-adjacent housing). */
+const US_POSTCODE_FORM_LOOKUP_HINT: Record<
+  string,
+  { city: string; state: string }
+> = {
+  "94304": { city: "Palo Alto", state: "California" },
+  "94305": { city: "Palo Alto", state: "California" },
+};
+
+function hintCityFromUsPostcode(
+  postcode: string | null | undefined,
+): { cityName: string; stateName: string } | null {
+  if (!postcode) return null;
+  const normalized = postcode.trim();
+  const hint = US_POSTCODE_FORM_LOOKUP_HINT[normalized];
+  if (!hint) return null;
+  return { cityName: hint.city, stateName: hint.state };
+}
 
 const LOOKUP_SYSTEM_PROMPT = `You help find the official city webpage a resident should use to report a civic issue.
 
@@ -60,18 +98,6 @@ Rules:
 }
 
 Example: For Palo Alto, "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311" is the correct unified 311 page and should be returned for any civic issue type, including road damage.`;
-
-function parseCityName(address: NominatimAddress | undefined): string | null {
-  if (!address) return null;
-  return (
-    address.city ??
-    address.town ??
-    address.village ??
-    address.hamlet ??
-    address.municipality ??
-    null
-  );
-}
 
 function isOfficialCityGovUrl(url: string): boolean {
   try {
@@ -194,7 +220,11 @@ function extractFormLookupJson(raw: string): string | null {
 async function reverseLookupCity(
   latitude: number,
   longitude: number,
-): Promise<{ cityName: string | null; stateName: string | null }> {
+): Promise<{
+  cityName: string | null;
+  stateName: string | null;
+  postcode: string | null;
+}> {
   const response = await fetch(
     `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${latitude}&lon=${longitude}`,
     {
@@ -206,20 +236,25 @@ async function reverseLookupCity(
   );
 
   if (!response.ok) {
-    return { cityName: null, stateName: null };
+    return { cityName: null, stateName: null, postcode: null };
   }
 
   const data = (await response.json()) as { address?: NominatimAddress };
-  const cityName = parseCityName(data.address);
+  const cityName = parseFormalMunicipality(data.address);
   return {
     cityName,
     stateName: data.address?.state ?? null,
+    postcode: data.address?.postcode?.trim() ?? null,
   };
 }
 
 async function geocodeAddress(
   address: string,
-): Promise<{ cityName: string | null; stateName: string | null }> {
+): Promise<{
+  cityName: string | null;
+  stateName: string | null;
+  postcode: string | null;
+}> {
   const response = await fetch(
     `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&q=${encodeURIComponent(address)}`,
     {
@@ -231,15 +266,16 @@ async function geocodeAddress(
   );
 
   if (!response.ok) {
-    return { cityName: null, stateName: null };
+    return { cityName: null, stateName: null, postcode: null };
   }
 
   const data = (await response.json()) as Array<{ address?: NominatimAddress }>;
   const first = data[0];
-  const cityName = parseCityName(first?.address);
+  const cityName = parseFormalMunicipality(first?.address);
   return {
     cityName,
     stateName: first?.address?.state ?? null,
+    postcode: first?.address?.postcode?.trim() ?? null,
   };
 }
 
@@ -248,13 +284,23 @@ async function resolveCity(
   latitude: number | undefined,
   longitude: number | undefined,
 ): Promise<{ cityName: string | null; stateName: string | null }> {
-  if (typeof latitude === "number" && typeof longitude === "number") {
-    const reverse = await reverseLookupCity(latitude, longitude);
-    if (reverse.cityName) return reverse;
+  const trimmed = address?.trim();
+
+  /** Match USPS-style municipality when Nominatim only returns hamlets/neighborhoods. */
+  if (trimmed) {
+    const forward = await geocodeAddress(trimmed);
+    const fromZip = hintCityFromUsPostcode(forward.postcode);
+    if (fromZip) return { cityName: fromZip.cityName, stateName: fromZip.stateName };
+    if (forward.cityName)
+      return { cityName: forward.cityName, stateName: forward.stateName };
   }
 
-  if (address?.trim()) {
-    return geocodeAddress(address.trim());
+  if (typeof latitude === "number" && typeof longitude === "number") {
+    const reverse = await reverseLookupCity(latitude, longitude);
+    const fromZip = hintCityFromUsPostcode(reverse.postcode);
+    if (fromZip) return { cityName: fromZip.cityName, stateName: fromZip.stateName };
+    if (reverse.cityName)
+      return { cityName: reverse.cityName, stateName: reverse.stateName };
   }
 
   return { cityName: null, stateName: null };
