@@ -47,7 +47,7 @@ export async function classifyWithAnthropic(
   content.push({ type: "text", text: textPrompt });
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-3-5-haiku-20241022",
     max_tokens: 300,
     messages: [{ role: "user", content }],
   });
@@ -58,7 +58,7 @@ export async function classifyWithAnthropic(
 
   return {
     ...parsed,
-    provider: "anthropic/claude-sonnet",
+    provider: "anthropic/claude-3.5-haiku",
     latencyMs: Date.now() - start,
   };
 }
