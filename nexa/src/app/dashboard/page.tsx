@@ -115,13 +115,16 @@ function ReportCard({ report }: { report: StoredReport }) {
 }
 
 export default function DashboardPage() {
-  const [reports, setReports] = useState<StoredReport[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const [reports, setReports] = useState<StoredReport[]>(() => {
+    if (typeof window === "undefined") return [];
+    return getReports();
+  });
+  const [mounted, setMounted] = useState(() => typeof window !== "undefined");
 
   useEffect(() => {
+    if (!mounted) setMounted(true);
     setReports(getReports());
-    setMounted(true);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/set-state-in-effect
 
   function handleSeed() {
     seedDemoReports();

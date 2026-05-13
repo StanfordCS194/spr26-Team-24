@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import {
   getReports,
   getReport,
@@ -10,15 +10,14 @@ import {
 } from "@/lib/reports-store";
 
 export function useReports() {
-  const [reports, setReports] = useState<StoredReport[]>([]);
+  const [reports, setReports] = useState<StoredReport[]>(() => {
+    if (typeof window === "undefined") return [];
+    return getReports();
+  });
 
   const refresh = useCallback(() => {
     setReports(getReports());
   }, []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   const addReport = useCallback(
     (report: Parameters<typeof saveReport>[0]) => {
