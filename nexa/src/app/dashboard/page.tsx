@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle2, Clock3, ClipboardList } from "lucide-react";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { DeleteReportButton } from "@/components/dashboard/delete-report-button";
 
 function formatStatus(status: string): string {
   return status
@@ -125,37 +126,33 @@ export default async function DashboardPage() {
                 key={report.id}
                 className="ep-card p-6 transition-colors hover:bg-muted/20"
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                      {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
-                        report.issueType ||
-                        "Uncategorized"}
-                    </p>
-                    <h2 className="mt-1 text-lg font-medium">
-                      {report.address || "No location provided"}
-                    </h2>
-                  </div>
-                  <div className="text-right">
-                    <p
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
+                      report.issueType ||
+                      "Uncategorized"}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span
                       className={`inline-flex rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider ${statusPillClass(report.status)}`}
                     >
                       {formatStatus(report.status)}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {new Date(report.createdAt).toLocaleString()}
-                    </p>
+                    </span>
+                    <DeleteReportButton reportId={report.id} />
                   </div>
                 </div>
 
-                <p className="mt-4 text-sm text-foreground">
+                <h2 className="mt-4 text-lg font-medium leading-snug">
+                  {report.address || "No location provided"}
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(report.createdAt).toLocaleString()}
+                </p>
+
+                <p className="mt-4 text-sm leading-relaxed text-foreground">
                   {report.aiDescription ||
                     report.description ||
                     "No description"}
-                </p>
-
-                <p className="mt-4 font-mono text-xs text-muted-foreground">
-                  ID: {report.id}
                 </p>
               </article>
             ))}

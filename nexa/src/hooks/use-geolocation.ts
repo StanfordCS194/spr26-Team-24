@@ -8,6 +8,14 @@ export function useGeolocation() {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const setCoordinates = useCallback(
+    (lat: number | null, lng: number | null) => {
+      setLatitude(lat);
+      setLongitude(lng);
+    },
+    [],
+  );
+
   const detect = useCallback(() => {
     if (!navigator.geolocation) return;
     setLoading(true);
@@ -16,8 +24,7 @@ export function useGeolocation() {
       async (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        setLatitude(lat);
-        setLongitude(lng);
+        setCoordinates(lat, lng);
 
         try {
           const res = await fetch(
@@ -33,13 +40,21 @@ export function useGeolocation() {
       },
       () => setLoading(false),
     );
-  }, []);
+  }, [setCoordinates]);
 
   const reset = useCallback(() => {
     setAddress("");
-    setLatitude(null);
-    setLongitude(null);
-  }, []);
+    setCoordinates(null, null);
+  }, [setCoordinates]);
 
-  return { address, setAddress, latitude, longitude, loading, detect, reset };
+  return {
+    address,
+    setAddress,
+    latitude,
+    longitude,
+    loading,
+    setCoordinates,
+    detect,
+    reset,
+  };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Camera, MapPin, Loader2, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +15,8 @@ interface DescribeStepProps {
   latitude: number | null;
   longitude: number | null;
   locationLoading: boolean;
+  locationSuggesting: boolean;
+  addressSuggestions: string[];
   classifying: boolean;
   classifyError: string | null;
   canSubmit: boolean;
@@ -33,6 +36,8 @@ export function DescribeStep({
   latitude,
   longitude,
   locationLoading,
+  locationSuggesting,
+  addressSuggestions,
   classifying,
   classifyError,
   canSubmit,
@@ -44,6 +49,27 @@ export function DescribeStep({
   onDetectLocation,
   onClassify,
 }: DescribeStepProps) {
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const locationWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!locationWrapperRef.current) return;
+      if (!locationWrapperRef.current.contains(event.target as Node)) {
+        setSuggestionsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectSuggestion = (suggestion: string) => {
+    onAddressChange(suggestion);
+    setSuggestionsOpen(false);
+  };
+
+  const showSuggestions = suggestionsOpen && addressSuggestions.length > 0;
+
   return (
     <div className="flex flex-col gap-10">
       <div>
@@ -108,21 +134,49 @@ export function DescribeStep({
         />
       </div>
 
-      <div className="ep-card p-6">
+      <div className="ep-card p-6" ref={locationWrapperRef}>
         <Label
           htmlFor="address"
           className="mb-3 block font-mono text-xs uppercase tracking-wider text-muted-foreground"
         >
           Location
         </Label>
-        <div className="flex gap-2">
-          <Input
-            id="address"
-            placeholder="Address or location description"
-            className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-            value={address}
-            onChange={(e) => onAddressChange(e.target.value)}
-          />
+        <div className="relative flex gap-2">
+          <div className="relative flex-1">
+            <Input
+              id="address"
+              placeholder="Address or location description"
+              className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+              value={address}
+              autoComplete="off"
+              onChange={(e) => {
+                onAddressChange(e.target.value);
+                setSuggestionsOpen(true);
+              }}
+              onFocus={() => setSuggestionsOpen(true)}
+            />
+            {showSuggestions && (
+              <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+                <ul className="max-h-72 overflow-y-auto py-1 text-sm">
+                  {addressSuggestions.map((suggestion) => (
+                    <li key={suggestion}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSelectSuggestion(suggestion);
+                        }}
+                        className="flex w-full items-start gap-2 px-4 py-2.5 text-left text-foreground transition-colors hover:bg-muted"
+                      >
+                        <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{suggestion}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
           <Button
             variant="outline"
             onClick={onDetectLocation}
@@ -137,6 +191,11 @@ export function DescribeStep({
             {locationLoading ? "..." : "Detect"}
           </Button>
         </div>
+        {locationSuggesting && (
+          <p className="mt-2 font-mono text-xs text-muted-foreground">
+            Searching locations...
+          </p>
+        )}
         {latitude && longitude && (
           <p className="mt-3 font-mono text-xs text-muted-foreground">
             GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}

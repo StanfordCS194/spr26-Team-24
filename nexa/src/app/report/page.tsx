@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Stepper, type ReportStep } from "@/components/report/stepper";
 import { DescribeStep } from "@/components/report/describe-step";
 import { ReviewStep } from "@/components/report/review-step";
@@ -20,6 +20,27 @@ interface CreatedReport {
   description: string | null;
   aiDescription: string | null;
   createdAt: string;
+}
+
+type OfficialFormLookupResult =
+  | {
+      status: "found";
+      cityName: string;
+      formUrl: string;
+      reason: string;
+      confidence: "low" | "medium" | "high";
+    }
+  | {
+      status: "not_found";
+      cityName: string | null;
+      message: string;
+      reason?: string;
+    };
+
+interface AddressSuggestion {
+  displayName: string;
+  latitude: number;
+  longitude: number;
 }
 
 async function fetchJSON<T>(url: string, body: unknown): Promise<T> {
@@ -45,9 +66,6 @@ export default function ReportPage() {
   const [classifying, setClassifying] = useState(false);
   const [classification, setClassification] =
     useState<ClassificationResult | null>(null);
-  const [selectedIssueType, setSelectedIssueType] = useState<string | null>(
-    null,
-  );
   const [classifyError, setClassifyError] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
@@ -55,17 +73,137 @@ export default function ReportPage() {
     null,
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [officialForm, setOfficialForm] =
+    useState<OfficialFormLookupResult | null>(null);
+  const [officialFormLoading, setOfficialFormLoading] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<
+    AddressSuggestion[]
+  >([]);
+  const [locationSuggesting, setLocationSuggesting] = useState(false);
+  const addressLookupTimerRef = useRef<number | null>(null);
+  const addressLookupRequestRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      if (addressLookupTimerRef.current) {
+        window.clearTimeout(addressLookupTimerRef.current);
+      }
+    };
+  }, []);
+
+  const lookupAddressSuggestions = (query: string) => {
+    if (addressLookupTimerRef.current) {
+      window.clearTimeout(addressLookupTimerRef.current);
+      addressLookupTimerRef.current = null;
+    }
+
+    const trimmed = query.trim();
+    if (trimmed.length < 3) {
+      setAddressSuggestions([]);
+      setLocationSuggesting(false);
+      return;
+    }
+
+    setLocationSuggesting(true);
+    addressLookupTimerRef.current = window.setTimeout(async () => {
+      const requestId = ++addressLookupRequestRef.current;
+
+      try {
+        const response = await fetch(
+          `/api/location/suggest?q=${encodeURIComponent(trimmed)}`,
+        );
+        if (!response.ok) throw new Error("Location suggestion lookup failed.");
+
+        const data = (await response.json()) as {
+          suggestions?: AddressSuggestion[];
+        };
+        if (requestId !== addressLookupRequestRef.current) return;
+
+        setAddressSuggestions(data.suggestions ?? []);
+      } catch {
+        if (requestId !== addressLookupRequestRef.current) return;
+        setAddressSuggestions([]);
+      } finally {
+        if (requestId !== addressLookupRequestRef.current) return;
+        setLocationSuggesting(false);
+      }
+    }, 250);
+  };
+
+  const lookupOfficialForm = async (issueType: string) => {
+    const hasLocation =
+      !!geo.address.trim() ||
+      (typeof geo.latitude === "number" && typeof geo.longitude === "number");
+
+    if (!hasLocation) {
+      setOfficialForm({
+        status: "not_found",
+        cityName: null,
+        message: "No official city form found.",
+        reason: "Add a location to look up the official city website.",
+      });
+      return;
+    }
+
+    setOfficialFormLoading(true);
+    try {
+      const result = await fetchJSON<OfficialFormLookupResult>(
+        "/api/reports/form-link",
+        {
+          issueType,
+          address: geo.address || undefined,
+          latitude: geo.latitude ?? undefined,
+          longitude: geo.longitude ?? undefined,
+        },
+      );
+      setOfficialForm(result);
+    } catch (err) {
+      setOfficialForm({
+        status: "not_found",
+        cityName: null,
+        message: "No official city form found.",
+        reason:
+          err instanceof Error
+            ? err.message
+            : "Could not look up an official city website.",
+      });
+    } finally {
+      setOfficialFormLoading(false);
+    }
+  };
+
+  const handleAddressChange = (value: string) => {
+    geo.setAddress(value);
+
+    const selectedSuggestion = addressSuggestions.find(
+      (suggestion) => suggestion.displayName === value,
+    );
+
+    if (selectedSuggestion) {
+      geo.setCoordinates(
+        selectedSuggestion.latitude,
+        selectedSuggestion.longitude,
+      );
+      setAddressSuggestions([]);
+      setLocationSuggesting(false);
+      return;
+    }
+
+    geo.setCoordinates(null, null);
+    lookupAddressSuggestions(value);
+  };
 
   const handleClassify = async () => {
     setClassifying(true);
     setClassifyError(null);
     try {
+      setOfficialForm(null);
       const result = await fetchJSON<ClassificationResult>(
         "/api/reports/classify",
         { image: image.imageBase64, description: description || undefined },
       );
       setClassification(result);
-      setSelectedIssueType(result.issueType);
+      void lookupOfficialForm(result.issueType);
       setStep("review");
     } catch (err) {
       setClassifyError(
@@ -84,7 +222,7 @@ export default function ReportPage() {
       const report = await fetchJSON<CreatedReport>("/api/reports", {
         description,
         aiDescription: classification.aiDescription,
-        issueType: selectedIssueType,
+        issueType: classification.issueType,
         latitude: geo.latitude,
         longitude: geo.longitude,
         address: geo.address,
@@ -106,11 +244,18 @@ export default function ReportPage() {
     setDescription("");
     image.clearImage();
     geo.reset();
+    setAddressSuggestions([]);
+    setLocationSuggesting(false);
+    if (addressLookupTimerRef.current) {
+      window.clearTimeout(addressLookupTimerRef.current);
+      addressLookupTimerRef.current = null;
+    }
     setClassification(null);
-    setSelectedIssueType(null);
     setCreatedReport(null);
     setClassifyError(null);
     setSubmitError(null);
+    setOfficialForm(null);
+    setOfficialFormLoading(false);
   };
 
   return (
@@ -130,6 +275,10 @@ export default function ReportPage() {
             latitude={geo.latitude}
             longitude={geo.longitude}
             locationLoading={geo.loading}
+            locationSuggesting={locationSuggesting}
+            addressSuggestions={addressSuggestions.map(
+              (suggestion) => suggestion.displayName,
+            )}
             classifying={classifying}
             classifyError={classifyError}
             canSubmit={!!(image.imageBase64 || description.trim())}
@@ -137,7 +286,7 @@ export default function ReportPage() {
             onDrop={image.handleDrop}
             onClearImage={image.clearImage}
             onDescriptionChange={setDescription}
-            onAddressChange={geo.setAddress}
+            onAddressChange={handleAddressChange}
             onDetectLocation={geo.detect}
             onClassify={handleClassify}
           />
@@ -149,10 +298,10 @@ export default function ReportPage() {
             imagePreview={image.imagePreview}
             description={description}
             address={geo.address}
-            selectedIssueType={selectedIssueType}
             submitting={submitting}
             submitError={submitError}
-            onIssueTypeChange={setSelectedIssueType}
+            officialForm={officialForm}
+            officialFormLoading={officialFormLoading}
             onBack={() => setStep("describe")}
             onSubmit={handleSubmit}
           />
