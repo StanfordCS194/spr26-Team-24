@@ -86,7 +86,9 @@ npm install
 cp .env.example .env.local
 ```
 
-Open `.env.local` and fill in your API keys:
+Open `.env.local` and fill in any API keys you have (`OPENAI_API_KEY`,
+`ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `NEXT_PUBLIC_POSTHOG_KEY`). The
+`DATABASE_URL` and `JWT_SECRET` defaults already work against the Docker DB.
 
 | Key | Required | Purpose |
 |---|---|---|
