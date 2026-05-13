@@ -1,7 +1,9 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Pencil } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -27,6 +29,8 @@ interface ReviewStepProps {
   submitting: boolean;
   submitError: string | null;
   onIssueTypeChange: (value: string | null) => void;
+  onDescriptionChange: (value: string) => void;
+  onAddressChange: (value: string) => void;
   onBack: () => void;
   onSubmit: () => void;
 }
@@ -40,6 +44,8 @@ export function ReviewStep({
   submitting,
   submitError,
   onIssueTypeChange,
+  onDescriptionChange,
+  onAddressChange,
   onBack,
   onSubmit,
 }: ReviewStepProps) {
@@ -50,6 +56,9 @@ export function ReviewStep({
         <h2 className="mt-3 text-2xl font-normal tracking-tight sm:text-3xl">
           Does this look right?
         </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Edit any field below before submitting.
+        </p>
       </div>
 
       <div className="ep-card p-8">
@@ -90,23 +99,35 @@ export function ReviewStep({
         </div>
       )}
 
-      {description && (
-        <div className="ep-card p-6">
-          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+      <div className="ep-card p-6">
+        <div className="mb-3 flex items-center gap-2">
+          <Label className="block font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Your Description
-          </span>
-          <p className="mt-2 text-sm text-foreground">{description}</p>
+          </Label>
+          <Pencil className="size-3 text-muted-foreground" />
         </div>
-      )}
+        <Textarea
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          className="min-h-20 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+          placeholder="Describe the issue..."
+        />
+      </div>
 
-      {address && (
-        <div className="ep-card p-6">
-          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+      <div className="ep-card p-6">
+        <div className="mb-3 flex items-center gap-2">
+          <Label className="block font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Location
-          </span>
-          <p className="mt-2 text-sm text-foreground">{address}</p>
+          </Label>
+          <Pencil className="size-3 text-muted-foreground" />
         </div>
-      )}
+        <Input
+          value={address}
+          onChange={(e) => onAddressChange(e.target.value)}
+          className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+          placeholder="Address or location description"
+        />
+      </div>
 
       <div className="ep-card p-6">
         <Label className="mb-3 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
