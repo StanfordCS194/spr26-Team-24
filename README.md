@@ -1,16 +1,28 @@
 # Nexa
 
-A full-stack Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, etc.). AI-powered classification compares results across multiple LLMs to make the best judgment.
+A full-stack Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, etc.). AI-powered classification compares results across multiple LLMs to make the best judgment, and an official city form lookup surfaces the correct 311 / Report-an-Issue page for the user's location.
 
 ## Tech Stack
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui
 - **Backend**: Next.js API Routes (under `src/app/api/`)
-- **AI Classification**: Multi-provider consensus engine (OpenAI GPT-4o-mini, Anthropic Claude Sonnet, Google Gemini 2.0 Flash)
-- **Database**: PostgreSQL 16 (via Docker), Prisma ORM
+- **AI Classification**: Multi-provider consensus engine (OpenAI GPT-4o-mini, Anthropic Claude 3.5 Haiku, Google Gemini 2.0 Flash)
+- **Database**: PostgreSQL (Neon on Vercel, Docker for local dev), Prisma ORM
+- **Address Autocomplete**: Google Places API (with Nominatim fallback)
+- **Civic Form Lookup**: OpenAI Responses API with `web_search_preview` tool
 - **Telemetry**: PostHog (passive event tracking, session replays)
-- **Deployment**: Vercel
+- **Auth**: JWT-based sessions (jose)
+- **Deployment**: Vercel (auto-deploys from `main`)
 - **CI**: GitHub Actions (lint, type-check, format check on PRs)
+
+## Features
+
+- **Report submission wizard** — describe an issue with text, photo, or both; detect GPS location or type an address with autocomplete suggestions
+- **Multi-LLM AI classification** — three providers classify in parallel; a consensus engine picks the best result; the review step shows a comparison panel
+- **Official city form lookup** — after classification, Nexa finds the official 311 / Report-an-Issue page for the user's city and surfaces a direct link (Nexa never sends data to the external site)
+- **Dashboard** — personal history of submitted reports with status tracking, category labels, and two-step report deletion
+- **Auth** — register, login, and session-aware navbar
+- **Address autocomplete** — Google Places suggestions (falls back to Nominatim when `GOOGLE_MAPS_API_KEY` is unset)
 
 ## AI Classification — How It Works
 
@@ -19,7 +31,7 @@ When a user submits a report, the `/api/reports/classify` endpoint sends the ima
 | Provider | Model | Strengths |
 |---|---|---|
 | OpenAI | `gpt-4o-mini` | Fast, strong vision, low cost |
-| Anthropic | `claude-sonnet` | Careful reasoning, good at ambiguous cases |
+| Anthropic | `claude-3-5-haiku-20241022` | Fast, careful reasoning, low cost |
 | Google | `gemini-2.0-flash` | Fast, good at structured output |
 
 A **consensus engine** then picks the best result:
@@ -35,15 +47,34 @@ The review step shows the user the winning classification **and** a comparison p
 
 ```
 spr26-Team-24/
-├── docker-compose.yml        # PostgreSQL database
+├── docker-compose.yml        # PostgreSQL database (local dev)
 ├── .github/workflows/ci.yml  # CI pipeline
 └── nexa/                     # Next.js application
     ├── src/
     │   ├── app/              # Pages and API routes
-    │   │   ├── api/          # Backend API endpoints
+    │   │   ├── api/
+    │   │   │   ├── auth/             # Login, register, logout, session
+    │   │   │   ├── health/           # Health check endpoint
+    │   │   │   ├── location/
+    │   │   │   │   └── suggest/      # Address autocomplete (Google Places / Nominatim)
+    │   │   │   └── reports/
+    │   │   │       ├── route.ts      # POST — create a report
+    │   │   │       ├── classify/     # POST — multi-LLM classification
+    │   │   │       ├── form-link/    # POST — official city form lookup
+    │   │   │       └── [id]/         # DELETE — remove a report (owner only)
     │   │   ├── dashboard/    # Report tracking dashboard
+    │   │   ├── login/        # Login page
+    │   │   ├── register/     # Registration page
     │   │   └── report/       # Report submission flow
-    │   ├── components/       # React components
+    │   ├── components/
+    │   │   ├── dashboard/
+    │   │   │   └── delete-report-button.tsx
+    │   │   ├── report/
+    │   │   │   ├── describe-step.tsx   # Step 1: description + photo + location
+    │   │   │   ├── review-step.tsx     # Step 2: AI result + form link + edit
+    │   │   │   ├── confirmed-step.tsx  # Step 3: confirmation
+    │   │   │   └── stepper.tsx         # Progress indicator
+    │   │   └── ui/           # shadcn/ui primitives
     │   ├── lib/
     │   │   ├── classify/     # Multi-LLM classification engine
     │   │   │   ├── types.ts           # Shared types and prompt
@@ -51,8 +82,13 @@ spr26-Team-24/
     │   │   │   ├── anthropic-provider.ts
     │   │   │   ├── google-provider.ts
     │   │   │   └── consensus.ts       # Voting / comparison logic
-    │   │   └── ...           # Auth, Prisma, constants
-    │   ├── hooks/            # Custom React hooks
+    │   │   ├── auth.ts       # JWT session helpers
+    │   │   ├── prisma.ts     # Prisma client singleton
+    │   │   ├── openai.ts     # OpenAI client (lazy init)
+    │   │   └── constants.ts  # Issue type labels, etc.
+    │   ├── hooks/
+    │   │   ├── use-geolocation.ts  # GPS detect + reverse geocode + setCoordinates
+    │   │   └── use-image-upload.ts # Photo upload / drag-drop
     │   └── types/            # TypeScript type definitions
     └── prisma/
         ├── schema.prisma     # Database schema
@@ -62,7 +98,7 @@ spr26-Team-24/
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v22 or later
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (optional — only needed for local Postgres)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (optional — only needed for local Postgres; production uses Neon)
 
 ## Getting Started
 
@@ -86,32 +122,33 @@ npm install
 cp .env.example .env.local
 ```
 
-Open `.env.local` and fill in any API keys you have (`OPENAI_API_KEY`,
-`ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `NEXT_PUBLIC_POSTHOG_KEY`). The
-`DATABASE_URL` and `JWT_SECRET` defaults already work against the Docker DB.
+Open `.env.local` and fill in your API keys. The app can connect to the production Neon database directly for local development (recommended), or you can run Postgres locally via Docker.
 
 | Key | Required | Purpose |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | GPT-4o-mini classification |
-| `ANTHROPIC_API_KEY` | Yes | Claude Sonnet classification |
-| `GOOGLE_API_KEY` | Yes | Gemini Flash classification |
+| `DATABASE_URL` | Yes | PostgreSQL connection string (Neon or local Docker) |
 | `JWT_SECRET` | Yes | Session token signing |
-| `DATABASE_URL` | For DB features | PostgreSQL connection string |
+| `OPENAI_API_KEY` | Yes | GPT-4o-mini classification + civic form lookup |
+| `ANTHROPIC_API_KEY` | Yes | Claude 3.5 Haiku classification |
+| `GOOGLE_API_KEY` | Yes | Gemini 2.0 Flash classification |
+| `GOOGLE_MAPS_API_KEY` | Optional | Google Places address autocomplete (falls back to Nominatim) |
 | `NEXT_PUBLIC_POSTHOG_KEY` | For telemetry | PostHog analytics |
+| `NEXT_PUBLIC_POSTHOG_HOST` | For telemetry | PostHog region host |
 
 For production deployment, see [`nexa/VERCEL_SETUP.md`](nexa/VERCEL_SETUP.md).
 
-### 4. Start the development server
+### 4. Set up the database
+
+**Option A — Use the production Neon database (recommended for demo):**
+
+Set `DATABASE_URL` in `.env.local` to the Neon connection string, then run:
 
 ```bash
-npm run dev
+cd nexa
+npx prisma migrate deploy
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 5. (Optional) Start the database
-
-Only needed if you want real data persistence instead of localStorage:
+**Option B — Local Postgres via Docker:**
 
 ```bash
 # From repo root
@@ -120,11 +157,19 @@ cd nexa
 npx prisma migrate dev
 ```
 
+### 5. Start the development server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
 ## Daily Startup Checklist
 
 After initial setup is done, use these commands each time you come back to the project:
 
-1. Start the database (from repo root):
+1. (If using local Docker DB) start the database from repo root:
 
 ```bash
 docker compose up -d
@@ -149,10 +194,12 @@ npm run dev
 | `npm run build` | Build for production (from `nexa/`) |
 | `npm run lint` | Run ESLint (from `nexa/`) |
 | `npm run format` | Format code with Prettier (from `nexa/`) |
+| `npm run format:check` | Check formatting without writing (from `nexa/`) |
 | `npx prisma studio` | Open a visual database browser (from `nexa/`) |
-| `npx prisma migrate dev` | Apply pending migrations (from `nexa/`) |
-| `docker compose up -d` | Start the database (from repo root) |
-| `docker compose down` | Stop the database (from repo root) |
+| `npx prisma migrate dev` | Create and apply migrations locally (from `nexa/`) |
+| `npx prisma migrate deploy` | Apply pending migrations to production (from `nexa/`) |
+| `docker compose up -d` | Start the local database (from repo root) |
+| `docker compose down` | Stop the local database (from repo root) |
 
 ## Wiki
 
@@ -160,3 +207,4 @@ npm run dev
 - [PRD](https://github.com/StanfordCS194/spr26-Team-24/wiki/PRD)
 - [Measure For Success (OKRs/KPIs)](https://github.com/StanfordCS194/spr26-Team-24/wiki/Measure-For-Success)
 - [Customer Discovery Summary](https://github.com/StanfordCS194/spr26-Team-24/wiki/Customer-Discovery-Summary)
+- [Midpoint User Testing Plan](https://github.com/StanfordCS194/spr26-Team-24/wiki/Midpoint-User-Testing-Plan)
