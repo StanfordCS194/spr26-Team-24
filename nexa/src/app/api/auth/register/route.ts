@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createToken, SESSION_COOKIE, cookieOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,14 +21,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const demoUser = {
-      id: "demo_user",
-      email,
-      name: name || null,
-    };
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return NextResponse.json(
+        { error: "An account with this email already exists" },
+        { status: 409 },
+      );
+    }
 
-    const token = await createToken({ userId: demoUser.id, email });
-    const response = NextResponse.json(demoUser, { status: 201 });
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name: name || null,
+        passwordHash,
+      },
+    });
+
+    const token = await createToken({ userId: user.id, email: user.email });
+    const response = NextResponse.json(
+      { id: user.id, email: user.email, name: user.name },
+      { status: 201 },
+    );
     response.cookies.set(SESSION_COOKIE, token, cookieOptions);
     return response;
   } catch (error) {

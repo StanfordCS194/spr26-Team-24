@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createToken, SESSION_COOKIE, cookieOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,14 +13,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const demoUser = {
-      id: "demo_user",
-      email,
-      name: email.split("@")[0],
-    };
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: {
+        email,
+        name: email.split("@")[0],
+      },
+    });
 
-    const token = await createToken({ userId: demoUser.id, email });
-    const response = NextResponse.json(demoUser, { status: 200 });
+    const token = await createToken({ userId: user.id, email: user.email });
+    const response = NextResponse.json(
+      { id: user.id, email: user.email, name: user.name },
+      { status: 200 },
+    );
     response.cookies.set(SESSION_COOKIE, token, cookieOptions);
     return response;
   } catch (error) {

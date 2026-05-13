@@ -8,7 +8,6 @@ import { ReviewStep } from "@/components/report/review-step";
 import { ConfirmedStep } from "@/components/report/confirmed-step";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useGeolocation } from "@/hooks/use-geolocation";
-import { saveReport, type StoredReport } from "@/lib/reports-store";
 
 interface ClassificationResult {
   issueType: string;
@@ -29,7 +28,13 @@ interface ComparisonResponse {
   method: string;
 }
 
-type CreatedReport = StoredReport;
+interface CreatedReport {
+  id: string;
+  issueType: string | null;
+  description: string | null;
+  aiDescription: string | null;
+  createdAt: string;
+}
 
 export default function ReportPage() {
   const posthog = usePostHog();
@@ -100,17 +105,25 @@ export default function ReportPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const report = saveReport({
-        issueType: selectedIssueType || classification.issueType,
-        description,
-        aiDescription: classification.aiDescription,
-        severity: classification.severity,
-        address: geo.address,
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-        imagePreview: image.imagePreview,
-        agency: null,
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description,
+          aiDescription: classification.aiDescription,
+          issueType: selectedIssueType || classification.issueType,
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+          address: geo.address,
+        }),
       });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Submission failed");
+      }
+
+      const report: CreatedReport = await res.json();
       setCreatedReport(report);
       setStep("confirmed");
       posthog?.capture("report_submitted", {
@@ -121,8 +134,8 @@ export default function ReportPage() {
         has_image: !!image.imageBase64,
         has_location: !!geo.latitude,
       });
-    } catch {
-      setSubmitError("Something went wrong");
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
