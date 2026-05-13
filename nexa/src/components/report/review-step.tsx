@@ -1,16 +1,15 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Loader2, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ExternalLink,
+  Loader2,
+  Pencil,
+} from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ErrorBanner } from "@/components/error-banner";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 
@@ -20,15 +19,30 @@ interface ClassificationResult {
   severity: "low" | "medium" | "high";
 }
 
+type OfficialFormLookupResult =
+  | {
+      status: "found";
+      cityName: string;
+      formUrl: string;
+      reason: string;
+      confidence: "low" | "medium" | "high";
+    }
+  | {
+      status: "not_found";
+      cityName: string | null;
+      message: string;
+      reason?: string;
+    };
+
 interface ReviewStepProps {
   classification: ClassificationResult;
   imagePreview: string | null;
   description: string;
   address: string;
-  selectedIssueType: string | null;
   submitting: boolean;
   submitError: string | null;
-  onIssueTypeChange: (value: string | null) => void;
+  officialForm: OfficialFormLookupResult | null;
+  officialFormLoading: boolean;
   onDescriptionChange: (value: string) => void;
   onAddressChange: (value: string) => void;
   onBack: () => void;
@@ -40,10 +54,10 @@ export function ReviewStep({
   imagePreview,
   description,
   address,
-  selectedIssueType,
   submitting,
   submitError,
-  onIssueTypeChange,
+  officialForm,
+  officialFormLoading,
   onDescriptionChange,
   onAddressChange,
   onBack,
@@ -130,24 +144,51 @@ export function ReviewStep({
       </div>
 
       <div className="ep-card p-6">
-        <Label className="mb-3 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
-          Issue Type (adjust if needed)
-        </Label>
-        <Select
-          value={selectedIssueType}
-          onValueChange={(value) => onIssueTypeChange(value)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select issue type" />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(ISSUE_TYPE_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          Where to submit
+        </span>
+
+        {officialFormLoading ? (
+          <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
+            Finding official city form...
+          </div>
+        ) : officialForm?.status === "found" ? (
+          <div className="mt-3">
+            <p className="text-sm text-foreground">
+              Official city website for {officialForm.cityName}
+            </p>
+            <a
+              href={officialForm.formUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1.5 text-sm text-ep-purple underline-offset-4 hover:underline"
+            >
+              Open official city form
+              <ExternalLink className="size-3.5" />
+            </a>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Confidence: {officialForm.confidence}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {officialForm.reason}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Nexa does not submit your data to this external website.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3">
+            <p className="text-sm text-foreground">
+              No official city form found.
+            </p>
+            {officialForm?.reason && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {officialForm.reason}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {submitError && <ErrorBanner message={submitError} />}

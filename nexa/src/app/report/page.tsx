@@ -36,6 +36,27 @@ interface CreatedReport {
   createdAt: string;
 }
 
+type OfficialFormLookupResult =
+  | {
+      status: "found";
+      cityName: string;
+      formUrl: string;
+      reason: string;
+      confidence: "low" | "medium" | "high";
+    }
+  | {
+      status: "not_found";
+      cityName: string | null;
+      message: string;
+      reason?: string;
+    };
+
+interface AddressSuggestion {
+  displayName: string;
+  latitude: number;
+  longitude: number;
+}
+
 export default function ReportPage() {
   const posthog = usePostHog();
   const flowStartedAt = useRef(0);
@@ -53,9 +74,6 @@ export default function ReportPage() {
   const [classification, setClassification] =
     useState<ClassificationResult | null>(null);
   const [comparison, setComparison] = useState<ComparisonResponse | null>(null);
-  const [selectedIssueType, setSelectedIssueType] = useState<string | null>(
-    null,
-  );
   const [classifyError, setClassifyError] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
@@ -63,11 +81,134 @@ export default function ReportPage() {
     null,
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [officialForm, setOfficialForm] =
+    useState<OfficialFormLookupResult | null>(null);
+  const [officialFormLoading, setOfficialFormLoading] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<
+    AddressSuggestion[]
+  >([]);
+  const [locationSuggesting, setLocationSuggesting] = useState(false);
+  const addressLookupTimerRef = useRef<number | null>(null);
+  const addressLookupRequestRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      if (addressLookupTimerRef.current) {
+        window.clearTimeout(addressLookupTimerRef.current);
+      }
+    };
+  }, []);
+
+  const lookupAddressSuggestions = (query: string) => {
+    if (addressLookupTimerRef.current) {
+      window.clearTimeout(addressLookupTimerRef.current);
+      addressLookupTimerRef.current = null;
+    }
+
+    const trimmed = query.trim();
+    if (trimmed.length < 3) {
+      setAddressSuggestions([]);
+      setLocationSuggesting(false);
+      return;
+    }
+
+    setLocationSuggesting(true);
+    addressLookupTimerRef.current = window.setTimeout(async () => {
+      const requestId = ++addressLookupRequestRef.current;
+
+      try {
+        const response = await fetch(
+          `/api/location/suggest?q=${encodeURIComponent(trimmed)}`,
+        );
+        if (!response.ok) throw new Error("Location suggestion lookup failed.");
+
+        const data = (await response.json()) as {
+          suggestions?: AddressSuggestion[];
+        };
+        if (requestId !== addressLookupRequestRef.current) return;
+
+        setAddressSuggestions(data.suggestions ?? []);
+      } catch {
+        if (requestId !== addressLookupRequestRef.current) return;
+        setAddressSuggestions([]);
+      } finally {
+        if (requestId !== addressLookupRequestRef.current) return;
+        setLocationSuggesting(false);
+      }
+    }, 250);
+  };
+
+  const lookupOfficialForm = async (issueType: string) => {
+    const hasLocation =
+      !!geo.address.trim() ||
+      (typeof geo.latitude === "number" && typeof geo.longitude === "number");
+
+    if (!hasLocation) {
+      setOfficialForm({
+        status: "not_found",
+        cityName: null,
+        message: "No official city form found.",
+        reason: "Add a location to look up the official city website.",
+      });
+      return;
+    }
+
+    setOfficialFormLoading(true);
+    try {
+      const res = await fetch("/api/reports/form-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          issueType,
+          address: geo.address || undefined,
+          latitude: geo.latitude ?? undefined,
+          longitude: geo.longitude ?? undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("Form lookup failed");
+      const result: OfficialFormLookupResult = await res.json();
+      setOfficialForm(result);
+    } catch (err) {
+      setOfficialForm({
+        status: "not_found",
+        cityName: null,
+        message: "No official city form found.",
+        reason:
+          err instanceof Error
+            ? err.message
+            : "Could not look up an official city website.",
+      });
+    } finally {
+      setOfficialFormLoading(false);
+    }
+  };
+
+  const handleAddressChange = (value: string) => {
+    geo.setAddress(value);
+
+    const selectedSuggestion = addressSuggestions.find(
+      (suggestion) => suggestion.displayName === value,
+    );
+
+    if (selectedSuggestion) {
+      geo.setCoordinates(
+        selectedSuggestion.latitude,
+        selectedSuggestion.longitude,
+      );
+      setAddressSuggestions([]);
+      setLocationSuggesting(false);
+      return;
+    }
+
+    geo.setCoordinates(null, null);
+    lookupAddressSuggestions(value);
+  };
 
   const handleClassify = async () => {
     setClassifying(true);
     setClassifyError(null);
     try {
+      setOfficialForm(null);
       const res = await fetch("/api/reports/classify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,7 +226,7 @@ export default function ReportPage() {
       const data: ComparisonResponse = await res.json();
       setComparison(data);
       setClassification(data.winner);
-      setSelectedIssueType(data.winner.issueType);
+      void lookupOfficialForm(data.winner.issueType);
       setStep("review");
       posthog?.capture("report_classified", {
         issue_type: data.winner.issueType,
@@ -111,7 +252,7 @@ export default function ReportPage() {
         body: JSON.stringify({
           description,
           aiDescription: classification.aiDescription,
-          issueType: selectedIssueType || classification.issueType,
+          issueType: classification.issueType,
           latitude: geo.latitude,
           longitude: geo.longitude,
           address: geo.address,
@@ -128,9 +269,8 @@ export default function ReportPage() {
       setStep("confirmed");
       posthog?.capture("report_submitted", {
         report_id: report.id,
-        issue_type: selectedIssueType,
+        issue_type: classification.issueType,
         time_to_submit_ms: Date.now() - flowStartedAt.current,
-        user_edited_type: selectedIssueType !== classification.issueType,
         has_image: !!image.imageBase64,
         has_location: !!geo.latitude,
       });
@@ -147,12 +287,19 @@ export default function ReportPage() {
     setDescription("");
     image.clearImage();
     geo.reset();
+    setAddressSuggestions([]);
+    setLocationSuggesting(false);
+    if (addressLookupTimerRef.current) {
+      window.clearTimeout(addressLookupTimerRef.current);
+      addressLookupTimerRef.current = null;
+    }
     setClassification(null);
     setComparison(null);
-    setSelectedIssueType(null);
     setCreatedReport(null);
     setClassifyError(null);
     setSubmitError(null);
+    setOfficialForm(null);
+    setOfficialFormLoading(false);
   };
 
   return (
@@ -173,6 +320,10 @@ export default function ReportPage() {
             longitude={geo.longitude}
             accuracy={geo.accuracy}
             locationLoading={geo.loading}
+            locationSuggesting={locationSuggesting}
+            addressSuggestions={addressSuggestions.map(
+              (suggestion) => suggestion.displayName,
+            )}
             locationError={geo.error}
             classifying={classifying}
             classifyError={classifyError}
@@ -181,7 +332,7 @@ export default function ReportPage() {
             onDrop={image.handleDrop}
             onClearImage={image.clearImage}
             onDescriptionChange={setDescription}
-            onAddressChange={geo.setAddress}
+            onAddressChange={handleAddressChange}
             onDetectLocation={geo.detect}
             onClassify={handleClassify}
           />
@@ -194,10 +345,10 @@ export default function ReportPage() {
               imagePreview={image.imagePreview}
               description={description}
               address={geo.address}
-              selectedIssueType={selectedIssueType}
               submitting={submitting}
               submitError={submitError}
-              onIssueTypeChange={setSelectedIssueType}
+              officialForm={officialForm}
+              officialFormLoading={officialFormLoading}
               onDescriptionChange={setDescription}
               onAddressChange={geo.setAddress}
               onBack={() => setStep("describe")}

@@ -10,6 +10,14 @@ export function useGeolocation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const setCoordinates = useCallback(
+    (lat: number | null, lng: number | null) => {
+      setLatitude(lat);
+      setLongitude(lng);
+    },
+    [],
+  );
+
   const detect = useCallback(() => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by this browser.");
@@ -22,8 +30,7 @@ export function useGeolocation() {
       async (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        setLatitude(lat);
-        setLongitude(lng);
+        setCoordinates(lat, lng);
         setAccuracy(position.coords.accuracy);
 
         try {
@@ -58,15 +65,14 @@ export function useGeolocation() {
         maximumAge: 60000,
       },
     );
-  }, []);
+  }, [setCoordinates]);
 
   const reset = useCallback(() => {
     setAddress("");
-    setLatitude(null);
-    setLongitude(null);
+    setCoordinates(null, null);
     setAccuracy(null);
     setError(null);
-  }, []);
+  }, [setCoordinates]);
 
   return {
     address,
@@ -76,6 +82,7 @@ export function useGeolocation() {
     accuracy,
     loading,
     error,
+    setCoordinates,
     detect,
     reset,
   };
