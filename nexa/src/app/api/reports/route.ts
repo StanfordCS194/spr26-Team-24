@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { IssueType } from "@/generated/prisma/enums";
+import { getSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSession();
     const body = await request.json();
     const {
       description,
@@ -30,6 +32,7 @@ export async function POST(request: NextRequest) {
 
     const report = await prisma.report.create({
       data: {
+        userId: session?.userId ?? null,
         description,
         aiDescription,
         issueType: validIssueType,
