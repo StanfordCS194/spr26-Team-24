@@ -8,6 +8,7 @@ import { ReviewStep } from "@/components/report/review-step";
 import { ConfirmedStep } from "@/components/report/confirmed-step";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { saveReport, type StoredReport } from "@/lib/reports-store";
 
 interface ClassificationResult {
   issueType: string;
@@ -28,13 +29,7 @@ interface ComparisonResponse {
   method: string;
 }
 
-interface CreatedReport {
-  id: string;
-  issueType: string | null;
-  description: string | null;
-  aiDescription: string | null;
-  createdAt: string;
-}
+type CreatedReport = StoredReport;
 
 export default function ReportPage() {
   const posthog = usePostHog();
@@ -105,13 +100,17 @@ export default function ReportPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const report: CreatedReport = {
-        id: `RPT-${Date.now().toString(36).toUpperCase()}`,
-        issueType: selectedIssueType,
+      const report = saveReport({
+        issueType: selectedIssueType || classification.issueType,
         description,
         aiDescription: classification.aiDescription,
-        createdAt: new Date().toISOString(),
-      };
+        severity: classification.severity,
+        address: geo.address,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        imagePreview: image.imagePreview,
+        agency: null,
+      });
       setCreatedReport(report);
       setStep("confirmed");
       posthog?.capture("report_submitted", {
