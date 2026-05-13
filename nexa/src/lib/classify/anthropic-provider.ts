@@ -49,7 +49,7 @@ export async function classifyWithAnthropic(
   content.push({ type: "text", text: textPrompt });
 
   const response = await getClient().messages.create({
-    model: "claude-3-5-haiku-20241022",
+    model: "claude-haiku-4-5",
     max_tokens: 300,
     messages: [{ role: "user", content }],
   });
