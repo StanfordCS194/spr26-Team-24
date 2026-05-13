@@ -40,7 +40,45 @@ type NominatimAddress = {
   hamlet?: string;
   municipality?: string;
   state?: string;
+  postcode?: string;
+  county?: string;
 };
+
+/**
+ * Nominatim often puts housing complexes and micro-places in `hamlet`, which is
+ * not a municipality for 311 search. Prefer incorporated-style fields only.
+ */
+function parseFormalMunicipality(
+  address: NominatimAddress | undefined,
+): string | null {
+  if (!address) return null;
+  return (
+    address.city ??
+    address.town ??
+    address.village ??
+    address.municipality ??
+    null
+  );
+}
+
+/** US ZIPs where Nominatim returns no city (e.g. Stanford-adjacent housing). */
+const US_POSTCODE_FORM_LOOKUP_HINT: Record<
+  string,
+  { city: string; state: string }
+> = {
+  "94304": { city: "Palo Alto", state: "California" },
+  "94305": { city: "Palo Alto", state: "California" },
+};
+
+function hintCityFromUsPostcode(
+  postcode: string | null | undefined,
+): { cityName: string; stateName: string } | null {
+  if (!postcode) return null;
+  const normalized = postcode.trim();
+  const hint = US_POSTCODE_FORM_LOOKUP_HINT[normalized];
+  if (!hint) return null;
+  return { cityName: hint.city, stateName: hint.state };
+}
 
 const LOOKUP_SYSTEM_PROMPT = `You help find the official city webpage a resident should use to report a civic issue.
 
@@ -61,18 +99,6 @@ Rules:
 }
 
 Example: For Palo Alto, "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311" is the correct unified 311 page and should be returned for any civic issue type, including road damage.`;
-
-function parseCityName(address: NominatimAddress | undefined): string | null {
-  if (!address) return null;
-  return (
-    address.city ??
-    address.town ??
-    address.village ??
-    address.hamlet ??
-    address.municipality ??
-    null
-  );
-}
 
 function isOfficialCityGovUrl(url: string): boolean {
   try {
@@ -273,8 +299,13 @@ async function resolveLocation(
     return reverse;
   }
 
-  if (address?.trim()) {
-    return geocodeAddress(address.trim());
+  if (typeof latitude === "number" && typeof longitude === "number") {
+    const reverse = await reverseLookupCity(latitude, longitude);
+    const fromZip = hintCityFromUsPostcode(reverse.postcode);
+    if (fromZip)
+      return { cityName: fromZip.cityName, stateName: fromZip.stateName };
+    if (reverse.cityName)
+      return { cityName: reverse.cityName, stateName: reverse.stateName };
   }
 
   return { cityName: null, stateName: null, latitude: null, longitude: null };
