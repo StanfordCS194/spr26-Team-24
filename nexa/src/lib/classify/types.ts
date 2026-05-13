@@ -50,3 +50,18 @@ Severity guidelines:
 - high: immediate safety hazard or environmental contamination
 - medium: significant inconvenience or moderate risk
 - low: minor issue or cosmetic concern`;
+
+/** Parse model JSON even when wrapped in markdown fences or extra prose. */
+export function parseClassificationResponse(raw: string): ClassificationResult {
+  let text = raw
+    .trim()
+    .replace(/```(?:json)?\s*/gi, "")
+    .replace(/```/g, "");
+  text = text.trim();
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new SyntaxError("No JSON object in model response");
+  }
+  return JSON.parse(text.slice(start, end + 1)) as ClassificationResult;
+}

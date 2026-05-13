@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
   CLASSIFICATION_PROMPT,
-  type ClassificationResult,
+  parseClassificationResponse,
   type ProviderResult,
 } from "./types";
 
@@ -56,11 +56,11 @@ export async function classifyWithAnthropic(
 
   const raw =
     response.content[0]?.type === "text" ? response.content[0].text : "{}";
-  const parsed = JSON.parse(raw) as ClassificationResult;
+  const parsed = parseClassificationResponse(raw);
 
   return {
     ...parsed,
-    provider: "anthropic/claude-3.5-haiku",
+    provider: "anthropic/claude-haiku-4-5",
     latencyMs: Date.now() - start,
   };
 }
