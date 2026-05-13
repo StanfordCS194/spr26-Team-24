@@ -121,7 +121,10 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid gap-4">
             {reports.map((report) => (
-              <article key={report.id} className="ep-card p-6 transition-colors hover:bg-muted/20">
+              <article
+                key={report.id}
+                className="ep-card p-6 transition-colors hover:bg-muted/20"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -146,7 +149,9 @@ export default async function DashboardPage() {
                 </div>
 
                 <p className="mt-4 text-sm text-foreground">
-                  {report.aiDescription || report.description || "No description"}
+                  {report.aiDescription ||
+                    report.description ||
+                    "No description"}
                 </p>
 
                 <p className="mt-4 font-mono text-xs text-muted-foreground">
