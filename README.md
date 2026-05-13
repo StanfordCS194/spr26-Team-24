@@ -118,6 +118,27 @@ cd nexa
 npx prisma migrate dev
 ```
 
+## Daily Startup Checklist
+
+After initial setup is done, use these commands each time you come back to the project:
+
+1. Start the database (from repo root):
+
+```bash
+docker compose up -d
+```
+
+2. Start the app (from `nexa/`):
+
+```bash
+cd nexa
+npm run dev
+```
+
+3. Open the app:
+   - Usually [http://localhost:3000](http://localhost:3000)
+   - If port 3000 is already in use, Next.js will auto-pick another port (for example `http://localhost:3001`)
+
 ## Useful Commands
 
 | Command | Description |

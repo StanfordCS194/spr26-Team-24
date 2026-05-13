@@ -81,6 +81,9 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
         <Link href="/" className="btn-cta btn-cta-outline">
           Home
         </Link>
+        <Link href="/dashboard" className="btn-cta btn-cta-outline">
+          My Dashboard
+        </Link>
         <button className="btn-cta btn-cta-purple" onClick={onReportAnother}>
           Report Another Issue
           <ArrowRight className="size-4" />
