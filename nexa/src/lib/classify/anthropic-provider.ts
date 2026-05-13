@@ -5,7 +5,9 @@ import {
   type ProviderResult,
 } from "./types";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function getClient() {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+}
 
 function extractMediaType(
   base64: string,
@@ -46,7 +48,7 @@ export async function classifyWithAnthropic(
   }
   content.push({ type: "text", text: textPrompt });
 
-  const response = await client.messages.create({
+  const response = await getClient().messages.create({
     model: "claude-3-5-haiku-20241022",
     max_tokens: 300,
     messages: [{ role: "user", content }],

@@ -5,7 +5,9 @@ import {
   type ProviderResult,
 } from "./types";
 
-const client = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+function getClient() {
+  return new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+}
 
 function stripPrefix(base64: string): string {
   const idx = base64.indexOf(",");
@@ -43,7 +45,7 @@ export async function classifyWithGoogle(
 
   parts.push({ text: textPrompt });
 
-  const response = await client.models.generateContent({
+  const response = await getClient().models.generateContent({
     model: "gemini-2.0-flash",
     contents: [{ role: "user", parts }],
   });
