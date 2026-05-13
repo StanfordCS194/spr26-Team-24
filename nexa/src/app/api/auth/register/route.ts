@@ -1,11 +1,7 @@
-// POST /api/auth/register
-// Creates a new user account, then issues a session cookie so the user is immediately logged in.
-// Returns the created user (without the password hash) or an error.
-
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
 import { createToken, SESSION_COOKIE, cookieOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +21,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if this email is already taken before doing the expensive hash
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json(
@@ -34,18 +29,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Cost factor 12 means bcrypt runs 2^12 = 4096 iterations — slow enough to resist brute-force
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
-      data: { name: name || null, email, passwordHash },
-      // Never return the password hash to the client
-      select: { id: true, email: true, name: true },
+      data: {
+        email,
+        name: name || null,
+        passwordHash,
+      },
     });
 
-    // Create a JWT and attach it as an httpOnly cookie on the response
     const token = await createToken({ userId: user.id, email: user.email });
-    const response = NextResponse.json(user, { status: 201 });
+    const response = NextResponse.json(
+      { id: user.id, email: user.email, name: user.name },
+      { status: 201 },
+    );
     response.cookies.set(SESSION_COOKIE, token, cookieOptions);
     return response;
   } catch (error) {

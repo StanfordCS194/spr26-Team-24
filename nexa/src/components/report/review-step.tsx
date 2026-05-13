@@ -1,8 +1,17 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ExternalLink, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ExternalLink,
+  Loader2,
+  Pencil,
+} from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { ErrorBanner } from "@/components/error-banner";
-import { ISSUE_TYPE_LABELS, SEVERITY_COLORS } from "@/lib/constants";
+import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 
 interface ClassificationResult {
   issueType: string;
@@ -34,6 +43,8 @@ interface ReviewStepProps {
   submitError: string | null;
   officialForm: OfficialFormLookupResult | null;
   officialFormLoading: boolean;
+  onDescriptionChange: (value: string) => void;
+  onAddressChange: (value: string) => void;
   onBack: () => void;
   onSubmit: () => void;
 }
@@ -47,6 +58,8 @@ export function ReviewStep({
   submitError,
   officialForm,
   officialFormLoading,
+  onDescriptionChange,
+  onAddressChange,
   onBack,
   onSubmit,
 }: ReviewStepProps) {
@@ -57,6 +70,9 @@ export function ReviewStep({
         <h2 className="mt-3 text-2xl font-normal tracking-tight sm:text-3xl">
           Does this look right?
         </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Edit any field below before submitting.
+        </p>
       </div>
 
       <div className="ep-card p-8">
@@ -70,11 +86,17 @@ export function ReviewStep({
                 classification.issueType}
             </h3>
           </div>
-          <div
-            className={`text-2xl font-normal ${SEVERITY_COLORS[classification.severity] || "text-muted-foreground"}`}
+          <span
+            className={`inline-flex items-center rounded-full px-3 py-1 font-mono text-xs font-medium uppercase tracking-wider ${
+              classification.severity === "high"
+                ? "bg-red-50 text-red-600"
+                : classification.severity === "medium"
+                  ? "bg-yellow-50 text-yellow-600"
+                  : "bg-ep-green-light text-ep-green"
+            }`}
           >
             {classification.severity}
-          </div>
+          </span>
         </div>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           {classification.aiDescription}
@@ -91,23 +113,35 @@ export function ReviewStep({
         </div>
       )}
 
-      {description && (
-        <div className="ep-card p-6">
-          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+      <div className="ep-card p-6">
+        <div className="mb-3 flex items-center gap-2">
+          <Label className="block font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Your Description
-          </span>
-          <p className="mt-2 text-sm text-foreground">{description}</p>
+          </Label>
+          <Pencil className="size-3 text-muted-foreground" />
         </div>
-      )}
+        <Textarea
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          className="min-h-20 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+          placeholder="Describe the issue..."
+        />
+      </div>
 
-      {address && (
-        <div className="ep-card p-6">
-          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+      <div className="ep-card p-6">
+        <div className="mb-3 flex items-center gap-2">
+          <Label className="block font-mono text-xs uppercase tracking-wider text-muted-foreground">
             Location
-          </span>
-          <p className="mt-2 text-sm text-foreground">{address}</p>
+          </Label>
+          <Pencil className="size-3 text-muted-foreground" />
         </div>
-      )}
+        <Input
+          value={address}
+          onChange={(e) => onAddressChange(e.target.value)}
+          className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+          placeholder="Address or location description"
+        />
+      </div>
 
       <div className="ep-card p-6">
         <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">

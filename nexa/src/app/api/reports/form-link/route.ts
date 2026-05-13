@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { IssueType } from "@/generated/prisma/enums";
 
@@ -189,7 +189,8 @@ Instructions:
 
 Do not say "not_found" just because there is no "${issueLabel}"-specific form — the general city 311 / Report-an-Issue page is the correct answer in that case.`;
 
-  const response = await openai.responses.create({
+  const client = getOpenAI();
+  const response = await client.responses.create({
     model: "gpt-4o-mini",
     input: [
       {

@@ -14,9 +14,11 @@ interface DescribeStepProps {
   address: string;
   latitude: number | null;
   longitude: number | null;
+  accuracy: number | null;
   locationLoading: boolean;
   locationSuggesting: boolean;
   addressSuggestions: string[];
+  locationError: string | null;
   classifying: boolean;
   classifyError: string | null;
   canSubmit: boolean;
@@ -35,9 +37,11 @@ export function DescribeStep({
   address,
   latitude,
   longitude,
+  accuracy,
   locationLoading,
   locationSuggesting,
   addressSuggestions,
+  locationError,
   classifying,
   classifyError,
   canSubmit,
@@ -79,9 +83,9 @@ export function DescribeStep({
         </h2>
       </div>
 
-      <div className="ep-card overflow-hidden">
+      <div>
         <div
-          className="grid-bg relative flex min-h-52 cursor-pointer flex-col items-center justify-center gap-3 p-8 transition-colors hover:bg-muted/30"
+          className="relative flex min-h-52 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/20 p-8 transition-colors hover:bg-muted/40"
           onDragOver={(e) => e.preventDefault()}
           onDrop={onDrop}
           onClick={onImageClick}
@@ -196,10 +200,22 @@ export function DescribeStep({
             Searching locations...
           </p>
         )}
+        {locationError && (
+          <p className="mt-3 text-xs text-red-500">{locationError}</p>
+        )}
         {latitude && longitude && (
-          <p className="mt-3 font-mono text-xs text-muted-foreground">
-            GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
+            <span>
+              GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+            </span>
+            {accuracy && (
+              <span
+                className={`rounded-full px-2 py-0.5 ${accuracy <= 20 ? "bg-ep-green-light text-ep-green" : accuracy <= 100 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"}`}
+              >
+                ±{Math.round(accuracy)}m
+              </span>
+            )}
+          </div>
         )}
       </div>
 

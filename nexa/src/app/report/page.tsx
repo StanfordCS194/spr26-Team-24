@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Stepper, type ReportStep } from "@/components/report/stepper";
 import { DescribeStep } from "@/components/report/describe-step";
 import { ReviewStep } from "@/components/report/review-step";
@@ -12,6 +13,19 @@ interface ClassificationResult {
   issueType: string;
   aiDescription: string;
   severity: "low" | "medium" | "high";
+  confidence?: number;
+}
+
+interface ProviderResult extends ClassificationResult {
+  provider: string;
+  latencyMs: number;
+}
+
+interface ComparisonResponse {
+  winner: ClassificationResult;
+  allResults: ProviderResult[];
+  consensus: boolean;
+  method: string;
 }
 
 interface CreatedReport {
@@ -43,20 +57,13 @@ interface AddressSuggestion {
   longitude: number;
 }
 
-async function fetchJSON<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "Request failed");
-  }
-  return res.json();
-}
-
 export default function ReportPage() {
+  const posthog = usePostHog();
+  const flowStartedAt = useRef(0);
+  useEffect(() => {
+    flowStartedAt.current = Date.now();
+  }, []);
+
   const [step, setStep] = useState<ReportStep>("describe");
   const [description, setDescription] = useState("");
 
@@ -66,6 +73,7 @@ export default function ReportPage() {
   const [classifying, setClassifying] = useState(false);
   const [classification, setClassification] =
     useState<ClassificationResult | null>(null);
+  const [comparison, setComparison] = useState<ComparisonResponse | null>(null);
   const [classifyError, setClassifyError] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
@@ -147,15 +155,18 @@ export default function ReportPage() {
 
     setOfficialFormLoading(true);
     try {
-      const result = await fetchJSON<OfficialFormLookupResult>(
-        "/api/reports/form-link",
-        {
+      const res = await fetch("/api/reports/form-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           issueType,
           address: geo.address || undefined,
           latitude: geo.latitude ?? undefined,
           longitude: geo.longitude ?? undefined,
-        },
-      );
+        }),
+      });
+      if (!res.ok) throw new Error("Form lookup failed");
+      const result: OfficialFormLookupResult = await res.json();
       setOfficialForm(result);
     } catch (err) {
       setOfficialForm({
@@ -198,17 +209,33 @@ export default function ReportPage() {
     setClassifyError(null);
     try {
       setOfficialForm(null);
-      const result = await fetchJSON<ClassificationResult>(
-        "/api/reports/classify",
-        { image: image.imageBase64, description: description || undefined },
-      );
-      setClassification(result);
-      void lookupOfficialForm(result.issueType);
+      const res = await fetch("/api/reports/classify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description,
+          imageBase64: image.imageBase64,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Classification failed");
+      }
+
+      const data: ComparisonResponse = await res.json();
+      setComparison(data);
+      setClassification(data.winner);
+      void lookupOfficialForm(data.winner.issueType);
       setStep("review");
-    } catch (err) {
-      setClassifyError(
-        err instanceof Error ? err.message : "Something went wrong",
-      );
+      posthog?.capture("report_classified", {
+        issue_type: data.winner.issueType,
+        severity: data.winner.severity,
+        has_image: !!image.imageBase64,
+        has_location: !!geo.latitude,
+      });
+    } catch (e) {
+      setClassifyError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setClassifying(false);
     }
@@ -219,27 +246,43 @@ export default function ReportPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const report = await fetchJSON<CreatedReport>("/api/reports", {
-        description,
-        aiDescription: classification.aiDescription,
-        issueType: classification.issueType,
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-        address: geo.address,
-        imageUrl: image.imageBase64,
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description,
+          aiDescription: classification.aiDescription,
+          issueType: classification.issueType,
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+          address: geo.address,
+        }),
       });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Submission failed");
+      }
+
+      const report: CreatedReport = await res.json();
       setCreatedReport(report);
       setStep("confirmed");
-    } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : "Something went wrong",
-      );
+      posthog?.capture("report_submitted", {
+        report_id: report.id,
+        issue_type: classification.issueType,
+        time_to_submit_ms: Date.now() - flowStartedAt.current,
+        has_image: !!image.imageBase64,
+        has_location: !!geo.latitude,
+      });
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
   };
 
   const resetForm = () => {
+    flowStartedAt.current = Date.now();
     setStep("describe");
     setDescription("");
     image.clearImage();
@@ -251,6 +294,7 @@ export default function ReportPage() {
       addressLookupTimerRef.current = null;
     }
     setClassification(null);
+    setComparison(null);
     setCreatedReport(null);
     setClassifyError(null);
     setSubmitError(null);
@@ -274,11 +318,13 @@ export default function ReportPage() {
             address={geo.address}
             latitude={geo.latitude}
             longitude={geo.longitude}
+            accuracy={geo.accuracy}
             locationLoading={geo.loading}
             locationSuggesting={locationSuggesting}
             addressSuggestions={addressSuggestions.map(
               (suggestion) => suggestion.displayName,
             )}
+            locationError={geo.error}
             classifying={classifying}
             classifyError={classifyError}
             canSubmit={!!(image.imageBase64 || description.trim())}
@@ -293,18 +339,74 @@ export default function ReportPage() {
         )}
 
         {step === "review" && classification && (
-          <ReviewStep
-            classification={classification}
-            imagePreview={image.imagePreview}
-            description={description}
-            address={geo.address}
-            submitting={submitting}
-            submitError={submitError}
-            officialForm={officialForm}
-            officialFormLoading={officialFormLoading}
-            onBack={() => setStep("describe")}
-            onSubmit={handleSubmit}
-          />
+          <>
+            <ReviewStep
+              classification={classification}
+              imagePreview={image.imagePreview}
+              description={description}
+              address={geo.address}
+              submitting={submitting}
+              submitError={submitError}
+              officialForm={officialForm}
+              officialFormLoading={officialFormLoading}
+              onDescriptionChange={setDescription}
+              onAddressChange={geo.setAddress}
+              onBack={() => setStep("describe")}
+              onSubmit={handleSubmit}
+            />
+
+            {comparison && comparison.allResults.length > 1 && (
+              <div className="mt-10">
+                <span className="section-label">/ AI Comparison</span>
+                <p className="mt-2 mb-4 text-sm text-muted-foreground">
+                  Decision method:{" "}
+                  <span className="font-medium text-foreground">
+                    {comparison.method}
+                  </span>
+                  {comparison.consensus && " (models agreed)"}
+                </p>
+                <div className="flex flex-col gap-3">
+                  {comparison.allResults.map((r) => (
+                    <div
+                      key={r.provider}
+                      className={`ep-card p-4 ${r.issueType === comparison.winner.issueType ? "ring-2 ring-ep-green/40" : "opacity-60"}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-medium uppercase tracking-wider">
+                          {r.provider}
+                        </span>
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {r.latencyMs}ms
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-center gap-3">
+                        <span className="text-sm font-semibold">
+                          {r.issueType}
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 font-mono text-xs uppercase ${
+                            r.severity === "high"
+                              ? "bg-red-50 text-red-600"
+                              : r.severity === "medium"
+                                ? "bg-yellow-50 text-yellow-600"
+                                : "bg-ep-green-light text-ep-green"
+                          }`}
+                        >
+                          {r.severity}
+                        </span>
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {Math.round((r.confidence ?? 0) * 100)}% confident
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {r.aiDescription}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {step === "confirmed" && createdReport && (
