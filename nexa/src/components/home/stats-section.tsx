@@ -21,7 +21,10 @@ const NARRATIVE = [
 
 export function StatsSection() {
   return (
-    <section id="stats" className="w-full border-y border-border bg-muted/30 px-6 py-20 lg:py-28">
+    <section
+      id="stats"
+      className="w-full border-y border-border bg-muted/30 px-6 py-20 lg:py-28"
+    >
       <div className="mx-auto max-w-[1440px]">
         <div className="mb-16">
           <span className="section-label">/ By The Numbers</span>

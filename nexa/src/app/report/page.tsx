@@ -7,6 +7,7 @@ import { ReviewStep } from "@/components/report/review-step";
 import { ConfirmedStep } from "@/components/report/confirmed-step";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { saveReport, type StoredReport } from "@/lib/reports-store";
 
 interface ClassificationResult {
   issueType: string;
@@ -14,17 +15,15 @@ interface ClassificationResult {
   severity: "low" | "medium" | "high";
 }
 
-interface CreatedReport {
-  id: string;
-  issueType: string | null;
-  description: string | null;
-  aiDescription: string | null;
-  createdAt: string;
-}
+type CreatedReport = StoredReport;
 
 const MOCK_CLASSIFICATIONS: Record<
   string,
-  { issueType: string; description: string; severity: "low" | "medium" | "high" }
+  {
+    issueType: string;
+    description: string;
+    severity: "low" | "medium" | "high";
+  }
 > = {
   pothole: {
     issueType: "ROAD_DAMAGE",
@@ -44,7 +43,11 @@ function pickMockClassification(text: string): ClassificationResult {
   const lower = text.toLowerCase();
   if (lower.match(/pothole|crack|road|pavement|asphalt/)) {
     const m = MOCK_CLASSIFICATIONS.pothole;
-    return { issueType: m.issueType, aiDescription: m.description, severity: m.severity };
+    return {
+      issueType: m.issueType,
+      aiDescription: m.description,
+      severity: m.severity,
+    };
   }
   if (lower.match(/light|lamp|street\s?light|dark/)) {
     return {
@@ -71,7 +74,11 @@ function pickMockClassification(text: string): ClassificationResult {
     };
   }
   const m = MOCK_CLASSIFICATIONS.default;
-  return { issueType: m.issueType, aiDescription: m.description, severity: m.severity };
+  return {
+    issueType: m.issueType,
+    aiDescription: m.description,
+    severity: m.severity,
+  };
 }
 
 function delay(ms: number) {
@@ -121,13 +128,17 @@ export default function ReportPage() {
     setSubmitError(null);
     try {
       await delay(1000);
-      const report: CreatedReport = {
-        id: `demo_${Date.now().toString(36)}`,
-        issueType: selectedIssueType,
+      const report = saveReport({
+        issueType: selectedIssueType || classification.issueType,
         description,
         aiDescription: classification.aiDescription,
-        createdAt: new Date().toISOString(),
-      };
+        severity: classification.severity,
+        address: geo.address,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        imagePreview: image.imagePreview,
+        agency: null,
+      });
       setCreatedReport(report);
       setStep("confirmed");
     } catch {

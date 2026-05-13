@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 const NAV_LINKS = [
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/#features", label: "Features" },
-  { href: "/#stats", label: "Impact" },
+  { href: "/dashboard", label: "Dashboard" },
 ];
 
 interface AuthUser {

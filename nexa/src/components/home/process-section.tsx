@@ -20,7 +20,8 @@ const STEPS = [
     number: "03",
     icon: CheckCircle2,
     title: "Report filed",
-    description: "Review, confirm, done. The whole process takes under 30 seconds.",
+    description:
+      "Review, confirm, done. The whole process takes under 30 seconds.",
   },
 ];
 

@@ -1,17 +1,10 @@
 import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
-
-interface CreatedReport {
-  id: string;
-  issueType: string | null;
-  description: string | null;
-  aiDescription: string | null;
-  createdAt: string;
-}
+import type { StoredReport } from "@/lib/reports-store";
 
 interface ConfirmedStepProps {
-  report: CreatedReport;
+  report: StoredReport;
   onReportAnother: () => void;
 }
 
@@ -37,9 +30,7 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
             <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
               Report ID
             </span>
-            <span className="font-mono text-sm">
-              {report.id.slice(0, 12)}...
-            </span>
+            <span className="font-mono text-sm">{report.id}</span>
           </div>
           <div className="h-px bg-border" />
           <div className="flex items-center justify-between">
@@ -77,9 +68,9 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <Link href="/" className="btn-cta btn-cta-outline">
-          Home
+      <div className="flex flex-wrap justify-center gap-3">
+        <Link href="/dashboard" className="btn-cta btn-cta-outline">
+          View Dashboard
         </Link>
         <button className="btn-cta btn-cta-purple" onClick={onReportAnother}>
           Report Another Issue
