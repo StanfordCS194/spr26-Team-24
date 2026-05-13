@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
-import type { StoredReport } from "@/lib/reports-store";
+
+interface ConfirmedReport {
+  id: string;
+  issueType: string | null;
+  aiDescription: string | null;
+  createdAt: string;
+}
 
 interface ConfirmedStepProps {
-  report: StoredReport;
+  report: ConfirmedReport;
   onReportAnother: () => void;
 }
 
@@ -71,9 +77,6 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
       <div className="flex flex-wrap justify-center gap-3">
         <Link href="/dashboard" className="btn-cta btn-cta-outline">
           View Dashboard
-        </Link>
-        <Link href="/dashboard" className="btn-cta btn-cta-outline">
-          My Dashboard
         </Link>
         <button className="btn-cta btn-cta-purple" onClick={onReportAnother}>
           Report Another Issue
