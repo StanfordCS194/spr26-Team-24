@@ -24,7 +24,11 @@ interface CreatedReport {
 
 const MOCK_CLASSIFICATIONS: Record<
   string,
-  { issueType: string; description: string; severity: "low" | "medium" | "high" }
+  {
+    issueType: string;
+    description: string;
+    severity: "low" | "medium" | "high";
+  }
 > = {
   pothole: {
     issueType: "ROAD_DAMAGE",
@@ -44,7 +48,11 @@ function pickMockClassification(text: string): ClassificationResult {
   const lower = text.toLowerCase();
   if (lower.match(/pothole|crack|road|pavement|asphalt/)) {
     const m = MOCK_CLASSIFICATIONS.pothole;
-    return { issueType: m.issueType, aiDescription: m.description, severity: m.severity };
+    return {
+      issueType: m.issueType,
+      aiDescription: m.description,
+      severity: m.severity,
+    };
   }
   if (lower.match(/light|lamp|street\s?light|dark/)) {
     return {
@@ -71,7 +79,11 @@ function pickMockClassification(text: string): ClassificationResult {
     };
   }
   const m = MOCK_CLASSIFICATIONS.default;
-  return { issueType: m.issueType, aiDescription: m.description, severity: m.severity };
+  return {
+    issueType: m.issueType,
+    aiDescription: m.description,
+    severity: m.severity,
+  };
 }
 
 function delay(ms: number) {

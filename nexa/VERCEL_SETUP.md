@@ -32,16 +32,16 @@ tab offers first.
 Settings → Environment Variables → add each of the following for the **Production**
 environment (and **Preview** if you want PR deploys to work end-to-end).
 
-| Key | Value | Notes |
-|---|---|---|
-| `DATABASE_URL` | _(auto-set by Neon — verify it's there)_ | Pooled connection string. |
-| `JWT_SECRET` | output of `openssl rand -base64 32` | Must be **different** from the local-dev secret in `.env.local`. |
-| `OPENAI_API_KEY` | `sk-…` from platform.openai.com | Required. Used by `/api/reports/classify`. |
-| `ANTHROPIC_API_KEY` | `sk-ant-…` from console.anthropic.com | Only required on the `llm-comparison` branch. |
-| `GOOGLE_API_KEY` | from aistudio.google.com | Only required on the `llm-comparison` branch. |
-| `NEXT_PUBLIC_POSTHOG_KEY` | `phc_…` from app.posthog.com | Required for the K2 time-to-submit telemetry. |
-| `NEXT_PUBLIC_POSTHOG_HOST` | `https://us.i.posthog.com` | Match the region of your PostHog project. |
-| `NEXT_PUBLIC_APP_URL` | `https://<your-vercel-domain>.vercel.app` | Used to construct absolute URLs in agency-receipt emails. |
+| Key                        | Value                                     | Notes                                                            |
+| -------------------------- | ----------------------------------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`             | _(auto-set by Neon — verify it's there)_  | Pooled connection string.                                        |
+| `JWT_SECRET`               | output of `openssl rand -base64 32`       | Must be **different** from the local-dev secret in `.env.local`. |
+| `OPENAI_API_KEY`           | `sk-…` from platform.openai.com           | Required. Used by `/api/reports/classify`.                       |
+| `ANTHROPIC_API_KEY`        | `sk-ant-…` from console.anthropic.com     | Only required on the `llm-comparison` branch.                    |
+| `GOOGLE_API_KEY`           | from aistudio.google.com                  | Only required on the `llm-comparison` branch.                    |
+| `NEXT_PUBLIC_POSTHOG_KEY`  | `phc_…` from app.posthog.com              | Required for the K2 time-to-submit telemetry.                    |
+| `NEXT_PUBLIC_POSTHOG_HOST` | `https://us.i.posthog.com`                | Match the region of your PostHog project.                        |
+| `NEXT_PUBLIC_APP_URL`      | `https://<your-vercel-domain>.vercel.app` | Used to construct absolute URLs in agency-receipt emails.        |
 
 ---
 
