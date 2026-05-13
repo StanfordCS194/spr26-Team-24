@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Stepper, type ReportStep } from "@/components/report/stepper";
 import { DescribeStep } from "@/components/report/describe-step";
 import { ReviewStep } from "@/components/report/review-step";
@@ -22,20 +23,81 @@ interface CreatedReport {
   createdAt: string;
 }
 
-async function fetchJSON<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "Request failed");
+const MOCK_CLASSIFICATIONS: Record<
+  string,
+  {
+    issueType: string;
+    description: string;
+    severity: "low" | "medium" | "high";
   }
-  return res.json();
+> = {
+  pothole: {
+    issueType: "ROAD_DAMAGE",
+    description:
+      "Pothole detected on roadway surface. Estimated diameter suggests moderate vehicle hazard. Recommended for priority repair by Public Works.",
+    severity: "medium",
+  },
+  default: {
+    issueType: "OTHER",
+    description:
+      "Civic issue identified from submitted photo and description. Requires review by the appropriate municipal department for classification and routing.",
+    severity: "low",
+  },
+};
+
+function pickMockClassification(text: string): ClassificationResult {
+  const lower = text.toLowerCase();
+  if (lower.match(/pothole|crack|road|pavement|asphalt/)) {
+    const m = MOCK_CLASSIFICATIONS.pothole;
+    return {
+      issueType: m.issueType,
+      aiDescription: m.description,
+      severity: m.severity,
+    };
+  }
+  if (lower.match(/light|lamp|street\s?light|dark/)) {
+    return {
+      issueType: "STREETLIGHT_OUTAGE",
+      aiDescription:
+        "Streetlight outage reported. Location flagged for electrical inspection by the city's lighting maintenance division.",
+      severity: "medium",
+    };
+  }
+  if (lower.match(/dump|trash|garbage|waste|litter/)) {
+    return {
+      issueType: "ILLEGAL_DUMPING",
+      aiDescription:
+        "Illegal dumping activity detected. Materials appear to include household waste. Flagged for environmental services cleanup.",
+      severity: "high",
+    };
+  }
+  if (lower.match(/smog|exhaust|emission|smoke|vehicle/)) {
+    return {
+      issueType: "VEHICLE_EMISSIONS",
+      aiDescription:
+        "Excessive vehicle emissions reported. Details forwarded to air quality compliance for follow-up investigation.",
+      severity: "low",
+    };
+  }
+  const m = MOCK_CLASSIFICATIONS.default;
+  return {
+    issueType: m.issueType,
+    aiDescription: m.description,
+    severity: m.severity,
+  };
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export default function ReportPage() {
+  const posthog = usePostHog();
+  const flowStartedAt = useRef(0);
+  useEffect(() => {
+    flowStartedAt.current = Date.now();
+  }, []);
+
   const [step, setStep] = useState<ReportStep>("describe");
   const [description, setDescription] = useState("");
 
@@ -60,17 +122,19 @@ export default function ReportPage() {
     setClassifying(true);
     setClassifyError(null);
     try {
-      const result = await fetchJSON<ClassificationResult>(
-        "/api/reports/classify",
-        { image: image.imageBase64, description: description || undefined },
-      );
+      await delay(1500);
+      const result = pickMockClassification(description);
       setClassification(result);
       setSelectedIssueType(result.issueType);
       setStep("review");
-    } catch (err) {
-      setClassifyError(
-        err instanceof Error ? err.message : "Something went wrong",
-      );
+      posthog?.capture("report_classified", {
+        issue_type: result.issueType,
+        severity: result.severity,
+        has_image: !!image.imageBase64,
+        has_location: !!geo.latitude,
+      });
+    } catch {
+      setClassifyError("Something went wrong");
     } finally {
       setClassifying(false);
     }
@@ -81,27 +145,33 @@ export default function ReportPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const report = await fetchJSON<CreatedReport>("/api/reports", {
+      await delay(1000);
+      const report: CreatedReport = {
+        id: `demo_${Date.now().toString(36)}`,
+        issueType: selectedIssueType,
         description,
         aiDescription: classification.aiDescription,
-        issueType: selectedIssueType,
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-        address: geo.address,
-        imageUrl: image.imageBase64,
-      });
+        createdAt: new Date().toISOString(),
+      };
       setCreatedReport(report);
       setStep("confirmed");
-    } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : "Something went wrong",
-      );
+      posthog?.capture("report_submitted", {
+        report_id: report.id,
+        issue_type: selectedIssueType,
+        time_to_submit_ms: Date.now() - flowStartedAt.current,
+        user_edited_type: selectedIssueType !== classification.issueType,
+        has_image: !!image.imageBase64,
+        has_location: !!geo.latitude,
+      });
+    } catch {
+      setSubmitError("Something went wrong");
     } finally {
       setSubmitting(false);
     }
   };
 
   const resetForm = () => {
+    flowStartedAt.current = Date.now();
     setStep("describe");
     setDescription("");
     image.clearImage();
