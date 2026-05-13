@@ -88,13 +88,107 @@ function isOfficialCityGovUrl(url: string): boolean {
   }
 }
 
-function extractJsonObject(raw: string): string | null {
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = fenced ? fenced[1] : raw;
-  const start = candidate.indexOf("{");
-  const end = candidate.lastIndexOf("}");
+/** Walk Responses API payloads when `output_text` is unset (tool-heavy responses). */
+function collectResponsesAssistantText(response: unknown): string {
+  if (!response || typeof response !== "object") return "";
+
+  const r = response as {
+    output_text?: string | null;
+    output?: unknown[];
+  };
+
+  const direct = typeof r.output_text === "string" ? r.output_text.trim() : "";
+  if (direct) return direct;
+
+  const chunks: string[] = [];
+  for (const item of r.output ?? []) {
+    if (!item || typeof item !== "object") continue;
+    const o = item as { type?: string; content?: unknown[] };
+    if (o.type !== "message" || !Array.isArray(o.content)) continue;
+    for (const block of o.content) {
+      if (!block || typeof block !== "object") continue;
+      const b = block as { type?: string; text?: string };
+      if (
+        (b.type === "output_text" || b.type === "text") &&
+        typeof b.text === "string"
+      ) {
+        chunks.push(b.text);
+      }
+    }
+  }
+  return chunks.join("\n").trim();
+}
+
+/** First balanced `{ â€¦ }` at `start`, respecting JSON `"` strings. */
+function sliceBalancedJsonObject(
+  content: string,
+  start: number,
+): string | null {
+  if (content[start] !== "{") return null;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = start; i < content.length; i++) {
+    const ch = content[i];
+
+    if (inString) {
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (ch === "\\") {
+        escape = true;
+        continue;
+      }
+      if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return content.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
+function extractFormLookupJson(raw: string): string | null {
+  let text = raw.replace(/\uFEFF/g, "").trim();
+
+  const fenceMatch =
+    text.match(/```(?:json)?\s*([\s\S]*?)```/i) ??
+    text.match(/```\s*([\s\S]*?)```/i);
+  text = fenceMatch ? fenceMatch[1].trim() : text;
+
+  text = text.replace(/\u3010[^\u3011]*\u3011/g, "");
+
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== "{") continue;
+    const blob = sliceBalancedJsonObject(text, i);
+    if (!blob) continue;
+    try {
+      const probe = JSON.parse(blob) as { status?: string };
+      if (probe.status === "found" || probe.status === "not_found") {
+        return blob;
+      }
+    } catch {
+      //
+    }
+  }
+
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) return null;
-  return candidate.slice(start, end + 1);
+  return text.slice(start, end + 1);
 }
 
 async function reverseLookupCity(
@@ -206,7 +300,7 @@ Do not say "not_found" just because there is no "${issueLabel}"-specific form â€
     tool_choice: { type: "web_search_preview" },
   });
 
-  const raw = response.output_text?.trim();
+  const raw = collectResponsesAssistantText(response);
   if (!raw) {
     return {
       status: "not_found",
@@ -214,7 +308,7 @@ Do not say "not_found" just because there is no "${issueLabel}"-specific form â€
     };
   }
 
-  const jsonText = extractJsonObject(raw);
+  const jsonText = extractFormLookupJson(raw);
   if (!jsonText) {
     console.warn("Form lookup: no JSON object in response", raw);
     return {
