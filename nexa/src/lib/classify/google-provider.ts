@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import {
   CLASSIFICATION_PROMPT,
-  type ClassificationResult,
+  parseClassificationResponse,
   type ProviderResult,
 } from "./types";
 
@@ -51,8 +51,7 @@ export async function classifyWithGoogle(
   });
 
   const raw = response.text ?? "{}";
-  const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "");
-  const parsed = JSON.parse(cleaned) as ClassificationResult;
+  const parsed = parseClassificationResponse(raw);
 
   return {
     ...parsed,

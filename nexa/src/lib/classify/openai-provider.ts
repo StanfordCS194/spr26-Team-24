@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import {
   CLASSIFICATION_PROMPT,
-  type ClassificationResult,
+  parseClassificationResponse,
   type ProviderResult,
 } from "./types";
 
@@ -45,7 +45,7 @@ export async function classifyWithOpenAI(
   });
 
   const raw = response.choices[0]?.message?.content ?? "{}";
-  const parsed = JSON.parse(raw) as ClassificationResult;
+  const parsed = parseClassificationResponse(raw);
 
   return {
     ...parsed,
