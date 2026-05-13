@@ -248,9 +248,7 @@ async function reverseLookupCity(
   };
 }
 
-async function geocodeAddress(
-  address: string,
-): Promise<{
+async function geocodeAddress(address: string): Promise<{
   cityName: string | null;
   stateName: string | null;
   postcode: string | null;
@@ -290,7 +288,8 @@ async function resolveCity(
   if (trimmed) {
     const forward = await geocodeAddress(trimmed);
     const fromZip = hintCityFromUsPostcode(forward.postcode);
-    if (fromZip) return { cityName: fromZip.cityName, stateName: fromZip.stateName };
+    if (fromZip)
+      return { cityName: fromZip.cityName, stateName: fromZip.stateName };
     if (forward.cityName)
       return { cityName: forward.cityName, stateName: forward.stateName };
   }
@@ -298,7 +297,8 @@ async function resolveCity(
   if (typeof latitude === "number" && typeof longitude === "number") {
     const reverse = await reverseLookupCity(latitude, longitude);
     const fromZip = hintCityFromUsPostcode(reverse.postcode);
-    if (fromZip) return { cityName: fromZip.cityName, stateName: fromZip.stateName };
+    if (fromZip)
+      return { cityName: fromZip.cityName, stateName: fromZip.stateName };
     if (reverse.cityName)
       return { cityName: reverse.cityName, stateName: reverse.stateName };
   }
