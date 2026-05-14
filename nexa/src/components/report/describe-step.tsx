@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, MapPin, Loader2, X, Zap } from "lucide-react";
+import { Camera, MapPin, Mic, Loader2, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/error-banner";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 
 interface DescribeStepProps {
   imagePreview: string | null;
@@ -55,6 +56,13 @@ export function DescribeStep({
 }: DescribeStepProps) {
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const locationWrapperRef = useRef<HTMLDivElement | null>(null);
+  const speech = useSpeechRecognition();
+  // Keep the latest description in a ref so the speech callback appends to the
+  // current value rather than the one captured when listening started.
+  const descriptionRef = useRef(description);
+  useEffect(() => {
+    descriptionRef.current = description;
+  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,6 +81,17 @@ export function DescribeStep({
   };
 
   const showSuggestions = suggestionsOpen && addressSuggestions.length > 0;
+
+  const handleMicToggle = () => {
+    if (speech.listening) {
+      speech.stop();
+      return;
+    }
+    speech.start((text) => {
+      const current = descriptionRef.current;
+      onDescriptionChange(current ? `${current} ${text}` : text);
+    });
+  };
 
   return (
     <div className="flex flex-col gap-10">
@@ -123,12 +142,34 @@ export function DescribeStep({
       </div>
 
       <div className="ep-card p-6">
-        <Label
-          htmlFor="description"
-          className="mb-3 block font-mono text-xs uppercase tracking-wider text-muted-foreground"
-        >
-          Description
-        </Label>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <Label
+            htmlFor="description"
+            className="block font-mono text-xs uppercase tracking-wider text-muted-foreground"
+          >
+            Description
+          </Label>
+          {speech.supported && (
+            <button
+              type="button"
+              onClick={handleMicToggle}
+              aria-label={
+                speech.listening ? "Stop dictation" : "Dictate description"
+              }
+              aria-pressed={speech.listening}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
+                speech.listening
+                  ? "bg-red-50 text-red-600 hover:bg-red-100"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <Mic
+                className={`size-3.5 ${speech.listening ? "animate-pulse" : ""}`}
+              />
+              {speech.listening ? "Listening…" : "Dictate"}
+            </button>
+          )}
+        </div>
         <Textarea
           id="description"
           placeholder='e.g. "Large pothole on the corner of Elm and Main, about 2 feet wide..."'
@@ -136,6 +177,9 @@ export function DescribeStep({
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
         />
+        {speech.error && (
+          <p className="mt-3 text-xs text-red-500">{speech.error}</p>
+        )}
       </div>
 
       <div className="ep-card p-6" ref={locationWrapperRef}>
