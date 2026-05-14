@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle2, Clock3, ClipboardList } from "lucide-react";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 import { DeleteReportButton } from "@/components/dashboard/delete-report-button";
 
 function formatStatus(status: string): string {
@@ -58,8 +59,7 @@ export default async function DashboardPage() {
   const confirmedReports = reports.filter(
     (report) => report.status === "CONFIRMED",
   ).length;
-  const latestReportDate =
-    reports.length > 0 ? new Date(reports[0].createdAt).toLocaleString() : "—";
+  const latestReport = reports[0];
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
@@ -107,7 +107,18 @@ export default async function DashboardPage() {
               Most Recent
             </p>
           </div>
-          <p className="mt-3 text-sm font-medium">{latestReportDate}</p>
+          <p className="mt-3 text-sm font-medium">
+            {latestReport ? (
+              <time
+                dateTime={latestReport.createdAt.toISOString()}
+                title={formatFullDateTime(latestReport.createdAt)}
+              >
+                {formatRelativeTime(latestReport.createdAt)}
+              </time>
+            ) : (
+              "—"
+            )}
+          </p>
         </div>
       </div>
 
@@ -146,7 +157,12 @@ export default async function DashboardPage() {
                   {report.address || "No location provided"}
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {new Date(report.createdAt).toLocaleString()}
+                  <time
+                    dateTime={report.createdAt.toISOString()}
+                    title={formatFullDateTime(report.createdAt)}
+                  >
+                    {formatRelativeTime(report.createdAt)}
+                  </time>
                 </p>
 
                 <p className="mt-4 text-sm leading-relaxed text-foreground">
