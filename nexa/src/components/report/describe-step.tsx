@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { Camera, MapPin, Loader2, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/error-banner";
+
+// Leaflet touches `window` at module load, so render the map only on the client.
+const LocationMap = dynamic(() => import("./location-map"), {
+  ssr: false,
+  loading: () => (
+    <div className="mt-3 h-48 animate-pulse rounded-lg border border-border bg-muted/40" />
+  ),
+});
 
 interface DescribeStepProps {
   imagePreview: string | null;
@@ -28,6 +37,7 @@ interface DescribeStepProps {
   onDescriptionChange: (value: string) => void;
   onAddressChange: (value: string) => void;
   onDetectLocation: () => void;
+  onLocationChange: (latitude: number, longitude: number) => void;
   onClassify: () => void;
 }
 
@@ -51,6 +61,7 @@ export function DescribeStep({
   onDescriptionChange,
   onAddressChange,
   onDetectLocation,
+  onLocationChange,
   onClassify,
 }: DescribeStepProps) {
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -203,19 +214,29 @@ export function DescribeStep({
         {locationError && (
           <p className="mt-3 text-xs text-red-500">{locationError}</p>
         )}
-        {latitude && longitude && (
-          <div className="mt-3 flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
-            <span>
-              GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-            </span>
-            {accuracy && (
-              <span
-                className={`rounded-full px-2 py-0.5 ${accuracy <= 20 ? "bg-ep-green-light text-ep-green" : accuracy <= 100 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"}`}
-              >
-                ±{Math.round(accuracy)}m
+        {latitude !== null && longitude !== null && (
+          <>
+            <div className="mt-3 flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
+              <span>
+                GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
               </span>
-            )}
-          </div>
+              {accuracy && (
+                <span
+                  className={`rounded-full px-2 py-0.5 ${accuracy <= 20 ? "bg-ep-green-light text-ep-green" : accuracy <= 100 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"}`}
+                >
+                  ±{Math.round(accuracy)}m
+                </span>
+              )}
+              <span className="text-muted-foreground/70">
+                Drag the pin to correct
+              </span>
+            </div>
+            <LocationMap
+              latitude={latitude}
+              longitude={longitude}
+              onMove={onLocationChange}
+            />
+          </>
         )}
       </div>
 
