@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
+import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 
 interface ConfirmedReport {
   id: string;
@@ -54,9 +55,13 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
             <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
               Submitted
             </span>
-            <span className="text-sm">
-              {new Date(report.createdAt).toLocaleString()}
-            </span>
+            <time
+              dateTime={new Date(report.createdAt).toISOString()}
+              title={formatFullDateTime(report.createdAt)}
+              className="text-sm"
+            >
+              {formatRelativeTime(report.createdAt)}
+            </time>
           </div>
           {report.aiDescription && (
             <>
