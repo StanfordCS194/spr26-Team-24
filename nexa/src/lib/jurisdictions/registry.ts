@@ -84,10 +84,7 @@ export const JURISDICTIONS: Record<JurisdictionId, Jurisdiction> = {
   },
 };
 
-export function getPortal(
-  jurisdictionId: JurisdictionId,
-  issueType: string,
-) {
+export function getPortal(jurisdictionId: JurisdictionId, issueType: string) {
   const jurisdiction = JURISDICTIONS[jurisdictionId];
   if (!jurisdiction) return null;
   const issueSpecific =
