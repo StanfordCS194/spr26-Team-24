@@ -4,11 +4,7 @@ import type { Feature, Polygon, MultiPolygon } from "geojson";
 
 import boundaries from "./boundaries.json";
 import { JURISDICTIONS, getPortal } from "./registry";
-import type {
-  Jurisdiction,
-  JurisdictionId,
-  JurisdictionMatch,
-} from "./types";
+import type { Jurisdiction, JurisdictionId, JurisdictionMatch } from "./types";
 
 type BoundaryProps = {
   jurisdictionId: JurisdictionId;
