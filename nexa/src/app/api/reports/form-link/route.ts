@@ -40,7 +40,6 @@ type NominatimAddress = {
   hamlet?: string;
   municipality?: string;
   state?: string;
-  postcode?: string;
   county?: string;
 };
 
@@ -59,25 +58,6 @@ function parseFormalMunicipality(
     address.municipality ??
     null
   );
-}
-
-/** US ZIPs where Nominatim returns no city (e.g. Stanford-adjacent housing). */
-const US_POSTCODE_FORM_LOOKUP_HINT: Record<
-  string,
-  { city: string; state: string }
-> = {
-  "94304": { city: "Palo Alto", state: "California" },
-  "94305": { city: "Palo Alto", state: "California" },
-};
-
-function hintCityFromUsPostcode(
-  postcode: string | null | undefined,
-): { cityName: string; stateName: string } | null {
-  if (!postcode) return null;
-  const normalized = postcode.trim();
-  const hint = US_POSTCODE_FORM_LOOKUP_HINT[normalized];
-  if (!hint) return null;
-  return { cityName: hint.city, stateName: hint.state };
 }
 
 const LOOKUP_SYSTEM_PROMPT = `You help find the official city webpage a resident should use to report a civic issue.
@@ -221,7 +201,6 @@ function extractFormLookupJson(raw: string): string | null {
 type ResolvedLocation = {
   cityName: string | null;
   stateName: string | null;
-  postcode: string | null;
   latitude: number | null;
   longitude: number | null;
 };
@@ -229,7 +208,6 @@ type ResolvedLocation = {
 const EMPTY_LOCATION: ResolvedLocation = {
   cityName: null,
   stateName: null,
-  postcode: null,
   latitude: null,
   longitude: null,
 };
@@ -254,7 +232,6 @@ async function reverseLookupCity(
   return {
     cityName: parseFormalMunicipality(data.address),
     stateName: data.address?.state ?? null,
-    postcode: data.address?.postcode ?? null,
     latitude,
     longitude,
   };
@@ -284,17 +261,15 @@ async function geocodeAddress(address: string): Promise<ResolvedLocation> {
   return {
     cityName: parseFormalMunicipality(first.address),
     stateName: first.address?.state ?? null,
-    postcode: first.address?.postcode ?? null,
     latitude: Number.isFinite(lat) ? lat : null,
     longitude: Number.isFinite(lon) ? lon : null,
   };
 }
 
 /**
- * Tries to produce lat/lon (always useful for the polygon resolver) plus a
- * city/state pair (used by the LLM fallback). When coords are supplied we still
- * forward-geocode the typed address to fill in city/postcode that Nominatim's
- * reverse endpoint doesn't surface for unincorporated places like Stanford.
+ * Produces lat/lon (used by the polygon resolver) and a city/state pair (used
+ * by the LLM fallback). When coords are supplied we still forward-geocode the
+ * typed address as a fallback for filling in city/state.
  */
 async function resolveLocation(
   address: string | undefined,
@@ -312,24 +287,9 @@ async function resolveLocation(
     base = {
       cityName: base.cityName ?? forward.cityName,
       stateName: base.stateName ?? forward.stateName,
-      postcode: base.postcode ?? forward.postcode,
       latitude: base.latitude ?? forward.latitude,
       longitude: base.longitude ?? forward.longitude,
     };
-  }
-
-  // ZIP-based hint covers Stanford-adjacent addresses (94304/94305) where
-  // Nominatim only returns hamlet-level data and parseFormalMunicipality
-  // intentionally rejects it.
-  if (!base.cityName) {
-    const fromZip = hintCityFromUsPostcode(base.postcode);
-    if (fromZip) {
-      base = {
-        ...base,
-        cityName: fromZip.cityName,
-        stateName: base.stateName ?? fromZip.stateName,
-      };
-    }
   }
 
   return base;
