@@ -99,7 +99,8 @@ async function fetchPolygon(source) {
         (r.geojson?.type === "Polygon" || r.geojson?.type === "MultiPolygon"),
     ) ??
     results.find(
-      (r) => r.geojson?.type === "Polygon" || r.geojson?.type === "MultiPolygon",
+      (r) =>
+        r.geojson?.type === "Polygon" || r.geojson?.type === "MultiPolygon",
     );
 
   if (!match) {
@@ -130,7 +131,9 @@ async function main() {
     try {
       const feature = await fetchPolygon(source);
       features.push(feature);
-      console.log(`ok (osm ${feature.properties.osmType}/${feature.properties.osmId})`);
+      console.log(
+        `ok (osm ${feature.properties.osmType}/${feature.properties.osmId})`,
+      );
     } catch (err) {
       console.log(`FAILED: ${err.message}`);
       throw err;
