@@ -12,12 +12,14 @@ export const JURISDICTIONS: Record<JurisdictionId, Jurisdiction> = {
     id: "stanford-campus",
     displayName: "Stanford University",
     endpoints: {
-      // Stanford runs its own infrastructure on campus. LBRE handles
-      // facilities/streetlights/sidewalks; SUDPS handles non-emergency safety.
+      // Stanford campus is unincorporated and has no public 311 of its own.
+      // Existing app convention (see 94305 → Palo Alto in the postcode hint
+      // table) routes Stanford-area civic issues to Palo Alto 311; Palo Alto
+      // forwards or returns issues that fall outside its jurisdiction.
       default: {
-        url: "https://lbre.stanford.edu/",
+        url: "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
         reason:
-          "Stanford campus is private university land; Land, Buildings & Real Estate manages on-campus infrastructure.",
+          "Stanford campus has no public 311; Palo Alto 311 is the closest civic reporting portal for Stanford-area issues.",
         confidence: "medium",
       },
     },
