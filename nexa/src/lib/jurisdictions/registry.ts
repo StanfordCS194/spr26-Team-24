@@ -42,9 +42,9 @@ export const JURISDICTIONS: Record<JurisdictionId, Jurisdiction> = {
     displayName: "Menlo Park",
     endpoints: {
       default: {
-        url: "https://www.menlopark.gov/Government/Departments/Public-Works/Report-a-concern",
+        url: "https://www.menlopark.gov/Services/ACT-Menlo-Park",
         reason: "Menlo Park's official Report-a-Concern page.",
-        confidence: "medium",
+        confidence: "high",
       },
     },
   },
