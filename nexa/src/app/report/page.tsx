@@ -218,12 +218,26 @@ export default function ReportPage() {
         }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Classification failed");
+      // Read the raw body once so non-JSON responses surface a useful error
+      // instead of Safari's cryptic "did not match the expected pattern".
+      const rawBody = await res.text();
+      let payload: unknown = null;
+      try {
+        payload = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        throw new Error(
+          `Classification failed (HTTP ${res.status}). Server returned a non-JSON response.`,
+        );
       }
 
-      const data: ComparisonResponse = await res.json();
+      if (!res.ok) {
+        const message =
+          (payload as { error?: string } | null)?.error ??
+          `Classification failed (HTTP ${res.status}).`;
+        throw new Error(message);
+      }
+
+      const data = payload as ComparisonResponse;
       setComparison(data);
       setClassification(data.winner);
       void lookupOfficialForm(data.winner.issueType);
