@@ -256,6 +256,7 @@ export default function ReportPage() {
           latitude: geo.latitude,
           longitude: geo.longitude,
           address: geo.address,
+          imageUrl: image.imageBase64,
         }),
       });
 

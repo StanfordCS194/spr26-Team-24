@@ -50,6 +50,7 @@ export default async function DashboardPage() {
       status: true,
       description: true,
       aiDescription: true,
+      imageUrl: true,
       address: true,
       createdAt: true,
     },
@@ -149,27 +150,47 @@ export default async function DashboardPage() {
                     >
                       {formatStatus(report.status)}
                     </span>
+                    <Link
+                      href={`/dashboard/reports/${report.id}`}
+                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      View details
+                      <ArrowRight className="size-3.5" />
+                    </Link>
                     <DeleteReportButton reportId={report.id} />
                   </div>
                 </div>
 
-                <h2 className="mt-4 text-lg font-medium leading-snug">
-                  {report.address || "No location provided"}
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  <time
-                    dateTime={report.createdAt.toISOString()}
-                    title={formatFullDateTime(report.createdAt)}
-                  >
-                    {formatRelativeTime(report.createdAt)}
-                  </time>
-                </p>
+                <Link
+                  href={`/dashboard/reports/${report.id}`}
+                  className="mt-4 block"
+                >
+                  <h2 className="text-lg font-medium leading-snug">
+                    {report.address || "No location provided"}
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    <time
+                      dateTime={report.createdAt.toISOString()}
+                      title={formatFullDateTime(report.createdAt)}
+                    >
+                      {formatRelativeTime(report.createdAt)}
+                    </time>
+                  </p>
 
-                <p className="mt-4 text-sm leading-relaxed text-foreground">
-                  {report.aiDescription ||
-                    report.description ||
-                    "No description"}
-                </p>
+                  <p className="mt-4 text-sm leading-relaxed text-foreground">
+                    {report.aiDescription ||
+                      report.description ||
+                      "No description"}
+                  </p>
+
+                  {report.imageUrl && (
+                    <img
+                      src={report.imageUrl}
+                      alt="Submitted issue"
+                      className="mt-4 max-h-56 w-full rounded-lg object-contain"
+                    />
+                  )}
+                </Link>
               </article>
             ))}
           </div>
