@@ -221,8 +221,17 @@ function extractFormLookupJson(raw: string): string | null {
 type ResolvedLocation = {
   cityName: string | null;
   stateName: string | null;
+  postcode: string | null;
   latitude: number | null;
   longitude: number | null;
+};
+
+const EMPTY_LOCATION: ResolvedLocation = {
+  cityName: null,
+  stateName: null,
+  postcode: null,
+  latitude: null,
+  longitude: null,
 };
 
 async function reverseLookupCity(
@@ -232,21 +241,20 @@ async function reverseLookupCity(
   const response = await fetch(
     `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${latitude}&lon=${longitude}`,
     {
-      headers: {
-        "User-Agent": "Nexa civic form lookup",
-      },
+      headers: { "User-Agent": "Nexa civic form lookup" },
       cache: "no-store",
     },
   );
 
   if (!response.ok) {
-    return { cityName: null, stateName: null, latitude, longitude };
+    return { ...EMPTY_LOCATION, latitude, longitude };
   }
 
   const data = (await response.json()) as { address?: NominatimAddress };
   return {
-    cityName: parseCityName(data.address),
+    cityName: parseFormalMunicipality(data.address),
     stateName: data.address?.state ?? null,
+    postcode: data.address?.postcode ?? null,
     latitude,
     longitude,
   };
@@ -256,16 +264,12 @@ async function geocodeAddress(address: string): Promise<ResolvedLocation> {
   const response = await fetch(
     `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&q=${encodeURIComponent(address)}`,
     {
-      headers: {
-        "User-Agent": "Nexa civic form lookup",
-      },
+      headers: { "User-Agent": "Nexa civic form lookup" },
       cache: "no-store",
     },
   );
 
-  if (!response.ok) {
-    return { cityName: null, stateName: null, latitude: null, longitude: null };
-  }
+  if (!response.ok) return EMPTY_LOCATION;
 
   const data = (await response.json()) as Array<{
     address?: NominatimAddress;
@@ -273,42 +277,62 @@ async function geocodeAddress(address: string): Promise<ResolvedLocation> {
     lon?: string;
   }>;
   const first = data[0];
-  const lat = first?.lat ? Number(first.lat) : NaN;
-  const lon = first?.lon ? Number(first.lon) : NaN;
+  if (!first) return EMPTY_LOCATION;
+
+  const lat = first.lat ? Number(first.lat) : NaN;
+  const lon = first.lon ? Number(first.lon) : NaN;
   return {
-    cityName: parseCityName(first?.address),
-    stateName: first?.address?.state ?? null,
+    cityName: parseFormalMunicipality(first.address),
+    stateName: first.address?.state ?? null,
+    postcode: first.address?.postcode ?? null,
     latitude: Number.isFinite(lat) ? lat : null,
     longitude: Number.isFinite(lon) ? lon : null,
   };
 }
 
+/**
+ * Tries to produce lat/lon (always useful for the polygon resolver) plus a
+ * city/state pair (used by the LLM fallback). When coords are supplied we still
+ * forward-geocode the typed address to fill in city/postcode that Nominatim's
+ * reverse endpoint doesn't surface for unincorporated places like Stanford.
+ */
 async function resolveLocation(
   address: string | undefined,
   latitude: number | undefined,
   longitude: number | undefined,
 ): Promise<ResolvedLocation> {
+  let base: ResolvedLocation = EMPTY_LOCATION;
+
   if (typeof latitude === "number" && typeof longitude === "number") {
-    const reverse = await reverseLookupCity(latitude, longitude);
-    if (reverse.cityName) return reverse;
-    // Coords are still useful for the polygon resolver even without a city name.
-    if (address?.trim()) {
-      const forward = await geocodeAddress(address.trim());
-      return { ...forward, latitude, longitude };
+    base = await reverseLookupCity(latitude, longitude);
+  }
+
+  if (!base.cityName && address?.trim()) {
+    const forward = await geocodeAddress(address.trim());
+    base = {
+      cityName: base.cityName ?? forward.cityName,
+      stateName: base.stateName ?? forward.stateName,
+      postcode: base.postcode ?? forward.postcode,
+      latitude: base.latitude ?? forward.latitude,
+      longitude: base.longitude ?? forward.longitude,
+    };
+  }
+
+  // ZIP-based hint covers Stanford-adjacent addresses (94304/94305) where
+  // Nominatim only returns hamlet-level data and parseFormalMunicipality
+  // intentionally rejects it.
+  if (!base.cityName) {
+    const fromZip = hintCityFromUsPostcode(base.postcode);
+    if (fromZip) {
+      base = {
+        ...base,
+        cityName: fromZip.cityName,
+        stateName: base.stateName ?? fromZip.stateName,
+      };
     }
-    return reverse;
   }
 
-  if (typeof latitude === "number" && typeof longitude === "number") {
-    const reverse = await reverseLookupCity(latitude, longitude);
-    const fromZip = hintCityFromUsPostcode(reverse.postcode);
-    if (fromZip)
-      return { cityName: fromZip.cityName, stateName: fromZip.stateName };
-    if (reverse.cityName)
-      return { cityName: reverse.cityName, stateName: reverse.stateName };
-  }
-
-  return { cityName: null, stateName: null, latitude: null, longitude: null };
+  return base;
 }
 
 async function lookupOfficialForm(params: {
