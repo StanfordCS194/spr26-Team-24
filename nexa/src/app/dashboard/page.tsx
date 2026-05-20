@@ -255,7 +255,9 @@ export default async function DashboardPage() {
                       <ol className="mt-3 space-y-3 text-sm">
                         <li className="flex gap-3">
                           <span className="mt-1 size-2 rounded-full bg-ep-green" />
-                          <span>Report submitted and saved to your history.</span>
+                          <span>
+                            Report submitted and saved to your history.
+                          </span>
                         </li>
                         <li className="flex gap-3 text-muted-foreground">
                           <span className="mt-1 size-2 rounded-full bg-muted-foreground/40" />
