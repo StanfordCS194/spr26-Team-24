@@ -1,20 +1,34 @@
 "use client";
 
+import Link from "next/link";
+import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 
 interface DeleteReportButtonProps {
   reportId: string;
+  redirectTo?: string;
+  showEdit?: boolean;
+  deleteLabel?: string;
+  deleteClassName?: string;
 }
 
-export function DeleteReportButton({ reportId }: DeleteReportButtonProps) {
+export function DeleteReportButton({
+  reportId,
+  redirectTo,
+  showEdit = true,
+  deleteLabel = "Delete",
+  deleteClassName,
+}: DeleteReportButtonProps) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleDelete = async () => {
+  const handleDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
     if (!confirming) {
       setConfirming(true);
       return;
@@ -35,7 +49,11 @@ export function DeleteReportButton({ reportId }: DeleteReportButtonProps) {
         throw new Error(data?.error ?? "Failed to delete the report.");
       }
 
-      router.refresh();
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        router.refresh();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete.");
       setConfirming(false);
@@ -50,21 +68,35 @@ export function DeleteReportButton({ reportId }: DeleteReportButtonProps) {
         {confirming && !deleting && (
           <button
             type="button"
-            onClick={() => setConfirming(false)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setConfirming(false);
+            }}
             className="font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
           >
             Cancel
           </button>
         )}
+        {showEdit && !confirming && (
+          <Link
+            href={`/dashboard/reports/${reportId}/edit`}
+            onClick={(event) => event.stopPropagation()}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Pencil className="size-3.5" />
+            Edit
+          </Link>
+        )}
         <button
           type="button"
           onClick={handleDelete}
           disabled={deleting}
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
+          className={
             confirming
-              ? "bg-red-600 text-white hover:bg-red-700"
-              : "text-muted-foreground hover:bg-muted hover:text-red-600"
-          } disabled:opacity-60`}
+              ? "inline-flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+              : (deleteClassName ??
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-60")
+          }
           aria-label={confirming ? "Confirm delete" : "Delete report"}
         >
           {deleting ? (
@@ -72,7 +104,7 @@ export function DeleteReportButton({ reportId }: DeleteReportButtonProps) {
           ) : (
             <Trash2 className="size-3.5" />
           )}
-          {confirming ? "Confirm" : "Delete"}
+          {confirming ? "Confirm" : deleteLabel}
         </button>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}

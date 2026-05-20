@@ -1,6 +1,14 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { ArrowRight, CheckCircle2, Clock3, ClipboardList } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ChevronDown,
+  Clock3,
+  ClipboardList,
+  ImageIcon,
+} from "lucide-react";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -50,6 +58,7 @@ export default async function DashboardPage() {
       status: true,
       description: true,
       aiDescription: true,
+      imageUrl: true,
       address: true,
       createdAt: true,
     },
@@ -133,44 +142,130 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid gap-4">
             {reports.map((report) => (
-              <article
+              <details
                 key={report.id}
-                className="ep-card p-6 transition-colors hover:bg-muted/20"
+                className="group ep-card p-6 transition-colors hover:bg-muted/20"
               >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
-                      report.issueType ||
-                      "Uncategorized"}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider ${statusPillClass(report.status)}`}
-                    >
-                      {formatStatus(report.status)}
+                <summary className="list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                      {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
+                        report.issueType ||
+                        "Uncategorized"}
                     </span>
-                    <DeleteReportButton reportId={report.id} />
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider ${statusPillClass(report.status)}`}
+                      >
+                        {formatStatus(report.status)}
+                      </span>
+                      <DeleteReportButton reportId={report.id} />
+                      <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex gap-4">
+                    <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/30">
+                      {report.imageUrl ? (
+                        <Image
+                          src={report.imageUrl}
+                          alt="Submitted issue preview"
+                          width={80}
+                          height={80}
+                          unoptimized
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="size-6 text-muted-foreground/50" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-lg font-medium leading-snug">
+                        {report.address || "No location provided"}
+                      </h2>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        <time
+                          dateTime={report.createdAt.toISOString()}
+                          title={formatFullDateTime(report.createdAt)}
+                        >
+                          {formatRelativeTime(report.createdAt)}
+                        </time>
+                      </p>
+
+                      <p className="mt-3 text-sm leading-relaxed text-foreground">
+                        {report.description ||
+                          report.aiDescription ||
+                          "No description"}
+                      </p>
+                    </div>
+                  </div>
+                </summary>
+
+                <div className="mt-6 grid gap-5 border-t border-border pt-5 md:grid-cols-[180px_1fr]">
+                  <div className="flex min-h-36 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/30">
+                    {report.imageUrl ? (
+                      <Image
+                        src={report.imageUrl}
+                        alt="Submitted issue"
+                        width={180}
+                        height={224}
+                        unoptimized
+                        className="max-h-56 w-full object-contain"
+                      />
+                    ) : (
+                      <ImageIcon className="size-8 text-muted-foreground/50" />
+                    )}
+                  </div>
+
+                  <div className="space-y-5">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                          Classification
+                        </p>
+                        <p className="mt-1 text-sm font-medium">
+                          {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
+                            report.issueType ||
+                            "Uncategorized"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                          Status
+                        </p>
+                        <p className="mt-1 text-sm font-medium">
+                          {formatStatus(report.status)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                        Submitted Text
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed">
+                        {report.description || "No submitted text"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                        Timeline
+                      </p>
+                      <ol className="mt-3 space-y-3 text-sm">
+                        <li className="flex gap-3">
+                          <span className="mt-1 size-2 rounded-full bg-ep-green" />
+                          <span>Report submitted and saved to your history.</span>
+                        </li>
+                        <li className="flex gap-3 text-muted-foreground">
+                          <span className="mt-1 size-2 rounded-full bg-muted-foreground/40" />
+                          <span>Agency review updates will appear here.</span>
+                        </li>
+                      </ol>
+                    </div>
                   </div>
                 </div>
-
-                <h2 className="mt-4 text-lg font-medium leading-snug">
-                  {report.address || "No location provided"}
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  <time
-                    dateTime={report.createdAt.toISOString()}
-                    title={formatFullDateTime(report.createdAt)}
-                  >
-                    {formatRelativeTime(report.createdAt)}
-                  </time>
-                </p>
-
-                <p className="mt-4 text-sm leading-relaxed text-foreground">
-                  {report.aiDescription ||
-                    report.description ||
-                    "No description"}
-                </p>
-              </article>
+              </details>
             ))}
           </div>
         )}
