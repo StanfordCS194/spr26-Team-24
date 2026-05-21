@@ -1,34 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2, Clock3, ClipboardList } from "lucide-react";
-import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
-import { DeleteReportButton } from "@/components/dashboard/delete-report-button";
-
-function formatStatus(status: string): string {
-  return status
-    .toLowerCase()
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function statusPillClass(status: string): string {
-  switch (status) {
-    case "CONFIRMED":
-      return "bg-ep-green-light text-ep-green";
-    case "RESOLVED":
-    case "CLOSED":
-      return "bg-blue-50 text-blue-700";
-    case "SUBMITTED":
-    case "IN_PROGRESS":
-      return "bg-ep-purple-light text-ep-purple";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
+import { ReportCard } from "@/components/dashboard/report-card";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -51,6 +27,7 @@ export default async function DashboardPage() {
       description: true,
       aiDescription: true,
       address: true,
+      imageUrl: true,
       createdAt: true,
     },
   });
@@ -133,44 +110,7 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid gap-4">
             {reports.map((report) => (
-              <article
-                key={report.id}
-                className="ep-card p-6 transition-colors hover:bg-muted/20"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
-                      report.issueType ||
-                      "Uncategorized"}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider ${statusPillClass(report.status)}`}
-                    >
-                      {formatStatus(report.status)}
-                    </span>
-                    <DeleteReportButton reportId={report.id} />
-                  </div>
-                </div>
-
-                <h2 className="mt-4 text-lg font-medium leading-snug">
-                  {report.address || "No location provided"}
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  <time
-                    dateTime={report.createdAt.toISOString()}
-                    title={formatFullDateTime(report.createdAt)}
-                  >
-                    {formatRelativeTime(report.createdAt)}
-                  </time>
-                </p>
-
-                <p className="mt-4 text-sm leading-relaxed text-foreground">
-                  {report.aiDescription ||
-                    report.description ||
-                    "No description"}
-                </p>
-              </article>
+              <ReportCard key={report.id} report={report} />
             ))}
           </div>
         )}
