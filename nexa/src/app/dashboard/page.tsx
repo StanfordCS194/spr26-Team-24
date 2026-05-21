@@ -3,8 +3,13 @@ import { redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2, Clock3, ClipboardList } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ISSUE_TYPE_LABELS, shortenAddress } from "@/lib/constants";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 import { ReportCard } from "@/components/dashboard/report-card";
+import {
+  ReportsMap,
+  type ReportMapPoint,
+} from "@/components/dashboard/reports-map";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -28,6 +33,8 @@ export default async function DashboardPage() {
       aiDescription: true,
       address: true,
       imageUrl: true,
+      latitude: true,
+      longitude: true,
       createdAt: true,
     },
   });
@@ -37,6 +44,29 @@ export default async function DashboardPage() {
     (report) => report.status === "CONFIRMED",
   ).length;
   const latestReport = reports[0];
+
+  const mapPoints: ReportMapPoint[] = reports
+    .filter(
+      (
+        report,
+      ): report is typeof report & { latitude: number; longitude: number } =>
+        typeof report.latitude === "number" &&
+        Number.isFinite(report.latitude) &&
+        typeof report.longitude === "number" &&
+        Number.isFinite(report.longitude),
+    )
+    .map((report) => ({
+      id: report.id,
+      latitude: report.latitude,
+      longitude: report.longitude,
+      issueLabel:
+        ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
+        report.issueType ||
+        "Uncategorized",
+      shortLocation: shortenAddress(report.address),
+      status: report.status,
+      relativeTime: formatRelativeTime(report.createdAt),
+    }));
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
@@ -98,6 +128,12 @@ export default async function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {mapPoints.length > 0 && (
+        <div className="mt-8">
+          <ReportsMap points={mapPoints} />
+        </div>
+      )}
 
       <div className="mt-8">
         {reports.length === 0 ? (
