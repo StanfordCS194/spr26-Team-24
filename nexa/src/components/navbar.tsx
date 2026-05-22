@@ -65,6 +65,14 @@ export function Navbar() {
               {link.label}
             </a>
           ))}
+          {user && (
+            <Link
+              href="/dashboard"
+              className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground ${pathname === "/dashboard" ? "text-foreground" : "text-muted-foreground"}`}
+            >
+              Dashboard
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center justify-self-end gap-3">
