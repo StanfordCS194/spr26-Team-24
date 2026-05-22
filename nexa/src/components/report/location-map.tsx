@@ -1,22 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-import L from "leaflet";
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-// Bundlers don't resolve Leaflet's default-icon URLs; provide them explicitly.
-const defaultIcon = L.icon({
-  iconUrl: markerIcon.src,
-  iconRetinaUrl: markerIcon2x.src,
-  shadowUrl: markerShadow.src,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+import { useEffect, useRef } from "react";
+import type { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 interface LocationMapProps {
   latitude: number;
@@ -24,53 +10,104 @@ interface LocationMapProps {
   onMove: (latitude: number, longitude: number) => void;
 }
 
-function RecenterOnChange({ lat, lng }: { lat: number; lng: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView([lat, lng], map.getZoom(), { animate: true });
-  }, [lat, lng, map]);
-  return null;
-}
+/** Leaflet default marker assets (bundlers break leaflet/dist icon paths). */
+const MARKER_ICON_URL =
+  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
+const MARKER_ICON_2X_URL =
+  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png";
+const MARKER_SHADOW_URL =
+  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
 
 export default function LocationMap({
   latitude,
   longitude,
   onMove,
 }: LocationMapProps) {
-  const markerRef = useRef<L.Marker | null>(null);
-  const eventHandlers = useMemo(
-    () => ({
-      dragend: () => {
-        const marker = markerRef.current;
-        if (!marker) return;
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markerRef = useRef<LeafletMarker | null>(null);
+  const onMoveRef = useRef(onMove);
+  useEffect(() => {
+    onMoveRef.current = onMove;
+  }, [onMove]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    let cancelled = false;
+
+    (async () => {
+      const leaflet = await import("leaflet");
+      const L = leaflet.default ?? leaflet;
+      if (cancelled || !containerRef.current) return;
+
+      const map = L.map(containerRef.current, {
+        scrollWheelZoom: false,
+        zoomControl: true,
+        attributionControl: true,
+      });
+      mapRef.current = map;
+
+      L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: "abcd",
+          maxZoom: 19,
+        },
+      ).addTo(map);
+
+      const icon = L.icon({
+        iconUrl: MARKER_ICON_URL,
+        iconRetinaUrl: MARKER_ICON_2X_URL,
+        shadowUrl: MARKER_SHADOW_URL,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+
+      const marker = L.marker([latitude, longitude], {
+        icon,
+        draggable: true,
+      }).addTo(map);
+      markerRef.current = marker;
+
+      marker.on("dragend", () => {
         const { lat, lng } = marker.getLatLng();
-        onMove(lat, lng);
-      },
-    }),
-    [onMove],
-  );
+        onMoveRef.current(lat, lng);
+      });
+
+      map.setView([latitude, longitude], 16);
+    })();
+
+    return () => {
+      cancelled = true;
+      markerRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+    // Init map once per mount; prop updates handled below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const marker = markerRef.current;
+    if (!map || !marker) return;
+    marker.setLatLng([latitude, longitude]);
+    map.setView([latitude, longitude], map.getZoom(), { animate: true });
+  }, [latitude, longitude]);
 
   return (
-    <div className="mt-3 h-48 overflow-hidden rounded-lg border border-border">
-      <MapContainer
-        center={[latitude, longitude]}
-        zoom={16}
-        scrollWheelZoom={false}
-        className="h-full w-full"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Marker
-          position={[latitude, longitude]}
-          icon={defaultIcon}
-          draggable
-          eventHandlers={eventHandlers}
-          ref={markerRef}
-        />
-        <RecenterOnChange lat={latitude} lng={longitude} />
-      </MapContainer>
-    </div>
+    <div
+      ref={containerRef}
+      className="mt-3 h-48 w-full overflow-hidden rounded-lg border border-border"
+      role="application"
+      aria-label="Map showing detected location. Drag the pin to adjust."
+    />
   );
 }

@@ -237,6 +237,7 @@ export function DescribeStep({
             )}
           </div>
           <Button
+            type="button"
             variant="outline"
             onClick={onDetectLocation}
             disabled={locationLoading}
