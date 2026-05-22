@@ -76,8 +76,7 @@ const AGENCIES: AgencySeed[] = [
     jurisdiction: "city-mountain-view",
     issueTypes: ["ROAD_DAMAGE", "STREETLIGHT_OUTAGE", "ILLEGAL_DUMPING"],
     intakeMethod: "WEB_FORM",
-    intakeUrl:
-      "https://www.mountainview.gov/our-city/departments/public-works",
+    intakeUrl: "https://www.mountainview.gov/our-city/departments/public-works",
     intakeEmail: null,
     requiredFields: {
       description: { type: "string", required: true },
