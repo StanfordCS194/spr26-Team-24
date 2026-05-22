@@ -140,9 +140,7 @@ export default async function ReportDetailPage({
         <div className="ep-card p-5">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Clock3 className="size-4" />
-            <p className="font-mono text-xs uppercase tracking-wider">
-              Status
-            </p>
+            <p className="font-mono text-xs uppercase tracking-wider">Status</p>
           </div>
           <div className="mt-3">
             <span
