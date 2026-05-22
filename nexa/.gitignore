@@ -43,3 +43,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# eval — downloaded image cache + result snapshots (manifest is committed, the rest isn't)
+/eval/dataset/_cache/
+/eval/results/*.json
