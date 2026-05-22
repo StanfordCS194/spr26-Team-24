@@ -38,6 +38,8 @@ model Report {
   agencyId           String?
   agency             Agency?      @relation(fields: [agencyId], references: [id])
   externalTrackingId String?
+  userResolved       Boolean?
+  userResolvedAt     DateTime?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 }
