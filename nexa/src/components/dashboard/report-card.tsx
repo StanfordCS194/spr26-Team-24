@@ -59,9 +59,16 @@ export function ReportCard({ report }: ReportCardProps) {
 
   return (
     <article className="ep-card overflow-hidden transition-colors hover:bg-muted/20">
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded((value) => !value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setExpanded((value) => !value);
+          }
+        }}
         aria-expanded={expanded}
         aria-controls={`report-${report.id}-details`}
         className="block w-full cursor-pointer p-6 text-left"
@@ -104,7 +111,7 @@ export function ReportCard({ report }: ReportCardProps) {
             {summary}
           </p>
         )}
-      </button>
+      </div>
 
       {expanded && (
         <div
