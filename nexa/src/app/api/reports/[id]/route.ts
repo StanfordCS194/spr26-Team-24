@@ -2,6 +2,46 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: "Not authenticated." },
+        { status: 401 },
+      );
+    }
+
+    const { id } = await context.params;
+
+    const report = await prisma.report.findUnique({
+      where: { id },
+    });
+
+    if (!report) {
+      return NextResponse.json({ error: "Report not found." }, { status: 404 });
+    }
+
+    if (report.userId !== session.userId) {
+      return NextResponse.json(
+        { error: "You can only view your own reports." },
+        { status: 403 },
+      );
+    }
+
+    return NextResponse.json(report);
+  } catch (error) {
+    console.error("Report fetch error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch report." },
+      { status: 500 },
+    );
+  }
+}
+
 export async function DELETE(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> },
