@@ -20,7 +20,7 @@ import { pipeline } from "node:stream/promises";
 import type { IssueType } from "../../src/lib/classify/types";
 
 const API = "https://commons.wikimedia.org/w/api.php";
-const PER_CATEGORY = 12;
+const PER_CATEGORY = 50;
 const MAX_BYTES = 4 * 1024 * 1024;
 const MIN_BYTES = 20 * 1024;
 const REQUEST_DELAY_MS = 1500;
@@ -31,17 +31,43 @@ interface CategoryConfig {
 }
 
 const CATEGORIES: CategoryConfig[] = [
+  // ROAD_DAMAGE
   { category: "Potholes", expected: "ROAD_DAMAGE" },
   { category: "Damaged roads", expected: "ROAD_DAMAGE" },
+  { category: "Road damage", expected: "ROAD_DAMAGE" },
   { category: "Cracks in pavement", expected: "ROAD_DAMAGE" },
+  { category: "Damaged pavements", expected: "ROAD_DAMAGE" },
+  { category: "Damaged sidewalks", expected: "ROAD_DAMAGE" },
+  { category: "Sinkholes", expected: "ROAD_DAMAGE" },
+  { category: "Subsidence", expected: "ROAD_DAMAGE" },
+  { category: "Flood damage", expected: "ROAD_DAMAGE" },
+  // STREETLIGHT_OUTAGE
   { category: "Damaged street lights", expected: "STREETLIGHT_OUTAGE" },
   { category: "Broken street lamps", expected: "STREETLIGHT_OUTAGE" },
+  { category: "Broken lamp posts", expected: "STREETLIGHT_OUTAGE" },
+  { category: "Damaged lamp posts", expected: "STREETLIGHT_OUTAGE" },
+  { category: "Fallen lamp posts", expected: "STREETLIGHT_OUTAGE" },
+  { category: "Vandalized street furniture", expected: "STREETLIGHT_OUTAGE" },
+  // ILLEGAL_DUMPING
   { category: "Illegal dumping", expected: "ILLEGAL_DUMPING" },
   { category: "Litter", expected: "ILLEGAL_DUMPING" },
   { category: "Garbage on the ground", expected: "ILLEGAL_DUMPING" },
+  { category: "Roadside litter", expected: "ILLEGAL_DUMPING" },
+  { category: "Fly tipping", expected: "ILLEGAL_DUMPING" },
+  { category: "Abandoned mattresses", expected: "ILLEGAL_DUMPING" },
+  { category: "Abandoned furniture", expected: "ILLEGAL_DUMPING" },
+  { category: "Garbage piles", expected: "ILLEGAL_DUMPING" },
+  { category: "Trash on streets", expected: "ILLEGAL_DUMPING" },
+  { category: "Dumping sites", expected: "ILLEGAL_DUMPING" },
+  // VEHICLE_EMISSIONS
   { category: "Exhaust smoke", expected: "VEHICLE_EMISSIONS" },
   { category: "Exhaust fumes", expected: "VEHICLE_EMISSIONS" },
   { category: "Air pollution by vehicles", expected: "VEHICLE_EMISSIONS" },
+  { category: "Vehicles emitting smoke", expected: "VEHICLE_EMISSIONS" },
+  { category: "Diesel smoke", expected: "VEHICLE_EMISSIONS" },
+  { category: "Diesel exhaust", expected: "VEHICLE_EMISSIONS" },
+  { category: "Truck exhaust", expected: "VEHICLE_EMISSIONS" },
+  { category: "Black smoke from vehicles", expected: "VEHICLE_EMISSIONS" },
 ];
 
 interface CombinedResponse {
