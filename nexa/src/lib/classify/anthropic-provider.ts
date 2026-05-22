@@ -26,6 +26,7 @@ function stripPrefix(base64: string): string {
 export async function classifyWithAnthropic(
   description: string,
   imageBase64: string | null,
+  options: { prompt?: string } = {},
 ): Promise<ProviderResult> {
   const start = Date.now();
 
@@ -42,7 +43,7 @@ export async function classifyWithAnthropic(
     });
   }
 
-  let textPrompt = CLASSIFICATION_PROMPT;
+  let textPrompt = options.prompt ?? CLASSIFICATION_PROMPT;
   if (description) {
     textPrompt += `\n\nUser description: "${description}"`;
   }
