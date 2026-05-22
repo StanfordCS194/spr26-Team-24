@@ -36,6 +36,8 @@ export default async function DashboardPage() {
       latitude: true,
       longitude: true,
       createdAt: true,
+      externalTrackingId: true,
+      userResolved: true,
     },
   });
 
