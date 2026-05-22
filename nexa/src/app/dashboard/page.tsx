@@ -133,44 +133,48 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid gap-4">
             {reports.map((report) => (
-              <article
+              <Link
                 key={report.id}
-                className="ep-card p-6 transition-colors hover:bg-muted/20"
+                href={`/dashboard/${report.id}`}
+                className="group block"
               >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
-                      report.issueType ||
-                      "Uncategorized"}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider ${statusPillClass(report.status)}`}
-                    >
-                      {formatStatus(report.status)}
+                <article className="ep-card p-6 transition-all hover:bg-muted/20 hover:shadow-sm group-hover:border-ep-purple/30">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                      {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
+                        report.issueType ||
+                        "Uncategorized"}
                     </span>
-                    <DeleteReportButton reportId={report.id} />
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider ${statusPillClass(report.status)}`}
+                      >
+                        {formatStatus(report.status)}
+                      </span>
+                      <DeleteReportButton reportId={report.id} />
+                      <ArrowRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                    </div>
                   </div>
-                </div>
 
-                <h2 className="mt-4 text-lg font-medium leading-snug">
-                  {report.address || "No location provided"}
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  <time
-                    dateTime={report.createdAt.toISOString()}
-                    title={formatFullDateTime(report.createdAt)}
-                  >
-                    {formatRelativeTime(report.createdAt)}
-                  </time>
-                </p>
+                  <h2 className="mt-4 text-lg font-medium leading-snug">
+                    {report.address || "No location provided"}
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    <time
+                      dateTime={report.createdAt.toISOString()}
+                      title={formatFullDateTime(report.createdAt)}
+                    >
+                      {formatRelativeTime(report.createdAt)}
+                    </time>
+                  </p>
 
-                <p className="mt-4 text-sm leading-relaxed text-foreground">
-                  {report.aiDescription ||
-                    report.description ||
-                    "No description"}
-                </p>
-              </article>
+                  <p className="mt-4 text-sm leading-relaxed text-foreground">
+                    {report.aiDescription ||
+                      report.description ||
+                      "No description"}
+                  </p>
+                </article>
+              </Link>
             ))}
           </div>
         )}

@@ -45,7 +45,11 @@ export function DeleteReportButton({ reportId }: DeleteReportButtonProps) {
   };
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div
+      className="flex flex-col items-end gap-1"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <div className="flex items-center gap-2">
         {confirming && !deleting && (
           <button
