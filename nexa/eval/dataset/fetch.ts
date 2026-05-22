@@ -174,19 +174,36 @@ async function fetchCategory(cfg: CategoryConfig): Promise<DatasetCase[]> {
   return out;
 }
 
-async function downloadCase(c: DatasetCase, cacheDir: string): Promise<void> {
+async function downloadCase(
+  c: DatasetCase,
+  cacheDir: string,
+  retries = 4,
+): Promise<void> {
   const ext = c.mime === "image/png" ? ".png" : ".jpg";
   const target = path.join(cacheDir, `${c.id}${ext}`);
-  const res = await fetch(c.url, {
-    headers: { "User-Agent": "Nexa-Eval/1.0" },
-  });
-  if (!res.ok || !res.body) {
-    throw new Error(`download failed for ${c.url}: HTTP ${res.status}`);
+  let lastStatus = 0;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt > 0) {
+      const backoff = Math.min(20000, 2000 * 2 ** (attempt - 1));
+      await sleep(backoff);
+    }
+    const res = await fetch(c.url, {
+      headers: {
+        "User-Agent":
+          "Nexa-Eval/1.0 (Stanford CS194 spr26 Team 24; classification eval harness; https://github.com/StanfordCS194/spr26-Team-24)",
+      },
+    });
+    if (res.ok && res.body) {
+      await pipeline(
+        res.body as unknown as NodeJS.ReadableStream,
+        createWriteStream(target),
+      );
+      return;
+    }
+    lastStatus = res.status;
+    if (res.status !== 429 && res.status < 500) break;
   }
-  await pipeline(
-    res.body as unknown as NodeJS.ReadableStream,
-    createWriteStream(target),
-  );
+  throw new Error(`download failed for ${c.url}: HTTP ${lastStatus}`);
 }
 
 async function main() {
@@ -277,13 +294,17 @@ async function main() {
     const remote = cases.filter((c) => c.source === "wikimedia-commons");
     console.log(`Downloading ${remote.length} files to ${cacheDir} …`);
     let ok = 0;
+    let i = 0;
     for (const c of remote) {
+      i++;
       try {
         await downloadCase(c, cacheDir);
         ok++;
+        process.stdout.write(`  [${i}/${remote.length}] ${c.id}\n`);
       } catch (err) {
-        console.error(`  ! ${c.id}: ${(err as Error).message}`);
+        console.error(`  ! [${i}/${remote.length}] ${c.id}: ${(err as Error).message}`);
       }
+      await sleep(800); // be polite to upload.wikimedia.org
     }
     console.log(`Downloaded ${ok}/${remote.length}.`);
   }

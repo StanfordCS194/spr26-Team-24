@@ -47,7 +47,7 @@ export async function classifyWithGoogle(
   parts.push({ text: textPrompt });
 
   const response = await getClient().models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash",
     contents: [{ role: "user", parts }],
   });
 
@@ -56,7 +56,7 @@ export async function classifyWithGoogle(
 
   return {
     ...parsed,
-    provider: "google/gemini-2.0-flash",
+    provider: "google/gemini-2.5-flash",
     latencyMs: Date.now() - start,
   };
 }

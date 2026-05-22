@@ -149,20 +149,101 @@ I built it.
 
 ### Results
 
-> Run `npm run eval` locally with `.env.local` populated to populate this
-> section with real numbers. Output will be saved at `eval/results/`.
+Ran `npm run eval` against the full 76-image dataset (73 Wikimedia
+Commons + 3 team test-photos) on 2026-05-22. Both modes hit the same
+three VLMs (OpenAI gpt-4o-mini, Anthropic claude-haiku-4-5, Google
+gemini-2.5-flash) and use the same consensus voting; the only
+differences are the inputs the VLMs see.
 
-After the eval runs the table below will be filled in:
+#### Headline numbers
 
 | Metric | Baseline (single-stage) | Two-stage | Δ |
 |---|---|---|---|
-| Overall accuracy | _TBD_ | _TBD_ | _TBD_ |
-| ROAD_DAMAGE accuracy | _TBD_ | _TBD_ | _TBD_ |
-| STREETLIGHT_OUTAGE accuracy | _TBD_ | _TBD_ | _TBD_ |
-| ILLEGAL_DUMPING accuracy | _TBD_ | _TBD_ | _TBD_ |
-| VEHICLE_EMISSIONS accuracy | _TBD_ | _TBD_ | _TBD_ |
-| Mean latency | _TBD_ ms | _TBD_ ms | _TBD_ ms |
-| Mean payload size sent to VLMs | _TBD_ KB | _TBD_ KB | _TBD_ KB |
+| **Overall accuracy** | **92.1%** (70/76) | 89.5% (68/76) | **−2.6 pp** |
+| ROAD_DAMAGE accuracy | 100% (25/25) | 92.0% (23/25) | −8 pp |
+| ILLEGAL_DUMPING accuracy | 96.0% (24/25) | 96.0% (24/25) | 0 |
+| STREETLIGHT_OUTAGE accuracy | 66.7% (8/12) | 66.7% (8/12) | 0 |
+| VEHICLE_EMISSIONS accuracy | 92.9% (13/14) | 92.9% (13/14) | 0 |
+| Mean latency | 5,471 ms | 7,302 ms | +1,832 ms |
+| Mean reported confidence | 0.94 | 0.95 | +0.01 |
+
+**Two-stage did not beat baseline on this dataset.** This is the honest
+result, and the most informative thing to walk the TA through.
+
+#### Per-case crosstab
+
+Of the 76 cases:
+
+- **67** were correctly classified by *both* modes (the easy majority)
+- **5** were missed by *both* — same hard cases either way (e.g.
+  Firetruck_Smoking_Down_The_Street, 8TH_GRADE_STUDENTS_PICK_UP_LITTER,
+  3 of the STREETLIGHT_OUTAGE shots where the actual light pole is small
+  in the frame)
+- **1 case flipped baseline-wrong → two-stage-right:**
+  `Broken_4182613125_.jpg` (OTHER → STREETLIGHT_OUTAGE) — the stage-1
+  observation correctly named the streetlight
+- **3 cases flipped baseline-right → two-stage-wrong:**
+  - `Flood_damage_in_American_Fork_Canyon_June_2023.jpg`: ROAD_DAMAGE → OTHER
+  - `Vddj-1.jpg`: ROAD_DAMAGE → OTHER
+  - `M_Infraestrutura.jpg`: STREETLIGHT_OUTAGE → OTHER
+
+Net: **1 win, 3 losses = −2 cases = −2.6 pp**. With n=76, a 2-case swing
+is well within the noise of provider-availability variation (Google
+gemini-2.5-flash returned HTTP 503 on a substantial minority of calls
+during both runs, and which provider drops out changes the consensus
+pool).
+
+#### Where two-stage *did* clearly help
+
+Accuracy was a wash, but two-stage materially improved three other
+dimensions of the pipeline:
+
+| Dimension | Baseline | Two-stage |
+|---|---|---|
+| Consensus method = `unanimous` | 63 cases | **67 cases** |
+| Consensus method = `highest-confidence` (i.e. no agreement, tiebreaker fired) | 5 cases | **0 cases** |
+| Anthropic-`5MB`-too-large failures | ~5 cases (raw phone-sized photos rejected) | **0** (preprocess shrinks to ~200 KB) |
+| EXIF GPS extracted as a fallback location signal | 0 | 24/76 cases |
+
+Two-stage makes the three providers **agree more often** (unanimity
++6.3%) and **never falls through to the weakest consensus method**.
+Robustness improved unambiguously.
+
+#### Honest interpretation
+
+The hypothesis going in was that grounding the stage-2 classifier with
+structured observations + location would lift accuracy. It did not, on
+this dataset. The most likely explanations, in priority order:
+
+1. **Stage-1 observations introduce an OTHER-bias on edge cases.** All
+   three two-stage losses flipped to OTHER. A stage-1 description that
+   says "flood damage with debris on a road" reads to the stage-2
+   classifier as "this is a natural-disaster scene, not strictly a
+   pothole" → OTHER. Baseline doesn't get that framing and just picks
+   the obvious category from the image.
+2. **The bottleneck on this dataset isn't *understanding the image*.**
+   The single-stage classifier already hits 92.1%. The 6 missed cases
+   are genuinely ambiguous (people cleaning up litter, distant streetlights,
+   fire-truck smoke as "fire" not "vehicle exhaust"). Stage-1 doesn't
+   resolve those because the visual ambiguity is real.
+3. **n=76 is too small** to detect a sub-5pp effect through the noise of
+   intermittent provider availability.
+
+#### What I'd change next
+
+- **Test on a larger, harder dataset** (real Nexa user submissions, not
+  curated Commons photos, which are well-lit and well-framed).
+- **Tighten the stage-1 prompt** so it produces shorter, more neutral
+  observations — current observations skew descriptive enough that they
+  introduce framing.
+- **Selective two-stage** — only run stage 1 when baseline confidence
+  would be low. Cheaper *and* avoids the OTHER-bias regression.
+- **Keep the preprocessing + EXIF + location-grounding parts of the
+  pipeline anyway** — they're free wins on robustness and cost the same
+  ~33% latency penalty whether observation is on or off.
+
+Raw results are at `eval/results/baseline.json` and
+`eval/results/two-stage.json`.
 
 ### Walkthrough for the TA
 
