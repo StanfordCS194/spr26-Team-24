@@ -22,7 +22,7 @@ issue type. Three independent gaps fell out of reading the code:
    ignored (sideways photos), and blurry / dark images hit the model
    unfiltered.
 2. **No structured visual grounding.** The model saw a photo and had to both
-   *describe* it and *classify* it in one shot. No first-pass extraction of
+   _describe_ it and _classify_ it in one shot. No first-pass extraction of
    what objects were actually present.
 3. **Location was dropped on the floor at classification time.** The wizard
    collected GPS and an address, but neither was sent to the classifier. A
@@ -65,7 +65,7 @@ Concretely:
   from EXIF orientation, downscale to max 1024 px (preserves aspect),
   re-encode as JPEG at quality 80 with mozjpeg. Cuts a typical phone photo
   from ~4 MB → ~200 KB, which directly translates to lower VLM cost and
-  latency. Reads EXIF GPS with `exifr` *before* sharp touches the buffer
+  latency. Reads EXIF GPS with `exifr` _before_ sharp touches the buffer
   (sharp strips EXIF as part of re-encoding).
 - **`src/lib/classify/observe.ts`** (new). Stage 1 — one low-cost
   `gpt-4o-mini` call with a prompt that asks for structured observation, not
@@ -102,7 +102,7 @@ Concretely:
 1. Open `src/lib/classify/consensus.ts:108`. The top-level docstring
    ASCII-diagrams the new pipeline.
 2. Step into `preprocessImage()` at `preprocess.ts:35` — note the EXIF read
-   happens *before* the sharp re-encode (line 50 vs. line 65), because sharp
+   happens _before_ the sharp re-encode (line 50 vs. line 65), because sharp
    strips orientation metadata and on some encoders also drops GPS.
 3. Step into `observeImage()` at `observe.ts:42`. Note the prompt
    explicitly tells the model **not** to classify — only describe. This is
@@ -157,15 +157,15 @@ differences are the inputs the VLMs see.
 
 #### Headline numbers
 
-| Metric | Baseline (single-stage) | Two-stage | Δ |
-|---|---|---|---|
-| **Overall accuracy** | **92.1%** (70/76) | 89.5% (68/76) | **−2.6 pp** |
-| ROAD_DAMAGE accuracy | 100% (25/25) | 92.0% (23/25) | −8 pp |
-| ILLEGAL_DUMPING accuracy | 96.0% (24/25) | 96.0% (24/25) | 0 |
-| STREETLIGHT_OUTAGE accuracy | 66.7% (8/12) | 66.7% (8/12) | 0 |
-| VEHICLE_EMISSIONS accuracy | 92.9% (13/14) | 92.9% (13/14) | 0 |
-| Mean latency | 5,471 ms | 7,302 ms | +1,832 ms |
-| Mean reported confidence | 0.94 | 0.95 | +0.01 |
+| Metric                      | Baseline (single-stage) | Two-stage     | Δ           |
+| --------------------------- | ----------------------- | ------------- | ----------- |
+| **Overall accuracy**        | **92.1%** (70/76)       | 89.5% (68/76) | **−2.6 pp** |
+| ROAD_DAMAGE accuracy        | 100% (25/25)            | 92.0% (23/25) | −8 pp       |
+| ILLEGAL_DUMPING accuracy    | 96.0% (24/25)           | 96.0% (24/25) | 0           |
+| STREETLIGHT_OUTAGE accuracy | 66.7% (8/12)            | 66.7% (8/12)  | 0           |
+| VEHICLE_EMISSIONS accuracy  | 92.9% (13/14)           | 92.9% (13/14) | 0           |
+| Mean latency                | 5,471 ms                | 7,302 ms      | +1,832 ms   |
+| Mean reported confidence    | 0.94                    | 0.95          | +0.01       |
 
 **Two-stage did not beat baseline on this dataset.** This is the honest
 result, and the most informative thing to walk the TA through.
@@ -174,8 +174,8 @@ result, and the most informative thing to walk the TA through.
 
 Of the 76 cases:
 
-- **67** were correctly classified by *both* modes (the easy majority)
-- **5** were missed by *both* — same hard cases either way (e.g.
+- **67** were correctly classified by _both_ modes (the easy majority)
+- **5** were missed by _both_ — same hard cases either way (e.g.
   Firetruck_Smoking_Down_The_Street, 8TH_GRADE_STUDENTS_PICK_UP_LITTER,
   3 of the STREETLIGHT_OUTAGE shots where the actual light pole is small
   in the frame)
@@ -193,17 +193,17 @@ gemini-2.5-flash returned HTTP 503 on a substantial minority of calls
 during both runs, and which provider drops out changes the consensus
 pool).
 
-#### Where two-stage *did* clearly help
+#### Where two-stage _did_ clearly help
 
 Accuracy was a wash, but two-stage materially improved three other
 dimensions of the pipeline:
 
-| Dimension | Baseline | Two-stage |
-|---|---|---|
-| Consensus method = `unanimous` | 63 cases | **67 cases** |
-| Consensus method = `highest-confidence` (i.e. no agreement, tiebreaker fired) | 5 cases | **0 cases** |
-| Anthropic-`5MB`-too-large failures | ~5 cases (raw phone-sized photos rejected) | **0** (preprocess shrinks to ~200 KB) |
-| EXIF GPS extracted as a fallback location signal | 0 | 24/76 cases |
+| Dimension                                                                     | Baseline                                   | Two-stage                             |
+| ----------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------- |
+| Consensus method = `unanimous`                                                | 63 cases                                   | **67 cases**                          |
+| Consensus method = `highest-confidence` (i.e. no agreement, tiebreaker fired) | 5 cases                                    | **0 cases**                           |
+| Anthropic-`5MB`-too-large failures                                            | ~5 cases (raw phone-sized photos rejected) | **0** (preprocess shrinks to ~200 KB) |
+| EXIF GPS extracted as a fallback location signal                              | 0                                          | 24/76 cases                           |
 
 Two-stage makes the three providers **agree more often** (unanimity
 +6.3%) and **never falls through to the weakest consensus method**.
@@ -221,7 +221,7 @@ this dataset. The most likely explanations, in priority order:
    classifier as "this is a natural-disaster scene, not strictly a
    pothole" → OTHER. Baseline doesn't get that framing and just picks
    the obvious category from the image.
-2. **The bottleneck on this dataset isn't *understanding the image*.**
+2. **The bottleneck on this dataset isn't _understanding the image_.**
    The single-stage classifier already hits 92.1%. The 6 missed cases
    are genuinely ambiguous (people cleaning up litter, distant streetlights,
    fire-truck smoke as "fire" not "vehicle exhaust"). Stage-1 doesn't
@@ -237,7 +237,7 @@ this dataset. The most likely explanations, in priority order:
   observations — current observations skew descriptive enough that they
   introduce framing.
 - **Selective two-stage** — only run stage 1 when baseline confidence
-  would be low. Cheaper *and* avoids the OTHER-bias regression.
+  would be low. Cheaper _and_ avoids the OTHER-bias regression.
 - **Keep the preprocessing + EXIF + location-grounding parts of the
   pipeline anyway** — they're free wins on robustness and cost the same
   ~33% latency penalty whether observation is on or off.

@@ -302,7 +302,9 @@ async function main() {
         ok++;
         process.stdout.write(`  [${i}/${remote.length}] ${c.id}\n`);
       } catch (err) {
-        console.error(`  ! [${i}/${remote.length}] ${c.id}: ${(err as Error).message}`);
+        console.error(
+          `  ! [${i}/${remote.length}] ${c.id}: ${(err as Error).message}`,
+        );
       }
       await sleep(800); // be polite to upload.wikimedia.org
     }

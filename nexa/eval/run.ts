@@ -70,14 +70,19 @@ function localPathFor(c: DatasetCase): string {
   return path.join(CACHE_DIR, `${c.id}${ext}`);
 }
 
-async function ensureLocal(c: DatasetCase, allowDownload: boolean): Promise<string> {
+async function ensureLocal(
+  c: DatasetCase,
+  allowDownload: boolean,
+): Promise<string> {
   const target = localPathFor(c);
   if (existsSync(target)) return target;
   if (c.source === "local") {
     throw new Error(`local case file missing: ${target}`);
   }
   if (!allowDownload) {
-    throw new Error(`missing cached file ${target} (re-run with downloads enabled)`);
+    throw new Error(
+      `missing cached file ${target} (re-run with downloads enabled)`,
+    );
   }
   await mkdir(path.dirname(target), { recursive: true });
   const res = await fetch(c.url, {
@@ -89,7 +94,10 @@ async function ensureLocal(c: DatasetCase, allowDownload: boolean): Promise<stri
   return target;
 }
 
-async function loadAsBase64DataUrl(c: DatasetCase, allowDownload: boolean): Promise<string> {
+async function loadAsBase64DataUrl(
+  c: DatasetCase,
+  allowDownload: boolean,
+): Promise<string> {
   const file = await ensureLocal(c, allowDownload);
   const bytes = await readFile(file);
   const mime = c.mime || "image/jpeg";
@@ -136,7 +144,9 @@ async function runMode(
       const p = await runCase(c, img, twoStage);
       predictions.push(p);
       const mark = p.ok ? "✓" : "✗";
-      console.log(`${mark}  expected=${p.expected.padEnd(18)} got=${p.predicted}`);
+      console.log(
+        `${mark}  expected=${p.expected.padEnd(18)} got=${p.predicted}`,
+      );
     } catch (err) {
       console.log(`SKIP (${(err as Error).message})`);
     }
@@ -185,7 +195,9 @@ async function main() {
   }
 
   if (args.mode === "two-stage" || args.mode === "both") {
-    console.log(`\n>>> Two-stage (preprocess + observe + classify), n=${cases.length}`);
+    console.log(
+      `\n>>> Two-stage (preprocess + observe + classify), n=${cases.length}`,
+    );
     const preds = await runMode(cases, true, args.download);
     twoStageMetrics = aggregate(preds);
     await writeFile(
@@ -206,7 +218,9 @@ async function main() {
   }
 
   if (baselineMetrics && twoStageMetrics) {
-    console.log(diffReport("Baseline", baselineMetrics, "Two-stage", twoStageMetrics));
+    console.log(
+      diffReport("Baseline", baselineMetrics, "Two-stage", twoStageMetrics),
+    );
   }
 }
 

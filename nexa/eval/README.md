@@ -8,7 +8,7 @@ pipeline. It exists to answer one question:
 > civic-issue photos — and by how much?
 
 It also operationalises **KPI K1** from the project's OKR document
-(*"Eval-set pass rate, weekly, as a CI job on every push to main"*), which had
+(_"Eval-set pass rate, weekly, as a CI job on every push to main"_), which had
 been documented but never built.
 
 ## Layout
@@ -36,15 +36,15 @@ caption alongside the URL in `cases.json`. The team's three existing
 `nexa/test-photos/*.jpg` images are included as ground-truth anchor cases.
 Categories queried:
 
-| Wikimedia category | Expected `IssueType`        |
-| ------------------ | --------------------------- |
-| Potholes           | ROAD_DAMAGE                 |
-| Road damage        | ROAD_DAMAGE                 |
-| Damaged street lights | STREETLIGHT_OUTAGE       |
-| Illegal dumping    | ILLEGAL_DUMPING             |
-| Litter             | ILLEGAL_DUMPING             |
-| Vehicles emitting smoke | VEHICLE_EMISSIONS      |
-| Exhaust smoke      | VEHICLE_EMISSIONS           |
+| Wikimedia category      | Expected `IssueType` |
+| ----------------------- | -------------------- |
+| Potholes                | ROAD_DAMAGE          |
+| Road damage             | ROAD_DAMAGE          |
+| Damaged street lights   | STREETLIGHT_OUTAGE   |
+| Illegal dumping         | ILLEGAL_DUMPING      |
+| Litter                  | ILLEGAL_DUMPING      |
+| Vehicles emitting smoke | VEHICLE_EMISSIONS    |
+| Exhaust smoke           | VEHICLE_EMISSIONS    |
 
 `fetch.ts` throttles requests at 1.1s/call and retries on HTTP 429 with
 exponential backoff, per Wikimedia's robot policy.
@@ -66,9 +66,9 @@ Aggregated into:
 
 **Conditions compared.**
 
-| Run | Image preprocess | Stage-1 observation | Location in prompt |
-|-----|------------------|---------------------|--------------------|
-| `baseline`  | raw image direct to VLMs | none | none |
+| Run         | Image preprocess                       | Stage-1 observation          | Location in prompt                         |
+| ----------- | -------------------------------------- | ---------------------------- | ------------------------------------------ |
+| `baseline`  | raw image direct to VLMs               | none                         | none                                       |
 | `two-stage` | sharp resize/rotate + EXIF GPS extract | gpt-4o-mini observation pass | EXIF/caller GPS folded into stage-2 prompt |
 
 Both runs hit the same three VLMs (OpenAI gpt-4o-mini, Anthropic
@@ -104,11 +104,11 @@ npx tsx eval/run.ts --mode=two-stage
 
 Estimated cost on the full ~60-image dataset:
 
-| Item               | Cost  |
-|--------------------|-------|
-| Baseline run (3 providers × 60 = 180 calls) | ~$0.30 |
-| Two-stage run (180 stage-2 calls + 60 stage-1 calls) | ~$0.40 |
-| **Total per full eval** | **~$0.70** |
+| Item                                                 | Cost       |
+| ---------------------------------------------------- | ---------- |
+| Baseline run (3 providers × 60 = 180 calls)          | ~$0.30     |
+| Two-stage run (180 stage-2 calls + 60 stage-1 calls) | ~$0.40     |
+| **Total per full eval**                              | **~$0.70** |
 
 ## Reading the results
 
@@ -131,7 +131,7 @@ delta to stdout. Capture that into the contributions doc / PR description.
 
 - Wikimedia Commons photos are biased toward "good" examples of each
   category — they're curated and well-lit. Real user submissions to Nexa will
-  be lower-quality. This eval is a *floor* on what we can expect from the
+  be lower-quality. This eval is a _floor_ on what we can expect from the
   models, not a tight estimate of production accuracy.
 - EXIF GPS extracted from Commons photos points at the photographer's
   location, which usually correlates with the depicted issue but isn't

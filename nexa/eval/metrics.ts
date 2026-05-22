@@ -52,7 +52,9 @@ export function aggregate(predictions: CasePrediction[]): AggregateMetrics {
   const p90LatencyMs =
     latencies.length === 0
       ? 0
-      : latencies[Math.min(latencies.length - 1, Math.floor(latencies.length * 0.9))];
+      : latencies[
+          Math.min(latencies.length - 1, Math.floor(latencies.length * 0.9))
+        ];
 
   const meanConfidence =
     predictions.length === 0
@@ -78,10 +80,7 @@ export function aggregate(predictions: CasePrediction[]): AggregateMetrics {
   };
 }
 
-export function renderReport(
-  label: string,
-  metrics: AggregateMetrics,
-): string {
+export function renderReport(label: string, metrics: AggregateMetrics): string {
   const lines: string[] = [];
   lines.push(`\n=== ${label} ===`);
   lines.push(
@@ -123,9 +122,7 @@ export function renderReport(
   );
   for (const expected of labelList) {
     const row = metrics.confusion[expected] ?? {};
-    const cells = labelList.map((l) =>
-      String(row[l] ?? 0).padStart(10),
-    );
+    const cells = labelList.map((l) => String(row[l] ?? 0).padStart(10));
     lines.push(`  ${expected.padEnd(22)}${cells.join("")}`);
   }
 

@@ -5,34 +5,35 @@ dataset (73 Wikimedia Commons + 3 team test-photos). See
 `CONTRIBUTIONS.md` § 2 for the full discussion.
 
 ## Providers
+
 - OpenAI `gpt-4o-mini`
 - Anthropic `claude-haiku-4-5`
 - Google `gemini-2.5-flash`
 
 ## Headline
 
-| | Baseline | Two-stage | Δ |
-|---|---|---|---|
+|                  | Baseline          | Two-stage     | Δ           |
+| ---------------- | ----------------- | ------------- | ----------- |
 | Overall accuracy | **92.1%** (70/76) | 89.5% (68/76) | **−2.6 pp** |
-| Mean latency | 5,471 ms | 7,302 ms | +1,832 ms |
-| Mean confidence | 0.938 | 0.950 | +0.012 |
+| Mean latency     | 5,471 ms          | 7,302 ms      | +1,832 ms   |
+| Mean confidence  | 0.938             | 0.950         | +0.012      |
 
 ## Per-class accuracy
 
-| Class | Support | Baseline | Two-stage |
-|---|---|---|---|
-| ROAD_DAMAGE | 25 | 100% | 92.0% |
-| ILLEGAL_DUMPING | 25 | 96.0% | 96.0% |
-| STREETLIGHT_OUTAGE | 12 | 66.7% | 66.7% |
-| VEHICLE_EMISSIONS | 14 | 92.9% | 92.9% |
+| Class              | Support | Baseline | Two-stage |
+| ------------------ | ------- | -------- | --------- |
+| ROAD_DAMAGE        | 25      | 100%     | 92.0%     |
+| ILLEGAL_DUMPING    | 25      | 96.0%    | 96.0%     |
+| STREETLIGHT_OUTAGE | 12      | 66.7%    | 66.7%     |
+| VEHICLE_EMISSIONS  | 14      | 92.9%    | 92.9%     |
 
 ## Consensus method
 
-| Method | Baseline | Two-stage |
-|---|---|---|
-| `unanimous` | 63 | **67** |
-| `majority` | 8 | 9 |
-| `highest-confidence` | 5 | **0** |
+| Method               | Baseline | Two-stage |
+| -------------------- | -------- | --------- |
+| `unanimous`          | 63       | **67**    |
+| `majority`           | 8        | 9         |
+| `highest-confidence` | 5        | **0**     |
 
 ## Confusion matrices
 
@@ -71,11 +72,11 @@ Net: 1 − 3 = **−2 cases** = −2.6 pp.
 
 ## Robustness wins (independent of accuracy)
 
-| Failure mode | Baseline | Two-stage |
-|---|---|---|
-| Anthropic 5 MB image rejections (raw phone-sized photos) | ~5 cases | 0 |
-| Highest-confidence tiebreaker fired (no provider agreement) | 5 cases | 0 |
-| EXIF GPS extracted as fallback location | 0 | 24 / 76 |
+| Failure mode                                                | Baseline | Two-stage |
+| ----------------------------------------------------------- | -------- | --------- |
+| Anthropic 5 MB image rejections (raw phone-sized photos)    | ~5 cases | 0         |
+| Highest-confidence tiebreaker fired (no provider agreement) | 5 cases  | 0         |
+| EXIF GPS extracted as fallback location                     | 0        | 24 / 76   |
 
 ## How to reproduce
 
