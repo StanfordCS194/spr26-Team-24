@@ -9,11 +9,15 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "db:seed": "prisma db seed",
     "eval:fetch": "tsx eval/dataset/fetch.ts",
     "eval:fetch:download": "tsx eval/dataset/fetch.ts --download",
     "eval": "tsx eval/run.ts",
     "eval:baseline": "tsx eval/run.ts --mode=baseline",
     "eval:two-stage": "tsx eval/run.ts --mode=two-stage"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",
