@@ -1,8 +1,7 @@
 # Eval Run Summary — 2026-05-22
 
 Headline numbers from running `npm run eval` over the full 76-image
-dataset (73 Wikimedia Commons + 3 team test-photos). See
-`CONTRIBUTIONS.md` § 2 for the full discussion.
+dataset (73 Wikimedia Commons + 3 team test-photos).
 
 ## Providers
 
