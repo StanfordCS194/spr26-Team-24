@@ -349,6 +349,7 @@ export default function ReportPage() {
             onDescriptionChange={setDescription}
             onAddressChange={handleAddressChange}
             onDetectLocation={geo.detect}
+            onLocationChange={geo.setCoordinates}
             onClassify={handleClassify}
           />
         )}
