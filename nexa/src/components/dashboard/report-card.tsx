@@ -1,0 +1,189 @@
+"use client";
+
+import { useState } from "react";
+import { ChevronDown, ImageOff, MapPin } from "lucide-react";
+import { ISSUE_TYPE_LABELS, shortenAddress } from "@/lib/constants";
+import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
+import { DeleteReportButton } from "@/components/dashboard/delete-report-button";
+
+export interface DashboardReport {
+  id: string;
+  issueType: string | null;
+  status: string;
+  description: string | null;
+  aiDescription: string | null;
+  address: string | null;
+  imageUrl: string | null;
+  createdAt: Date;
+}
+
+interface ReportCardProps {
+  report: DashboardReport;
+}
+
+function formatStatus(status: string): string {
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function statusPillClass(status: string): string {
+  switch (status) {
+    case "CONFIRMED":
+      return "bg-ep-green-light text-ep-green";
+    case "RESOLVED":
+    case "CLOSED":
+      return "bg-blue-50 text-blue-700";
+    case "SUBMITTED":
+    case "IN_PROGRESS":
+      return "bg-ep-purple-light text-ep-purple";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
+
+export function ReportCard({ report }: ReportCardProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  const issueLabel =
+    ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
+    report.issueType ||
+    "Uncategorized";
+  const shortLocation = shortenAddress(report.address);
+  const summary =
+    report.aiDescription?.trim() ||
+    report.description?.trim() ||
+    "No description";
+
+  return (
+    <article className="ep-card overflow-hidden transition-colors hover:bg-muted/20">
+      <button
+        type="button"
+        onClick={() => setExpanded((value) => !value)}
+        aria-expanded={expanded}
+        aria-controls={`report-${report.id}-details`}
+        className="block w-full cursor-pointer p-6 text-left"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              {issueLabel}
+            </span>
+            <h2 className="mt-2 text-lg font-medium leading-snug">
+              {shortLocation || "Location unavailable"}
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              <time
+                dateTime={report.createdAt.toISOString()}
+                title={formatFullDateTime(report.createdAt)}
+              >
+                {formatRelativeTime(report.createdAt)}
+              </time>
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span
+              className={`inline-flex rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider ${statusPillClass(report.status)}`}
+            >
+              {formatStatus(report.status)}
+            </span>
+            <span onClick={(event) => event.stopPropagation()}>
+              <DeleteReportButton reportId={report.id} />
+            </span>
+            <ChevronDown
+              className={`size-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+
+        {!expanded && (
+          <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-foreground">
+            {summary}
+          </p>
+        )}
+      </button>
+
+      {expanded && (
+        <div
+          id={`report-${report.id}-details`}
+          className="border-t border-border px-6 pb-6 pt-5"
+        >
+          <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+            <div>
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                Photo
+              </span>
+              <div className="mt-2 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border border-border bg-muted/40">
+                {report.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={report.imageUrl}
+                    alt={`Photo for ${issueLabel} report`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <ImageOff className="size-6" aria-hidden="true" />
+                    <p className="text-xs">No photo attached</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-5">
+              {report.description?.trim() ? (
+                <div>
+                  <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    Your description
+                  </span>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground">
+                    {report.description}
+                  </p>
+                </div>
+              ) : null}
+
+              {report.aiDescription?.trim() ? (
+                <div>
+                  <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    AI summary
+                  </span>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground">
+                    {report.aiDescription}
+                  </p>
+                </div>
+              ) : null}
+
+              {!report.description?.trim() && !report.aiDescription?.trim() && (
+                <p className="text-sm text-muted-foreground">
+                  No description was provided for this report.
+                </p>
+              )}
+
+              <div>
+                <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  Location
+                </span>
+                {report.address ? (
+                  <div className="mt-2 flex items-start gap-2 text-sm leading-relaxed text-foreground">
+                    <MapPin
+                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <span>{report.address}</span>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    No location provided.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}

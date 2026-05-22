@@ -1,34 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2, Clock3, ClipboardList } from "lucide-react";
-import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ISSUE_TYPE_LABELS, shortenAddress } from "@/lib/constants";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
-import { DeleteReportButton } from "@/components/dashboard/delete-report-button";
-
-function formatStatus(status: string): string {
-  return status
-    .toLowerCase()
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function statusPillClass(status: string): string {
-  switch (status) {
-    case "CONFIRMED":
-      return "bg-ep-green-light text-ep-green";
-    case "RESOLVED":
-    case "CLOSED":
-      return "bg-blue-50 text-blue-700";
-    case "SUBMITTED":
-    case "IN_PROGRESS":
-      return "bg-ep-purple-light text-ep-purple";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
+import { ReportCard } from "@/components/dashboard/report-card";
+import {
+  ReportsMap,
+  type ReportMapPoint,
+} from "@/components/dashboard/reports-map";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -51,6 +32,9 @@ export default async function DashboardPage() {
       description: true,
       aiDescription: true,
       address: true,
+      imageUrl: true,
+      latitude: true,
+      longitude: true,
       createdAt: true,
     },
   });
@@ -60,6 +44,29 @@ export default async function DashboardPage() {
     (report) => report.status === "CONFIRMED",
   ).length;
   const latestReport = reports[0];
+
+  const mapPoints: ReportMapPoint[] = reports
+    .filter(
+      (
+        report,
+      ): report is typeof report & { latitude: number; longitude: number } =>
+        typeof report.latitude === "number" &&
+        Number.isFinite(report.latitude) &&
+        typeof report.longitude === "number" &&
+        Number.isFinite(report.longitude),
+    )
+    .map((report) => ({
+      id: report.id,
+      latitude: report.latitude,
+      longitude: report.longitude,
+      issueLabel:
+        ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
+        report.issueType ||
+        "Uncategorized",
+      shortLocation: shortenAddress(report.address),
+      status: report.status,
+      relativeTime: formatRelativeTime(report.createdAt),
+    }));
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
@@ -122,6 +129,12 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {mapPoints.length > 0 && (
+        <div className="mt-8">
+          <ReportsMap points={mapPoints} />
+        </div>
+      )}
+
       <div className="mt-8">
         {reports.length === 0 ? (
           <div className="ep-card p-8 text-center">
@@ -133,48 +146,7 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid gap-4">
             {reports.map((report) => (
-              <Link
-                key={report.id}
-                href={`/dashboard/${report.id}`}
-                className="group block"
-              >
-                <article className="ep-card p-6 transition-all hover:bg-muted/20 hover:shadow-sm group-hover:border-ep-purple/30">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                      {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
-                        report.issueType ||
-                        "Uncategorized"}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider ${statusPillClass(report.status)}`}
-                      >
-                        {formatStatus(report.status)}
-                      </span>
-                      <DeleteReportButton reportId={report.id} />
-                      <ArrowRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                    </div>
-                  </div>
-
-                  <h2 className="mt-4 text-lg font-medium leading-snug">
-                    {report.address || "No location provided"}
-                  </h2>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    <time
-                      dateTime={report.createdAt.toISOString()}
-                      title={formatFullDateTime(report.createdAt)}
-                    >
-                      {formatRelativeTime(report.createdAt)}
-                    </time>
-                  </p>
-
-                  <p className="mt-4 text-sm leading-relaxed text-foreground">
-                    {report.aiDescription ||
-                      report.description ||
-                      "No description"}
-                  </p>
-                </article>
-              </Link>
+              <ReportCard key={report.id} report={report} />
             ))}
           </div>
         )}
