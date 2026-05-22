@@ -146,7 +146,10 @@ export function ReportsMap({ points }: ReportsMapProps) {
   return (
     <div className="ep-card overflow-hidden">
       <div className="flex items-center gap-2 border-b border-border px-5 py-4">
-        <MapPinned className="size-4 text-muted-foreground" aria-hidden="true" />
+        <MapPinned
+          className="size-4 text-muted-foreground"
+          aria-hidden="true"
+        />
         <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
           Report locations
         </span>

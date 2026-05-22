@@ -241,7 +241,11 @@
 
 .leaflet-container {
   font-family:
-    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+    var(--font-geist-sans),
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    sans-serif;
   background: var(--muted);
 }
 
