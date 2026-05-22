@@ -12,13 +12,15 @@ function getClient() {
 export async function classifyWithOpenAI(
   description: string,
   imageBase64: string | null,
+  options: { prompt?: string } = {},
 ): Promise<ProviderResult> {
   const start = Date.now();
+  const promptText = options.prompt ?? CLASSIFICATION_PROMPT;
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
   const content: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [
-    { type: "text", text: CLASSIFICATION_PROMPT },
+    { type: "text", text: promptText },
   ];
 
   if (description) {

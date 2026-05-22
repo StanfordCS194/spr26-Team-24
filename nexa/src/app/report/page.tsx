@@ -215,6 +215,9 @@ export default function ReportPage() {
         body: JSON.stringify({
           description,
           imageBase64: image.imageBase64,
+          latitude: geo.latitude ?? undefined,
+          longitude: geo.longitude ?? undefined,
+          address: geo.address || undefined,
         }),
       });
 
