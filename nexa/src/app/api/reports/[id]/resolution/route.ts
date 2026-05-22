@@ -16,9 +16,9 @@ export async function POST(
     }
 
     const { id } = await context.params;
-    const body = (await request.json().catch(() => null)) as
-      | { resolved?: unknown }
-      | null;
+    const body = (await request.json().catch(() => null)) as {
+      resolved?: unknown;
+    } | null;
 
     if (!body || typeof body.resolved !== "boolean") {
       return NextResponse.json(
