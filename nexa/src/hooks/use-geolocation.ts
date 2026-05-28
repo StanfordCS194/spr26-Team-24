@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
+import { reverseGeocode } from "@/lib/reverse-geocode";
 
 export function useGeolocation() {
   const [address, setAddress] = useState("");
@@ -10,6 +11,10 @@ export function useGeolocation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Monotonic counter so a slow response from an earlier drag never overwrites
+  // the result of a more recent one.
+  const geocodeSeq = useRef(0);
+
   const setCoordinates = useCallback(
     (lat: number | null, lng: number | null) => {
       setLatitude(lat);
@@ -18,6 +23,16 @@ export function useGeolocation() {
     [],
   );
 
+  /** Shared reverse-geocode: updates address to match lat/lng. */
+  const refreshAddress = useCallback(async (lat: number, lng: number) => {
+    const seq = ++geocodeSeq.current;
+    const name = await reverseGeocode(lat, lng);
+    if (seq === geocodeSeq.current) {
+      setAddress(name);
+    }
+  }, []);
+
+  /** Browser GPS → set coords + reverse-geocode address. */
   const detect = useCallback(() => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by this browser.");
@@ -32,17 +47,7 @@ export function useGeolocation() {
         const lng = position.coords.longitude;
         setCoordinates(lat, lng);
         setAccuracy(position.coords.accuracy);
-
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-          );
-          const data = await res.json();
-          if (data.display_name) setAddress(data.display_name);
-        } catch {
-          setAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-        }
-
+        await refreshAddress(lat, lng);
         setLoading(false);
       },
       (err) => {
@@ -65,9 +70,19 @@ export function useGeolocation() {
         maximumAge: 60000,
       },
     );
-  }, [setCoordinates]);
+  }, [setCoordinates, refreshAddress]);
+
+  /** Pin drag → update coords + reverse-geocode to keep address in sync. */
+  const movePin = useCallback(
+    (lat: number, lng: number) => {
+      setCoordinates(lat, lng);
+      void refreshAddress(lat, lng);
+    },
+    [setCoordinates, refreshAddress],
+  );
 
   const reset = useCallback(() => {
+    geocodeSeq.current += 1;
     setAddress("");
     setCoordinates(null, null);
     setAccuracy(null);
@@ -83,6 +98,7 @@ export function useGeolocation() {
     loading,
     error,
     setCoordinates,
+    movePin,
     detect,
     reset,
   };
