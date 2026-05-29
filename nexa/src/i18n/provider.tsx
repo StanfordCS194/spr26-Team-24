@@ -32,6 +32,13 @@ function isLocale(value: string | null): value is Locale {
   return LANGUAGES.some((language) => language.code === value);
 }
 
+function getStoredLocale(): Locale {
+  if (typeof window === "undefined") return DEFAULT_LOCALE;
+
+  const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+  return isLocale(storedLocale) ? storedLocale : DEFAULT_LOCALE;
+}
+
 function formatMessage(message: string, params?: Params) {
   if (!params) return message;
 
@@ -42,15 +49,11 @@ function formatMessage(message: string, params?: Params) {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const [locale, setLocaleState] = useState<Locale>(getStoredLocale);
 
   useEffect(() => {
-    const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (isLocale(storedLocale)) {
-      setLocaleState(storedLocale);
-      document.documentElement.lang = storedLocale;
-    }
-  }, []);
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale);
