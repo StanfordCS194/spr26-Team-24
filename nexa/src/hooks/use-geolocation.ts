@@ -35,7 +35,7 @@ export function useGeolocation() {
   /** Browser GPS → set coords + reverse-geocode address. */
   const detect = useCallback(() => {
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by this browser.");
+      setError("geo.unsupported");
       return;
     }
     setLoading(true);
@@ -54,13 +54,13 @@ export function useGeolocation() {
         setLoading(false);
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            setError("Location permission denied. Please allow access.");
+            setError("geo.denied");
             break;
           case err.POSITION_UNAVAILABLE:
-            setError("Location unavailable. Try again.");
+            setError("geo.unavailable");
             break;
           case err.TIMEOUT:
-            setError("Location request timed out. Try again.");
+            setError("geo.timeout");
             break;
         }
       },

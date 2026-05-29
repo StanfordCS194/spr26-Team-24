@@ -6,12 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
 import { Menu } from "@base-ui/react/menu";
 import { Logo } from "@/components/logo";
+import { LanguageSelector } from "@/components/language-selector";
+import { useI18n } from "@/i18n/provider";
 
 const NAV_LINKS = [
-  { href: "/#how-it-works", label: "How It Works" },
-  { href: "/#features", label: "Features" },
-  { href: "/#stats", label: "Impact" },
-];
+  { href: "/#how-it-works", labelKey: "nav.howItWorks" },
+  { href: "/#features", labelKey: "nav.features" },
+  { href: "/#stats", labelKey: "nav.impact" },
+] as const;
 
 interface AuthUser {
   id: string;
@@ -31,6 +33,7 @@ function getInitials(user: AuthUser): string {
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useI18n();
 
   const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
 
@@ -62,7 +65,7 @@ export function Navbar() {
               href={link.href}
               className="font-mono text-xs font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
             >
-              {link.label}
+              {t(link.labelKey)}
             </a>
           ))}
           {user && (
@@ -70,12 +73,13 @@ export function Navbar() {
               href="/dashboard"
               className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground ${pathname === "/dashboard" ? "text-foreground" : "text-muted-foreground"}`}
             >
-              Dashboard
+              {t("nav.dashboard")}
             </Link>
           )}
         </div>
 
         <div className="flex items-center justify-self-end gap-3">
+          <LanguageSelector />
           {user === undefined ? (
             <div
               aria-hidden
@@ -87,7 +91,7 @@ export function Navbar() {
                 href="/report"
                 className={`btn-cta btn-cta-dark ${pathname === "/report" ? "opacity-70" : ""}`}
               >
-                Report Issue
+                {t("nav.reportIssue")}
                 <ArrowRight className="size-3.5" />
               </Link>
               <UserMenu
@@ -102,13 +106,13 @@ export function Navbar() {
                 href="/login"
                 className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground ${pathname === "/login" ? "text-foreground" : "text-muted-foreground"}`}
               >
-                Sign in
+                {t("nav.signIn")}
               </Link>
               <Link
                 href="/report"
                 className={`btn-cta btn-cta-dark ${pathname === "/report" ? "opacity-70" : ""}`}
               >
-                Report Issue
+                {t("nav.reportIssue")}
                 <ArrowRight className="size-3.5" />
               </Link>
             </>
@@ -130,11 +134,12 @@ function UserMenu({
 }) {
   const initials = getInitials(user);
   const isOnDashboard = pathname === "/dashboard";
+  const { t } = useI18n();
 
   return (
     <Menu.Root>
       <Menu.Trigger
-        aria-label="Open account menu"
+        aria-label={t("nav.accountMenu")}
         className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-xs font-semibold tracking-wide text-white shadow-sm outline-none ring-offset-background transition hover:scale-[1.04] hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[popup-open]:ring-2 data-[popup-open]:ring-ring data-[popup-open]:ring-offset-2"
       >
         {initials}
@@ -184,7 +189,7 @@ function UserMenu({
                 className={`flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isOnDashboard ? "bg-muted" : ""}`}
               >
                 <LayoutDashboard className="size-4 text-muted-foreground" />
-                Dashboard
+                {t("nav.dashboard")}
               </Menu.LinkItem>
 
               <Menu.Item
@@ -192,7 +197,7 @@ function UserMenu({
                 className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
               >
                 <LogOut className="size-4 text-muted-foreground" />
-                Sign out
+                {t("nav.signOut")}
               </Menu.Item>
             </div>
           </Menu.Popup>

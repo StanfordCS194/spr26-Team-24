@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
-import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
+import { useI18n } from "@/i18n/provider";
 
 interface ConfirmedReport {
   id: string;
@@ -16,6 +16,8 @@ interface ConfirmedStepProps {
 }
 
 export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
+  const { t, locale } = useI18n();
+
   return (
     <div className="flex flex-col items-center gap-10 py-12 text-center">
       <div className="flex size-20 items-center justify-center rounded-full bg-ep-green-light">
@@ -24,10 +26,10 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
 
       <div>
         <h2 className="text-3xl font-normal tracking-tight">
-          Report submitted!
+          {t("report.submitted")}
         </h2>
         <p className="mt-2 text-muted-foreground">
-          Your civic report has been filed successfully.
+          {t("report.submittedText")}
         </p>
       </div>
 
@@ -35,32 +37,32 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              Report ID
+              {t("report.reportId")}
             </span>
             <span className="font-mono text-sm">{report.id}</span>
           </div>
           <div className="h-px bg-border" />
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              Issue Type
+              {t("report.issueType")}
             </span>
             <span className="text-sm font-medium">
-              {ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
-                report.issueType ||
-                "Unknown"}
+              {report.issueType
+                ? t(`issue.${report.issueType}`)
+                : t("common.unknown")}
             </span>
           </div>
           <div className="h-px bg-border" />
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              Submitted
+              {t("report.submittedLabel")}
             </span>
             <time
               dateTime={new Date(report.createdAt).toISOString()}
               title={formatFullDateTime(report.createdAt)}
               className="text-sm"
             >
-              {formatRelativeTime(report.createdAt)}
+              {formatRelativeTime(report.createdAt, locale, t("time.justNow"))}
             </time>
           </div>
           {report.aiDescription && (
@@ -68,7 +70,7 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
               <div className="h-px bg-border" />
               <div>
                 <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                  AI Summary
+                  {t("report.aiSummary")}
                 </span>
                 <p className="mt-2 text-sm leading-relaxed text-foreground">
                   {report.aiDescription}
@@ -81,10 +83,10 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
 
       <div className="flex flex-wrap justify-center gap-3">
         <Link href="/dashboard" className="btn-cta btn-cta-outline">
-          View Dashboard
+          {t("report.viewDashboard")}
         </Link>
         <button className="btn-cta btn-cta-purple" onClick={onReportAnother}>
-          Report Another Issue
+          {t("report.reportAnother")}
           <ArrowRight className="size-4" />
         </button>
       </div>

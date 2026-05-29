@@ -1,15 +1,20 @@
+"use client";
+
 import { CheckCircle2 } from "lucide-react";
+import { useI18n } from "@/i18n/provider";
+import type { MessageKey } from "@/i18n/messages";
 
 export type ReportStep = "describe" | "review" | "confirmed";
 
-const STEPS: { key: ReportStep; label: string; number: string }[] = [
-  { key: "describe", label: "Describe", number: "1" },
-  { key: "review", label: "Review", number: "2" },
-  { key: "confirmed", label: "Done", number: "3" },
+const STEPS: { key: ReportStep; labelKey: MessageKey; number: string }[] = [
+  { key: "describe", labelKey: "report.stepDescribe", number: "1" },
+  { key: "review", labelKey: "report.stepReview", number: "2" },
+  { key: "confirmed", labelKey: "report.stepDone", number: "3" },
 ];
 
 export function Stepper({ current }: { current: ReportStep }) {
   const currentIdx = STEPS.findIndex((s) => s.key === current);
+  const { t } = useI18n();
 
   return (
     <div className="flex items-center justify-center gap-3">
@@ -45,7 +50,7 @@ export function Stepper({ current }: { current: ReportStep }) {
                       : "text-muted-foreground"
                 }`}
               >
-                {step.label}
+                {t(step.labelKey)}
               </span>
             </div>
           </div>

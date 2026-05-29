@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { PostHogProvider } from "@/components/posthog-provider";
+import { I18nProvider } from "@/i18n/provider";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -32,10 +33,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <PostHogProvider>
-          <Navbar />
-          {children}
-        </PostHogProvider>
+        <I18nProvider>
+          <PostHogProvider>
+            <Navbar />
+            {children}
+          </PostHogProvider>
+        </I18nProvider>
       </body>
     </html>
   );
