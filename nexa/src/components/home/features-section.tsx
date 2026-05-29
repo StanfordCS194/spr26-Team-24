@@ -52,9 +52,7 @@ export function FeaturesSection() {
               <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-ep-green-light">
                 <feature.icon className="size-5 text-ep-green" />
               </div>
-              <h3 className="text-base font-semibold">
-                {t(feature.titleKey)}
-              </h3>
+              <h3 className="text-base font-semibold">{t(feature.titleKey)}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {t(feature.descriptionKey)}
               </p>

@@ -148,7 +148,8 @@ export function ReportsMap({ points }: ReportsMapProps) {
           {t("dashboard.reportLocations")}
         </span>
         <span className="ml-auto font-mono text-xs text-muted-foreground">
-          {points.length} {points.length === 1 ? t("dashboard.pin") : t("dashboard.pins")}
+          {points.length}{" "}
+          {points.length === 1 ? t("dashboard.pin") : t("dashboard.pins")}
         </span>
       </div>
       <div

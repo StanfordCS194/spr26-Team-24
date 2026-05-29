@@ -82,7 +82,8 @@ export default async function EditReportPage({ params }: EditReportPageProps) {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             <T k={`status.${report.status}`} /> ·{" "}
-            <T k="report.submittedLabel" /> {formatFullDateTime(report.createdAt)}
+            <T k="report.submittedLabel" />{" "}
+            {formatFullDateTime(report.createdAt)}
           </p>
         </div>
       </div>

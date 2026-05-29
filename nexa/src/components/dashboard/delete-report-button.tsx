@@ -107,9 +107,7 @@ export function DeleteReportButton({
               : (deleteClassName ??
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-60")
           }
-          aria-label={
-            confirming ? t("common.confirm") : resolvedDeleteLabel
-          }
+          aria-label={confirming ? t("common.confirm") : resolvedDeleteLabel}
         >
           {deleting ? (
             <Loader2 className="size-3.5 animate-spin" />

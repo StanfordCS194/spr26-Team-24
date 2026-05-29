@@ -53,9 +53,7 @@ export function ProcessSection() {
                 </span>
               </div>
               <div>
-                <h3 className="text-base font-semibold">
-                  {t(step.titleKey)}
-                </h3>
+                <h3 className="text-base font-semibold">{t(step.titleKey)}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   {t(step.descriptionKey)}
                 </p>

@@ -60,8 +60,9 @@ export function ReportCard({ report }: ReportCardProps) {
   const [expanded, setExpanded] = useState(false);
   const { t, locale } = useI18n();
 
-  const issueLabel =
-    report.issueType ? t(`issue.${report.issueType}`) : t("dashboard.uncategorized");
+  const issueLabel = report.issueType
+    ? t(`issue.${report.issueType}`)
+    : t("dashboard.uncategorized");
   const shortLocation = shortenAddress(report.address);
   const summary =
     report.aiDescription?.trim() ||
@@ -97,7 +98,11 @@ export function ReportCard({ report }: ReportCardProps) {
                 dateTime={report.createdAt.toISOString()}
                 title={formatFullDateTime(report.createdAt, locale)}
               >
-                {formatRelativeTime(report.createdAt, locale, t("time.justNow"))}
+                {formatRelativeTime(
+                  report.createdAt,
+                  locale,
+                  t("time.justNow"),
+                )}
               </time>
             </p>
           </div>

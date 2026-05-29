@@ -175,10 +175,7 @@ export default function ReportPage() {
         status: "not_found",
         cityName: null,
         message: t("report.noOfficialForm"),
-        reason:
-          err instanceof Error
-            ? err.message
-            : t("report.noOfficialForm"),
+        reason: err instanceof Error ? err.message : t("report.noOfficialForm"),
       });
     } finally {
       setOfficialFormLoading(false);
@@ -254,7 +251,9 @@ export default function ReportPage() {
         has_location: !!geo.latitude,
       });
     } catch (e) {
-      setClassifyError(e instanceof Error ? e.message : t("common.somethingWrong"));
+      setClassifyError(
+        e instanceof Error ? e.message : t("common.somethingWrong"),
+      );
     } finally {
       setClassifying(false);
     }
@@ -295,7 +294,9 @@ export default function ReportPage() {
         has_location: !!geo.latitude,
       });
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : t("common.somethingWrong"));
+      setSubmitError(
+        e instanceof Error ? e.message : t("common.somethingWrong"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -378,7 +379,9 @@ export default function ReportPage() {
 
             {comparison && comparison.allResults.length > 1 && (
               <div className="mt-10">
-                <span className="section-label">{t("report.aiComparison")}</span>
+                <span className="section-label">
+                  {t("report.aiComparison")}
+                </span>
                 <p className="mt-2 mb-4 text-sm text-muted-foreground">
                   {t("report.decisionMethod")}{" "}
                   <span className="font-medium text-foreground">

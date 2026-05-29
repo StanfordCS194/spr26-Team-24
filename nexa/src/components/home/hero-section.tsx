@@ -66,9 +66,7 @@ export function HeroSection() {
                 <div className="flex size-10 items-center justify-center rounded-lg bg-ep-green-light">
                   <item.icon className="size-5 text-ep-green" />
                 </div>
-                <h3 className="text-base font-semibold">
-                  {t(item.titleKey)}
-                </h3>
+                <h3 className="text-base font-semibold">{t(item.titleKey)}</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   {t(item.descriptionKey)}
                 </p>

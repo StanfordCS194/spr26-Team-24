@@ -42,9 +42,7 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
       className="mt-4 flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 px-4 py-3"
       onClick={(event) => event.stopPropagation()}
     >
-      <p className="flex-1 text-sm">
-        {t("dashboard.resolutionQuestion")}
-      </p>
+      <p className="flex-1 text-sm">{t("dashboard.resolutionQuestion")}</p>
       <div className="flex items-center gap-2">
         <button
           type="button"

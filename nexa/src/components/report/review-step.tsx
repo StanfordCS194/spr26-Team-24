@@ -84,7 +84,8 @@ export function ReviewStep({
               {t("report.aiClassification")}
             </span>
             <h3 className="mt-2 text-xl font-semibold text-foreground">
-              {t(`issue.${classification.issueType}`) || classification.issueType}
+              {t(`issue.${classification.issueType}`) ||
+                classification.issueType}
             </h3>
           </div>
           <span
