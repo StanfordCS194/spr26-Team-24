@@ -1,44 +1,49 @@
+"use client";
+
 import Link from "next/link";
 import { Camera, Zap, CheckCircle2, ArrowRight } from "lucide-react";
+import { useI18n } from "@/i18n/provider";
 
 const STEPS = [
   {
     number: "01",
     icon: Camera,
-    title: "Describe the problem",
-    description:
-      "Upload a photo, type a description, or both. Whatever is easiest.",
+    titleKey: "home.step1Title",
+    descriptionKey: "home.step1Description",
   },
   {
     number: "02",
     icon: Zap,
-    title: "AI classifies & routes",
-    description:
-      "Identifies the issue type, severity, and the responsible city agency.",
+    titleKey: "home.step2Title",
+    descriptionKey: "home.step2Description",
   },
   {
     number: "03",
     icon: CheckCircle2,
-    title: "Report filed",
-    description:
-      "Review, confirm, done. The whole process takes under 30 seconds.",
+    titleKey: "home.step3Title",
+    descriptionKey: "home.step3Description",
   },
-];
+] as const;
 
 export function ProcessSection() {
+  const { t } = useI18n();
+
   return (
     <section id="how-it-works" className="w-full px-6 py-20 lg:py-28">
       <div className="mx-auto max-w-[1440px]">
         <div className="mb-16">
-          <span className="section-label">/ How It Works</span>
+          <span className="section-label">{t("home.howItWorksLabel")}</span>
           <h2 className="mt-4 max-w-lg text-3xl font-normal leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
-            Three steps from problem to report.
+            {t("home.processTitle")}
           </h2>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
           {STEPS.map((step) => (
-            <div key={step.title} className="ep-card flex flex-col gap-5 p-8">
+            <div
+              key={step.titleKey}
+              className="ep-card flex flex-col gap-5 p-8"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex size-10 items-center justify-center rounded-lg bg-ep-green-light">
                   <step.icon className="size-5 text-ep-green" />
@@ -48,9 +53,11 @@ export function ProcessSection() {
                 </span>
               </div>
               <div>
-                <h3 className="text-base font-semibold">{step.title}</h3>
+                <h3 className="text-base font-semibold">
+                  {t(step.titleKey)}
+                </h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {step.description}
+                  {t(step.descriptionKey)}
                 </p>
               </div>
             </div>
@@ -59,7 +66,7 @@ export function ProcessSection() {
 
         <div className="mt-10">
           <Link href="/report" className="btn-cta btn-cta-purple w-fit">
-            Try It Now
+            {t("home.tryNow")}
             <ArrowRight className="size-4" />
           </Link>
         </div>

@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useI18n } from "@/i18n/provider";
 
 export function RegisterForm() {
   const router = useRouter();
+  const { t } = useI18n();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,17 +30,21 @@ export function RegisterForm() {
         body: JSON.stringify({ name: name || undefined, email, password }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Registration failed");
+        setError(
+          res.status === 409
+            ? t("auth.accountExists")
+            : res.status === 400
+              ? t("auth.passwordTooShort")
+              : t("auth.registrationFailed"),
+        );
         return;
       }
 
       router.push("/");
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t("common.somethingWrong"));
     } finally {
       setLoading(false);
     }
@@ -49,20 +55,20 @@ export function RegisterForm() {
       <div className="ep-card p-8">
         <div className="mb-6">
           <h1 className="text-xl font-semibold tracking-tight">
-            Create an account
+            {t("auth.createTitle")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Join Nexa and start reporting civic issues
+            {t("auth.createSubtitle")}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="name">Name (optional)</Label>
+            <Label htmlFor="name">{t("auth.nameOptional")}</Label>
             <Input
               id="name"
               type="text"
-              placeholder="Jane Smith"
+              placeholder={t("auth.namePlaceholder")}
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -70,7 +76,7 @@ export function RegisterForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <Input
               id="email"
               type="email"
@@ -83,11 +89,11 @@ export function RegisterForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder={t("auth.passwordNewPlaceholder")}
               autoComplete="new-password"
               required
               value={password}
@@ -102,18 +108,18 @@ export function RegisterForm() {
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account\u2026" : "Create account"}
+            {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
           </Button>
         </form>
       </div>
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t("auth.hasAccount")}{" "}
         <Link
           href="/login"
           className="font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Sign in
+          {t("nav.signIn")}
         </Link>
       </p>
     </div>

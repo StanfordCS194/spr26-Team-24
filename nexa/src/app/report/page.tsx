@@ -8,6 +8,7 @@ import { ReviewStep } from "@/components/report/review-step";
 import { ConfirmedStep } from "@/components/report/confirmed-step";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { useI18n } from "@/i18n/provider";
 
 interface ClassificationResult {
   issueType: string;
@@ -59,6 +60,7 @@ interface AddressSuggestion {
 
 export default function ReportPage() {
   const posthog = usePostHog();
+  const { t } = useI18n();
   const flowStartedAt = useRef(0);
   useEffect(() => {
     flowStartedAt.current = Date.now();
@@ -147,8 +149,8 @@ export default function ReportPage() {
       setOfficialForm({
         status: "not_found",
         cityName: null,
-        message: "No official city form found.",
-        reason: "Add a location to look up the official city website.",
+        message: t("report.noOfficialForm"),
+        reason: t("report.locationPlaceholder"),
       });
       return;
     }
@@ -165,18 +167,18 @@ export default function ReportPage() {
           longitude: geo.longitude ?? undefined,
         }),
       });
-      if (!res.ok) throw new Error("Form lookup failed");
+      if (!res.ok) throw new Error(t("report.noOfficialForm"));
       const result: OfficialFormLookupResult = await res.json();
       setOfficialForm(result);
     } catch (err) {
       setOfficialForm({
         status: "not_found",
         cityName: null,
-        message: "No official city form found.",
+        message: t("report.noOfficialForm"),
         reason:
           err instanceof Error
             ? err.message
-            : "Could not look up an official city website.",
+            : t("report.noOfficialForm"),
       });
     } finally {
       setOfficialFormLoading(false);
@@ -252,7 +254,7 @@ export default function ReportPage() {
         has_location: !!geo.latitude,
       });
     } catch (e) {
-      setClassifyError(e instanceof Error ? e.message : "Something went wrong");
+      setClassifyError(e instanceof Error ? e.message : t("common.somethingWrong"));
     } finally {
       setClassifying(false);
     }
@@ -279,7 +281,7 @@ export default function ReportPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Submission failed");
+        throw new Error(err.error || t("report.submit"));
       }
 
       const report: CreatedReport = await res.json();
@@ -293,7 +295,7 @@ export default function ReportPage() {
         has_location: !!geo.latitude,
       });
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : "Something went wrong");
+      setSubmitError(e instanceof Error ? e.message : t("common.somethingWrong"));
     } finally {
       setSubmitting(false);
     }
@@ -376,13 +378,13 @@ export default function ReportPage() {
 
             {comparison && comparison.allResults.length > 1 && (
               <div className="mt-10">
-                <span className="section-label">/ AI Comparison</span>
+                <span className="section-label">{t("report.aiComparison")}</span>
                 <p className="mt-2 mb-4 text-sm text-muted-foreground">
-                  Decision method:{" "}
+                  {t("report.decisionMethod")}{" "}
                   <span className="font-medium text-foreground">
                     {comparison.method}
                   </span>
-                  {comparison.consensus && " (models agreed)"}
+                  {comparison.consensus && t("report.modelsAgreed")}
                 </p>
                 <div className="flex flex-col gap-3">
                   {comparison.allResults.map((r) => (
@@ -400,7 +402,7 @@ export default function ReportPage() {
                       </div>
                       <div className="mt-2 flex items-center gap-3">
                         <span className="text-sm font-semibold">
-                          {r.issueType}
+                          {t(`issue.${r.issueType}`)}
                         </span>
                         <span
                           className={`rounded-full px-2 py-0.5 font-mono text-xs uppercase ${
@@ -411,10 +413,12 @@ export default function ReportPage() {
                                 : "bg-ep-green-light text-ep-green"
                           }`}
                         >
-                          {r.severity}
+                          {t(`severity.${r.severity}`)}
                         </span>
                         <span className="font-mono text-xs text-muted-foreground">
-                          {Math.round((r.confidence ?? 0) * 100)}% confident
+                          {t("report.confident", {
+                            percent: Math.round((r.confidence ?? 0) * 100),
+                          })}
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
