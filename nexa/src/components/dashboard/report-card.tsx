@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { ChevronDown, ImageOff, MapPin } from "lucide-react";
-import { shortenAddress } from "@/lib/constants";
+import { ISSUE_TYPE_LABELS, shortenAddress } from "@/lib/constants";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 import { DeleteReportButton } from "@/components/dashboard/delete-report-button";
 import { ResolutionPrompt } from "@/components/dashboard/resolution-prompt";
-import { useI18n } from "@/i18n/provider";
 
 const RESOLUTION_PROMPT_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
 const STATUSES_HIDING_PROMPT = new Set([
@@ -41,6 +40,14 @@ interface ReportCardProps {
   report: DashboardReport;
 }
 
+function formatStatus(status: string): string {
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function statusPillClass(status: string): string {
   switch (status) {
     case "CONFIRMED":
@@ -58,15 +65,16 @@ function statusPillClass(status: string): string {
 
 export function ReportCard({ report }: ReportCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const { t, locale } = useI18n();
 
   const issueLabel =
-    report.issueType ? t(`issue.${report.issueType}`) : t("dashboard.uncategorized");
+    ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
+    report.issueType ||
+    "Uncategorized";
   const shortLocation = shortenAddress(report.address);
   const summary =
     report.aiDescription?.trim() ||
     report.description?.trim() ||
-    t("dashboard.noDescription");
+    "No description";
 
   return (
     <article className="ep-card overflow-hidden transition-colors hover:bg-muted/20">
@@ -90,14 +98,14 @@ export function ReportCard({ report }: ReportCardProps) {
               {issueLabel}
             </span>
             <h2 className="mt-2 text-lg font-medium leading-snug">
-              {shortLocation || t("dashboard.locationUnavailable")}
+              {shortLocation || "Location unavailable"}
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
               <time
                 dateTime={report.createdAt.toISOString()}
-                title={formatFullDateTime(report.createdAt, locale)}
+                title={formatFullDateTime(report.createdAt)}
               >
-                {formatRelativeTime(report.createdAt, locale, t("time.justNow"))}
+                {formatRelativeTime(report.createdAt)}
               </time>
             </p>
           </div>
@@ -105,7 +113,7 @@ export function ReportCard({ report }: ReportCardProps) {
             <span
               className={`inline-flex rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider ${statusPillClass(report.status)}`}
             >
-              {t(`status.${report.status}`)}
+              {formatStatus(report.status)}
             </span>
             <span onClick={(event) => event.stopPropagation()}>
               <DeleteReportButton reportId={report.id} />
@@ -136,20 +144,20 @@ export function ReportCard({ report }: ReportCardProps) {
           <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                {t("dashboard.photo")}
+                Photo
               </span>
               <div className="mt-2 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border border-border bg-muted/40">
                 {report.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={report.imageUrl}
-                    alt={t("dashboard.photoAlt", { issue: issueLabel })}
+                    alt={`Photo for ${issueLabel} report`}
                     className="h-full w-full object-cover"
                   />
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <ImageOff className="size-6" aria-hidden="true" />
-                    <p className="text-xs">{t("dashboard.noPhoto")}</p>
+                    <p className="text-xs">No photo attached</p>
                   </div>
                 )}
               </div>
@@ -159,7 +167,7 @@ export function ReportCard({ report }: ReportCardProps) {
               {report.description?.trim() ? (
                 <div>
                   <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    {t("dashboard.yourDescription")}
+                    Your description
                   </span>
                   <p className="mt-2 text-sm leading-relaxed text-foreground">
                     {report.description}
@@ -170,7 +178,7 @@ export function ReportCard({ report }: ReportCardProps) {
               {report.aiDescription?.trim() ? (
                 <div>
                   <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                    {t("dashboard.aiSummary")}
+                    AI summary
                   </span>
                   <p className="mt-2 text-sm leading-relaxed text-foreground">
                     {report.aiDescription}
@@ -180,13 +188,13 @@ export function ReportCard({ report }: ReportCardProps) {
 
               {!report.description?.trim() && !report.aiDescription?.trim() && (
                 <p className="text-sm text-muted-foreground">
-                  {t("dashboard.noDescriptionProvided")}
+                  No description was provided for this report.
                 </p>
               )}
 
               <div>
                 <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                  {t("report.location")}
+                  Location
                 </span>
                 {report.address ? (
                   <div className="mt-2 flex items-start gap-2 text-sm leading-relaxed text-foreground">
@@ -198,7 +206,7 @@ export function ReportCard({ report }: ReportCardProps) {
                   </div>
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {t("dashboard.noLocation")}
+                    No location provided.
                   </p>
                 )}
               </div>

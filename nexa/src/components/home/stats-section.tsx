@@ -1,31 +1,25 @@
-"use client";
-
-import { useI18n } from "@/i18n/provider";
-
 const STATS = [
-  { value: "30s", labelKey: "home.statAverage" },
-  { value: "80%", labelKey: "home.statAccuracy" },
-  { value: "5", labelKey: "home.statIssueTypes" },
-] as const;
+  { value: "30s", label: "Average report time" },
+  { value: "80%", label: "Routing accuracy target" },
+  { value: "5", label: "Issue types supported" },
+];
 
 const NARRATIVE = [
   {
-    labelKey: "home.challenge",
-    textKey: "home.challengeText",
+    label: "/ Challenge",
+    text: "No single place to report civic issues. Potholes, dumping, broken lights — each goes to a different agency with a different process.",
   },
   {
-    labelKey: "home.solution",
-    textKey: "home.solutionText",
+    label: "/ Solution",
+    text: "Nexa uses AI to classify your report, determine the right agency based on GPS, and prepare a properly formatted submission.",
   },
   {
-    labelKey: "home.result",
-    textKey: "home.resultText",
+    label: "/ Result",
+    text: "What used to take 15 minutes of research and form-filling now takes 30 seconds with a photo and a tap.",
   },
-] as const;
+];
 
 export function StatsSection() {
-  const { t } = useI18n();
-
   return (
     <section
       id="stats"
@@ -33,9 +27,9 @@ export function StatsSection() {
     >
       <div className="mx-auto max-w-[1440px]">
         <div className="mb-16">
-          <span className="section-label">{t("home.statsLabel")}</span>
+          <span className="section-label">/ By The Numbers</span>
           <h2 className="mt-4 max-w-lg text-3xl font-normal leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
-            {t("home.statsTitle")}
+            Reporting made radically simpler.
           </h2>
         </div>
 
@@ -43,12 +37,12 @@ export function StatsSection() {
           <div className="ep-card p-8 lg:p-10">
             <div className="grid grid-cols-3 gap-6">
               {STATS.map((stat) => (
-                <div key={stat.labelKey}>
+                <div key={stat.label}>
                   <div className="text-3xl font-normal text-ep-green lg:text-4xl">
                     {stat.value}
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">
-                    {t(stat.labelKey)}
+                    {stat.label}
                   </div>
                 </div>
               ))}
@@ -57,11 +51,11 @@ export function StatsSection() {
 
           <div className="ep-card flex flex-col gap-6 p-8 lg:p-10">
             {NARRATIVE.map((item, i) => (
-              <div key={item.labelKey}>
+              <div key={item.label}>
                 {i > 0 && <div className="mb-6 h-px bg-border" />}
-                <span className="section-label">{t(item.labelKey)}</span>
+                <span className="section-label">{item.label}</span>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {t(item.textKey)}
+                  {item.text}
                 </p>
               </div>
             ))}

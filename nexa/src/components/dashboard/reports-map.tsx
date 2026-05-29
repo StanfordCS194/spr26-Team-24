@@ -4,13 +4,12 @@ import { useEffect, useRef } from "react";
 import type { LatLngTuple, Map as LeafletMap } from "leaflet";
 import { MapPinned } from "lucide-react";
 import "leaflet/dist/leaflet.css";
-import { useI18n } from "@/i18n/provider";
 
 export interface ReportMapPoint {
   id: string;
   latitude: number;
   longitude: number;
-  issueType: string | null;
+  issueLabel: string;
   shortLocation: string;
   status: string;
   relativeTime: string;
@@ -46,6 +45,14 @@ function pinSvg(color: string): string {
   `;
 }
 
+function formatStatus(status: string): string {
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -56,7 +63,6 @@ function escapeHtml(value: string): string {
 }
 
 export function ReportsMap({ points }: ReportsMapProps) {
-  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
 
@@ -103,10 +109,10 @@ export function ReportsMap({ points }: ReportsMapProps) {
 
         const popupHtml = `
           <div class="nexa-map-popup">
-            <p class="nexa-map-popup__label">${escapeHtml(point.issueType ? t(`issue.${point.issueType}`) : t("dashboard.uncategorized"))}</p>
-            <p class="nexa-map-popup__title">${escapeHtml(point.shortLocation || t("dashboard.locationUnavailable"))}</p>
+            <p class="nexa-map-popup__label">${escapeHtml(point.issueLabel)}</p>
+            <p class="nexa-map-popup__title">${escapeHtml(point.shortLocation || "Location unavailable")}</p>
             <div class="nexa-map-popup__meta">
-              <span class="nexa-map-popup__status nexa-map-popup__status--${isConfirmed ? "confirmed" : "pending"}">${escapeHtml(t(`status.${point.status}`))}</span>
+              <span class="nexa-map-popup__status nexa-map-popup__status--${isConfirmed ? "confirmed" : "pending"}">${escapeHtml(formatStatus(point.status))}</span>
               <span class="nexa-map-popup__time">${escapeHtml(point.relativeTime)}</span>
             </div>
           </div>
@@ -133,7 +139,7 @@ export function ReportsMap({ points }: ReportsMapProps) {
         mapRef.current = null;
       }
     };
-  }, [points, t]);
+  }, [points]);
 
   if (points.length === 0) return null;
 
@@ -145,23 +151,17 @@ export function ReportsMap({ points }: ReportsMapProps) {
           aria-hidden="true"
         />
         <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-          {t("dashboard.reportLocations")}
+          Report locations
         </span>
         <span className="ml-auto font-mono text-xs text-muted-foreground">
-          {points.length} {points.length === 1 ? t("dashboard.pin") : t("dashboard.pins")}
+          {points.length} {points.length === 1 ? "pin" : "pins"}
         </span>
       </div>
       <div
         ref={containerRef}
         className="h-[360px] w-full"
         role="img"
-        aria-label={t("dashboard.mapAria", {
-          count: points.length,
-          locations:
-            points.length === 1
-              ? t("dashboard.locationSingular")
-              : t("dashboard.locationPlural"),
-        })}
+        aria-label={`Map showing ${points.length} report ${points.length === 1 ? "location" : "locations"}`}
       />
     </div>
   );

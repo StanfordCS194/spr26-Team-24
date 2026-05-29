@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/error-banner";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
-import { useI18n } from "@/i18n/provider";
 
 // Leaflet touches `window` at module load, so render the map only on the client.
 const LocationMap = dynamic(() => import("./location-map"), {
@@ -66,7 +65,6 @@ export function DescribeStep({
   onLocationChange,
   onClassify,
 }: DescribeStepProps) {
-  const { t } = useI18n();
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const locationWrapperRef = useRef<HTMLDivElement | null>(null);
   const speech = useSpeechRecognition();
@@ -109,9 +107,9 @@ export function DescribeStep({
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <span className="section-label">{t("report.describeLabel")}</span>
+        <span className="section-label">/ Describe the Issue</span>
         <h2 className="mt-3 text-2xl font-normal tracking-tight sm:text-3xl">
-          {t("report.whatDidYouSee")}
+          What did you see?
         </h2>
       </div>
 
@@ -126,7 +124,7 @@ export function DescribeStep({
             <div className="relative">
               <img
                 src={imagePreview}
-                alt={t("report.issuePreview")}
+                alt="Issue preview"
                 className="max-h-64 rounded-lg object-contain"
               />
               <button
@@ -144,11 +142,9 @@ export function DescribeStep({
             <>
               <Camera className="size-10 text-muted-foreground/40" />
               <div className="text-center">
-                <p className="font-medium text-foreground">
-                  {t("report.uploadPhoto")}
-                </p>
+                <p className="font-medium text-foreground">Upload a photo</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {t("report.uploadHint")}
+                  Drag and drop or click to browse
                 </p>
               </div>
             </>
@@ -162,16 +158,14 @@ export function DescribeStep({
             htmlFor="description"
             className="block font-mono text-xs uppercase tracking-wider text-muted-foreground"
           >
-            {t("report.description")}
+            Description
           </Label>
           {speech.supported && (
             <button
               type="button"
               onClick={handleMicToggle}
               aria-label={
-                speech.listening
-                  ? t("report.stopDictation")
-                  : t("report.dictateDescription")
+                speech.listening ? "Stop dictation" : "Dictate description"
               }
               aria-pressed={speech.listening}
               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
@@ -183,19 +177,19 @@ export function DescribeStep({
               <Mic
                 className={`size-3.5 ${speech.listening ? "animate-pulse" : ""}`}
               />
-              {speech.listening ? t("report.dictating") : t("report.dictate")}
+              {speech.listening ? "Listening…" : "Dictate"}
             </button>
           )}
         </div>
         <Textarea
           id="description"
-          placeholder={t("report.descriptionPlaceholder")}
+          placeholder='e.g. "Large pothole on the corner of Elm and Main, about 2 feet wide..."'
           className="min-h-28 resize-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0"
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
         />
         {speech.error && (
-          <p className="mt-3 text-xs text-red-500">{t(speech.error)}</p>
+          <p className="mt-3 text-xs text-red-500">{speech.error}</p>
         )}
       </div>
 
@@ -204,13 +198,13 @@ export function DescribeStep({
           htmlFor="address"
           className="mb-3 block font-mono text-xs uppercase tracking-wider text-muted-foreground"
         >
-          {t("report.location")}
+          Location
         </Label>
         <div className="relative flex gap-2">
           <div className="relative flex-1">
             <Input
               id="address"
-              placeholder={t("report.locationPlaceholder")}
+              placeholder="Address or location description"
               className="border-0 bg-transparent shadow-none focus-visible:ring-0"
               value={address}
               autoComplete="off"
@@ -254,16 +248,16 @@ export function DescribeStep({
             ) : (
               <MapPin className="size-3.5" />
             )}
-            {locationLoading ? "..." : t("report.detect")}
+            {locationLoading ? "..." : "Detect"}
           </Button>
         </div>
         {locationSuggesting && (
           <p className="mt-2 font-mono text-xs text-muted-foreground">
-            {t("report.searchingLocations")}
+            Searching locations...
           </p>
         )}
         {locationError && (
-          <p className="mt-3 text-xs text-red-500">{t(locationError)}</p>
+          <p className="mt-3 text-xs text-red-500">{locationError}</p>
         )}
         {latitude !== null && longitude !== null && (
           <>
@@ -279,7 +273,7 @@ export function DescribeStep({
                 </span>
               )}
               <span className="text-muted-foreground/70">
-                {t("report.dragPin")}
+                Drag the pin to correct
               </span>
             </div>
             <LocationMap
@@ -301,11 +295,11 @@ export function DescribeStep({
         {classifying ? (
           <>
             <Loader2 className="size-4 animate-spin" />
-            {t("report.analyzing")}
+            Analyzing with AI...
           </>
         ) : (
           <>
-            {t("report.analyze")}
+            Analyze Issue
             <Zap className="size-4" />
           </>
         )}

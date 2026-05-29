@@ -5,15 +5,12 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useI18n } from "@/i18n/provider";
-import type { MessageKey } from "@/i18n/messages";
 
 interface DeleteReportButtonProps {
   reportId: string;
   redirectTo?: string;
   showEdit?: boolean;
   deleteLabel?: string;
-  deleteLabelKey?: MessageKey;
   deleteClassName?: string;
 }
 
@@ -21,16 +18,13 @@ export function DeleteReportButton({
   reportId,
   redirectTo,
   showEdit = true,
-  deleteLabel,
-  deleteLabelKey = "common.delete",
+  deleteLabel = "Delete",
   deleteClassName,
 }: DeleteReportButtonProps) {
   const router = useRouter();
-  const { t } = useI18n();
   const [deleting, setDeleting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const resolvedDeleteLabel = deleteLabel ? deleteLabel : t(deleteLabelKey);
 
   const handleDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -52,7 +46,7 @@ export function DeleteReportButton({
         const data = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        throw new Error(data?.error ?? t("common.somethingWrong"));
+        throw new Error(data?.error ?? "Failed to delete the report.");
       }
 
       if (redirectTo) {
@@ -61,7 +55,7 @@ export function DeleteReportButton({
         router.refresh();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.somethingWrong"));
+      setError(err instanceof Error ? err.message : "Failed to delete.");
       setConfirming(false);
     } finally {
       setDeleting(false);
@@ -84,7 +78,7 @@ export function DeleteReportButton({
             }}
             className="font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
           >
-            {t("common.cancel")}
+            Cancel
           </button>
         )}
         {showEdit && !confirming && (
@@ -94,7 +88,7 @@ export function DeleteReportButton({
             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <Pencil className="size-3.5" />
-            {t("common.edit")}
+            Edit
           </Link>
         )}
         <button
@@ -107,16 +101,14 @@ export function DeleteReportButton({
               : (deleteClassName ??
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-60")
           }
-          aria-label={
-            confirming ? t("common.confirm") : resolvedDeleteLabel
-          }
+          aria-label={confirming ? "Confirm delete" : "Delete report"}
         >
           {deleting ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <Trash2 className="size-3.5" />
           )}
-          {confirming ? t("common.confirm") : resolvedDeleteLabel}
+          {confirming ? "Confirm" : deleteLabel}
         </button>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}

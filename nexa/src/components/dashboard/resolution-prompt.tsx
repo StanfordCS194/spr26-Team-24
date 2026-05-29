@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { useI18n } from "@/i18n/provider";
 
 interface ResolutionPromptProps {
   reportId: string;
@@ -11,7 +10,6 @@ interface ResolutionPromptProps {
 
 export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
   const router = useRouter();
-  const { t } = useI18n();
   const [submitting, setSubmitting] = useState<"yes" | "no" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,11 +26,11 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
         const data = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        throw new Error(data?.error ?? t("common.somethingWrong"));
+        throw new Error(data?.error ?? "Failed to record response.");
       }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.somethingWrong"));
+      setError(err instanceof Error ? err.message : "Something went wrong.");
       setSubmitting(null);
     }
   };
@@ -43,7 +41,7 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
       onClick={(event) => event.stopPropagation()}
     >
       <p className="flex-1 text-sm">
-        {t("dashboard.resolutionQuestion")}
+        It&apos;s been a few weeks — was this issue fixed?
       </p>
       <div className="flex items-center gap-2">
         <button
@@ -57,7 +55,7 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
           ) : (
             <CheckCircle2 className="size-3.5" />
           )}
-          {t("dashboard.yesFixed")}
+          Yes, fixed
         </button>
         <button
           type="button"
@@ -70,7 +68,7 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
           ) : (
             <XCircle className="size-3.5" />
           )}
-          {t("dashboard.notYet")}
+          Not yet
         </button>
       </div>
       {error && (

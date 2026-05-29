@@ -81,7 +81,7 @@ export function useSpeechRecognition() {
   const start = useCallback((onFinal: (text: string) => void) => {
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor) {
-      setError("speech.unsupported");
+      setError("Speech recognition is not supported in this browser.");
       return;
     }
 
@@ -112,13 +112,13 @@ export function useSpeechRecognition() {
         event.error === "not-allowed" ||
         event.error === "service-not-allowed"
       ) {
-        setError("speech.denied");
+        setError("Microphone permission denied. Please allow access.");
       } else if (event.error === "no-speech") {
-        setError("speech.noSpeech");
+        setError("No speech detected. Try again.");
       } else if (event.error === "audio-capture") {
-        setError("speech.noMicrophone");
+        setError("No microphone found.");
       } else {
-        setError("speech.failed");
+        setError("Speech recognition failed. Try again.");
       }
     };
 
@@ -133,7 +133,7 @@ export function useSpeechRecognition() {
       recognitionRef.current = recognition;
       setListening(true);
     } catch {
-      setError("speech.startFailed");
+      setError("Could not start speech recognition.");
       recognitionRef.current = null;
     }
   }, []);
