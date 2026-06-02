@@ -8,6 +8,7 @@ import { ReviewStep } from "@/components/report/review-step";
 import { ConfirmedStep } from "@/components/report/confirmed-step";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { queueReport } from "@/lib/offline-queue";
 
 interface ClassificationResult {
   issueType: string;
@@ -81,6 +82,7 @@ export default function ReportPage() {
     null,
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submittedOffline, setSubmittedOffline] = useState(false);
   const [officialForm, setOfficialForm] =
     useState<OfficialFormLookupResult | null>(null);
   const [officialFormLoading, setOfficialFormLoading] = useState(false);
@@ -262,19 +264,22 @@ export default function ReportPage() {
     if (!classification) return;
     setSubmitting(true);
     setSubmitError(null);
+
+    const payload = {
+      description,
+      aiDescription: classification.aiDescription,
+      issueType: classification.issueType,
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+      address: geo.address,
+      imageUrl: image.imageBase64,
+    };
+
     try {
       const res = await fetch("/api/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description,
-          aiDescription: classification.aiDescription,
-          issueType: classification.issueType,
-          latitude: geo.latitude,
-          longitude: geo.longitude,
-          address: geo.address,
-          imageUrl: image.imageBase64,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -284,6 +289,7 @@ export default function ReportPage() {
 
       const report: CreatedReport = await res.json();
       setCreatedReport(report);
+      setSubmittedOffline(false);
       setStep("confirmed");
       posthog?.capture("report_submitted", {
         report_id: report.id,
@@ -293,7 +299,27 @@ export default function ReportPage() {
         has_location: !!geo.latitude,
       });
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : "Something went wrong");
+      // No connectivity: park the report locally and confirm optimistically.
+      // PwaSetup replays the queue once the browser is back online.
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        queueReport(payload);
+        setCreatedReport({
+          id: "Pending sync",
+          issueType: classification.issueType,
+          description,
+          aiDescription: classification.aiDescription,
+          createdAt: new Date().toISOString(),
+        });
+        setSubmittedOffline(true);
+        setStep("confirmed");
+        posthog?.capture("report_queued_offline", {
+          issue_type: classification.issueType,
+          has_image: !!image.imageBase64,
+          has_location: !!geo.latitude,
+        });
+      } else {
+        setSubmitError(e instanceof Error ? e.message : "Something went wrong");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -316,6 +342,7 @@ export default function ReportPage() {
     setCreatedReport(null);
     setClassifyError(null);
     setSubmitError(null);
+    setSubmittedOffline(false);
     setOfficialForm(null);
     setOfficialFormLoading(false);
   };
@@ -429,7 +456,11 @@ export default function ReportPage() {
         )}
 
         {step === "confirmed" && createdReport && (
-          <ConfirmedStep report={createdReport} onReportAnother={resetForm} />
+          <ConfirmedStep
+            report={createdReport}
+            offline={submittedOffline}
+            onReportAnother={resetForm}
+          />
         )}
       </div>
 
