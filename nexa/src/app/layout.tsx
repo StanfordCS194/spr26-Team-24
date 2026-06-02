@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { PostHogProvider } from "@/components/posthog-provider";
+import { PwaSetup } from "@/components/pwa-setup";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <PostHogProvider>
+          <PwaSetup />
           <Navbar />
           {children}
         </PostHogProvider>
