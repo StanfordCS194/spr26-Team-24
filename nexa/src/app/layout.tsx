@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { PostHogProvider } from "@/components/posthog-provider";
+import { PwaSetup } from "@/components/pwa-setup";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -19,6 +20,16 @@ export const metadata: Metadata = {
   title: "Nexa — Snap a Photo, We'll Handle City Hall",
   description:
     "Report neighborhood issues to your city in seconds. AI-powered civic reporting that knows which department to call and how to file it.",
+  applicationName: "Nexa",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Nexa",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#14b8a6",
 };
 
 export default function RootLayout({
@@ -33,6 +44,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <PostHogProvider>
+          <PwaSetup />
           <Navbar />
           {children}
         </PostHogProvider>

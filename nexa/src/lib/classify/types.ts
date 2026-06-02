@@ -28,7 +28,14 @@ export interface ComparisonResult {
   method: "unanimous" | "majority" | "highest-confidence" | "fallback";
 }
 
-export const CLASSIFICATION_PROMPT = `You are a civic issue classifier for a municipal reporting app called Nexa. 
+export interface LocationContext {
+  latitude?: number | null;
+  longitude?: number | null;
+  address?: string | null;
+  jurisdiction?: string | null;
+}
+
+const BASE_CLASSIFICATION_PROMPT = `You are a civic issue classifier for a municipal reporting app called Nexa.
 Analyze the provided image and/or text description of a neighborhood issue.
 
 Respond with ONLY valid JSON matching this exact schema (no markdown, no code fences):
@@ -50,6 +57,45 @@ Severity guidelines:
 - high: immediate safety hazard or environmental contamination
 - medium: significant inconvenience or moderate risk
 - low: minor issue or cosmetic concern`;
+
+/** Backward-compatible export — the original single-stage prompt. */
+export const CLASSIFICATION_PROMPT = BASE_CLASSIFICATION_PROMPT;
+
+function renderLocation(location: LocationContext | null | undefined): string {
+  if (!location) return "";
+  const parts: string[] = [];
+  if (location.address) parts.push(`Address: ${location.address}`);
+  if (
+    typeof location.latitude === "number" &&
+    typeof location.longitude === "number"
+  ) {
+    parts.push(
+      `Coordinates: ${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`,
+    );
+  }
+  if (location.jurisdiction)
+    parts.push(`Jurisdiction: ${location.jurisdiction}`);
+  if (parts.length === 0) return "";
+  return `\n\nReport location context:\n  ${parts.join("\n  ")}`;
+}
+
+/**
+ * Build the stage-2 classification prompt. `observationBlock` is the
+ * pre-rendered output of `renderObservation()` from observe.ts (kept as a
+ * string here so types.ts has no runtime dependency on observe.ts).
+ */
+export function buildClassificationPrompt(
+  options: {
+    observationBlock?: string;
+    location?: LocationContext | null;
+  } = {},
+): string {
+  const sections = [BASE_CLASSIFICATION_PROMPT];
+  if (options.observationBlock) sections.push(options.observationBlock);
+  const loc = renderLocation(options.location);
+  if (loc) sections.push(loc);
+  return sections.join("\n");
+}
 
 /** Parse model JSON even when wrapped in markdown fences or extra prose. */
 export function parseClassificationResponse(raw: string): ClassificationResult {

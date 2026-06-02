@@ -12,10 +12,15 @@ interface ConfirmedReport {
 
 interface ConfirmedStepProps {
   report: ConfirmedReport;
+  offline?: boolean;
   onReportAnother: () => void;
 }
 
-export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
+export function ConfirmedStep({
+  report,
+  offline = false,
+  onReportAnother,
+}: ConfirmedStepProps) {
   return (
     <div className="flex flex-col items-center gap-10 py-12 text-center">
       <div className="flex size-20 items-center justify-center rounded-full bg-ep-green-light">
@@ -24,10 +29,12 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
 
       <div>
         <h2 className="text-3xl font-normal tracking-tight">
-          Report submitted!
+          {offline ? "Saved offline" : "Report submitted!"}
         </h2>
         <p className="mt-2 text-muted-foreground">
-          Your civic report has been filed successfully.
+          {offline
+            ? "You're offline — we'll file this report automatically when your connection returns."
+            : "Your civic report has been filed successfully."}
         </p>
       </div>
 
