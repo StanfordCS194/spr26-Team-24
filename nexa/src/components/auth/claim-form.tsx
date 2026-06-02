@@ -56,8 +56,8 @@ export function ClaimForm() {
             Claim your account
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            If your account was created before passwords were required, set
-            one here to take it over.
+            If your account was created before passwords were required, set one
+            here to take it over.
           </p>
         </div>
 
