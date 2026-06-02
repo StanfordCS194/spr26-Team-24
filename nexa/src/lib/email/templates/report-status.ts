@@ -10,12 +10,14 @@ const STATUS_COPY: Record<
   SUBMITTING: null,
   SUBMITTED: {
     label: "Submitted to agency",
-    description: "Your report has been forwarded to the responsible agency for review.",
+    description:
+      "Your report has been forwarded to the responsible agency for review.",
     color: "#3b82f6",
   },
   ACKNOWLEDGED: {
     label: "Acknowledged",
-    description: "The agency has acknowledged your report and it's in their queue.",
+    description:
+      "The agency has acknowledged your report and it's in their queue.",
     color: "#8b5cf6",
   },
   IN_PROGRESS: {
@@ -25,7 +27,8 @@ const STATUS_COPY: Record<
   },
   RESOLVED: {
     label: "Resolved",
-    description: "The issue you reported has been resolved. Thanks for helping improve your city.",
+    description:
+      "The issue you reported has been resolved. Thanks for helping improve your city.",
     color: "#10b981",
   },
   CLOSED: {

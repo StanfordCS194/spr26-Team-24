@@ -18,7 +18,9 @@ export function reportConfirmationTemplate(params: {
   const { name, reportId, issueType, address, agencyName } = params;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const displayName = name || "there";
-  const issueLabel = issueType ? ISSUE_LABEL[issueType] : "Infrastructure issue";
+  const issueLabel = issueType
+    ? ISSUE_LABEL[issueType]
+    : "Infrastructure issue";
   const reportUrl = `${appUrl}/dashboard`;
 
   return {
@@ -59,16 +61,24 @@ export function reportConfirmationTemplate(params: {
                         <td style="padding:6px 0;font-size:13px;color:#71717a;width:140px;">Issue type</td>
                         <td style="padding:6px 0;font-size:13px;color:#18181b;font-weight:500;">${issueLabel}</td>
                       </tr>
-                      ${address ? `
+                      ${
+                        address
+                          ? `
                       <tr>
                         <td style="padding:6px 0;font-size:13px;color:#71717a;">Location</td>
                         <td style="padding:6px 0;font-size:13px;color:#18181b;">${address}</td>
-                      </tr>` : ""}
-                      ${agencyName ? `
+                      </tr>`
+                          : ""
+                      }
+                      ${
+                        agencyName
+                          ? `
                       <tr>
                         <td style="padding:6px 0;font-size:13px;color:#71717a;">Forwarded to</td>
                         <td style="padding:6px 0;font-size:13px;color:#18181b;">${agencyName}</td>
-                      </tr>` : ""}
+                      </tr>`
+                          : ""
+                      }
                     </table>
                   </td>
                 </tr>

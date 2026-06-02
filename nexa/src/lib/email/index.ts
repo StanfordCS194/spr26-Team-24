@@ -17,7 +17,11 @@ interface BrevoPayload {
   htmlContent: string;
 }
 
-async function sendEmail(to: { email: string; name?: string }, subject: string, html: string) {
+async function sendEmail(
+  to: { email: string; name?: string },
+  subject: string,
+  html: string,
+) {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
     console.warn("[email] BREVO_API_KEY not set — skipping email send");
@@ -47,9 +51,16 @@ async function sendEmail(to: { email: string; name?: string }, subject: string, 
   }
 }
 
-export async function sendWelcomeEmail(user: { email: string; name: string | null }) {
+export async function sendWelcomeEmail(user: {
+  email: string;
+  name: string | null;
+}) {
   const { subject, html } = welcomeTemplate(user.name ?? "");
-  await sendEmail({ email: user.email, name: user.name ?? undefined }, subject, html);
+  await sendEmail(
+    { email: user.email, name: user.name ?? undefined },
+    subject,
+    html,
+  );
 }
 
 export async function sendReportConfirmationEmail(
@@ -68,7 +79,11 @@ export async function sendReportConfirmationEmail(
     address: report.address,
     agencyName: report.agency?.name ?? null,
   });
-  await sendEmail({ email: user.email, name: user.name ?? undefined }, template.subject, template.html);
+  await sendEmail(
+    { email: user.email, name: user.name ?? undefined },
+    template.subject,
+    template.html,
+  );
 }
 
 export async function sendReportStatusEmail(
@@ -84,5 +99,9 @@ export async function sendReportStatusEmail(
 
   if (!template) return;
 
-  await sendEmail({ email: user.email, name: user.name ?? undefined }, template.subject, template.html);
+  await sendEmail(
+    { email: user.email, name: user.name ?? undefined },
+    template.subject,
+    template.html,
+  );
 }
