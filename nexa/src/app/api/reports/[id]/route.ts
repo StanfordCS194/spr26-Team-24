@@ -19,7 +19,7 @@ export async function DELETE(
 
     const report = await prisma.report.findUnique({
       where: { id },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, issueGroupId: true },
     });
 
     if (!report) {
@@ -33,7 +33,46 @@ export async function DELETE(
       );
     }
 
-    await prisma.report.delete({ where: { id } });
+    // Delete the report and keep its IssueGroup consistent: a stale reportCount
+    // or an orphaned (now empty) group would otherwise linger as a ghost pin on
+    // the community map. Recompute the surviving members' count and centroid, or
+    // drop the group entirely when its last report is removed.
+    await prisma.$transaction(async (tx) => {
+      await tx.report.delete({ where: { id } });
+
+      if (!report.issueGroupId) return;
+
+      const members = await tx.report.findMany({
+        where: { issueGroupId: report.issueGroupId },
+        select: { latitude: true, longitude: true },
+      });
+
+      if (members.length === 0) {
+        await tx.issueGroup.delete({ where: { id: report.issueGroupId } });
+        return;
+      }
+
+      const located = members.filter(
+        (m): m is { latitude: number; longitude: number } =>
+          typeof m.latitude === "number" && typeof m.longitude === "number",
+      );
+      const data: {
+        reportCount: number;
+        latitude?: number;
+        longitude?: number;
+      } = { reportCount: members.length };
+      if (located.length > 0) {
+        data.latitude =
+          located.reduce((sum, m) => sum + m.latitude, 0) / located.length;
+        data.longitude =
+          located.reduce((sum, m) => sum + m.longitude, 0) / located.length;
+      }
+
+      await tx.issueGroup.update({
+        where: { id: report.issueGroupId },
+        data,
+      });
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
