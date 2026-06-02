@@ -40,8 +40,28 @@ model Report {
   externalTrackingId String?
   userResolved       Boolean?
   userResolvedAt     DateTime?
+  issueGroupId       String?
+  issueGroup         IssueGroup?  @relation(fields: [issueGroupId], references: [id])
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
+}
+
+// A shared "case" that groups duplicate reports — multiple people reporting the
+// same real-world problem are linked into one IssueGroup. The group's centroid
+// is the average of its members' coordinates, and resolving one member resolves
+// the whole group (see src/lib/issues/dedupe.ts and the resolution endpoint).
+model IssueGroup {
+  id               String       @id @default(cuid())
+  issueType        IssueType
+  latitude         Float
+  longitude        Float
+  status           ReportStatus @default(CONFIRMED)
+  resolvedAt       DateTime?
+  resolvedByUserId String?
+  reportCount      Int          @default(1)
+  reports          Report[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 }
 
 model Agency {

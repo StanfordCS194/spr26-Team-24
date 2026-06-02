@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { IssueType } from "@/generated/prisma/enums";
 import { getSession } from "@/lib/auth";
 import { resolveAgencyId } from "@/lib/jurisdictions/agency";
+import { findOrCreateIssueGroup } from "@/lib/issues/dedupe";
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,6 +40,15 @@ export async function POST(request: NextRequest) {
       issueType: validIssueType,
     });
 
+    // Group this report with any existing open report about the same nearby
+    // issue so duplicate reports from different people share one case. Returns
+    // null (no grouping) when the report has no location or issue type.
+    const issueGroupId = await findOrCreateIssueGroup({
+      issueType: validIssueType,
+      latitude,
+      longitude,
+    });
+
     const report = await prisma.report.create({
       data: {
         userId: session?.userId ?? null,
@@ -50,6 +60,7 @@ export async function POST(request: NextRequest) {
         address,
         imageUrl,
         agencyId,
+        issueGroupId,
         status: "CONFIRMED",
       },
     });

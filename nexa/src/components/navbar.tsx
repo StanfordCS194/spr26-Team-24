@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
+import { ArrowRight, LayoutDashboard, LogOut, MapPinned } from "lucide-react";
 import { Menu } from "@base-ui/react/menu";
 import { Logo } from "@/components/logo";
 
@@ -66,12 +66,20 @@ export function Navbar() {
             </a>
           ))}
           {user && (
-            <Link
-              href="/dashboard"
-              className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground ${pathname === "/dashboard" ? "text-foreground" : "text-muted-foreground"}`}
-            >
-              Dashboard
-            </Link>
+            <>
+              <Link
+                href="/dashboard"
+                className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground ${pathname === "/dashboard" ? "text-foreground" : "text-muted-foreground"}`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/map"
+                className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground ${pathname === "/map" ? "text-foreground" : "text-muted-foreground"}`}
+              >
+                Map
+              </Link>
+            </>
           )}
         </div>
 
@@ -130,6 +138,7 @@ function UserMenu({
 }) {
   const initials = getInitials(user);
   const isOnDashboard = pathname === "/dashboard";
+  const isOnMap = pathname === "/map";
 
   return (
     <Menu.Root>
@@ -185,6 +194,20 @@ function UserMenu({
               >
                 <LayoutDashboard className="size-4 text-muted-foreground" />
                 Dashboard
+              </Menu.LinkItem>
+
+              <Menu.LinkItem
+                render={
+                  <Link
+                    href="/map"
+                    aria-current={isOnMap ? "page" : undefined}
+                  />
+                }
+                closeOnClick
+                className={`flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isOnMap ? "bg-muted" : ""}`}
+              >
+                <MapPinned className="size-4 text-muted-foreground" />
+                Community Map
               </Menu.LinkItem>
 
               <Menu.Item
