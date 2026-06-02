@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { IntakeMethod, ReportStatus } from "@/generated/prisma/enums";
 import { parseOpen311Config, submitToOpen311 } from "@/lib/submission/open311";
+import { resolveAgencyId } from "@/lib/jurisdictions/agency";
 
 // POST /api/reports/[id]/submit
 //
@@ -47,7 +48,20 @@ export async function POST(
       );
     }
 
-    const agency = report.agency;
+    // Reports created before jurisdiction routing existed (or whose location
+    // was added later) may not have an agency yet — resolve it on demand.
+    let agency = report.agency;
+    if (!agency) {
+      const agencyId = await resolveAgencyId({
+        latitude: report.latitude,
+        longitude: report.longitude,
+        issueType: report.issueType,
+      });
+      if (agencyId) {
+        await prisma.report.update({ where: { id }, data: { agencyId } });
+        agency = await prisma.agency.findUnique({ where: { id: agencyId } });
+      }
+    }
     if (!agency) {
       return NextResponse.json(
         { error: "No agency is assigned to this report." },
