@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
+import { SubmissionAssistant } from "@/components/report/submission-assistant";
 
 interface ConfirmedReport {
   id: string;
@@ -85,6 +86,8 @@ export function ConfirmedStep({
           )}
         </div>
       </div>
+
+      {!offline && <SubmissionAssistant reportId={report.id} />}
 
       <div className="flex flex-wrap justify-center gap-3">
         <Link href="/dashboard" className="btn-cta btn-cta-outline">
