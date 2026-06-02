@@ -322,3 +322,48 @@
   font-size: 0.7rem;
   color: var(--muted-foreground);
 }
+
+p.nexa-map-popup__time {
+  margin: 0.4rem 0 0;
+}
+
+.nexa-map-popup__resolve {
+  margin-top: 0.625rem;
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  background: var(--ep-green);
+  color: #ffffff;
+  font-family: var(--font-geist-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.nexa-map-popup__resolve:hover {
+  opacity: 0.9;
+}
+
+.nexa-map-popup__resolve:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.nexa-map-popup__resolved-note {
+  margin: 0.5rem 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-geist-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ep-green);
+}
