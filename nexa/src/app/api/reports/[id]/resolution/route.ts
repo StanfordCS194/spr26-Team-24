@@ -29,7 +29,7 @@ export async function POST(
 
     const report = await prisma.report.findUnique({
       where: { id },
-      select: { id: true, userId: true, status: true },
+      select: { id: true, userId: true, status: true, issueGroupId: true },
     });
 
     if (!report) {
@@ -43,6 +43,42 @@ export async function POST(
       );
     }
 
+    const resolvedAt = new Date();
+
+    // Shared resolution: when a report that belongs to an IssueGroup is marked
+    // resolved, the whole case resolves for every reporter linked to it. The
+    // group is flagged resolved and every non-closed member report is updated to
+    // match. Reports with no group keep the single-report behavior below.
+    if (report.issueGroupId && body.resolved) {
+      await prisma.$transaction([
+        prisma.issueGroup.update({
+          where: { id: report.issueGroupId },
+          data: {
+            status: "RESOLVED",
+            resolvedAt,
+            resolvedByUserId: session.userId,
+          },
+        }),
+        prisma.report.updateMany({
+          where: {
+            issueGroupId: report.issueGroupId,
+            status: { not: "CLOSED" },
+          },
+          data: {
+            userResolved: true,
+            userResolvedAt: resolvedAt,
+            status: "RESOLVED",
+          },
+        }),
+      ]);
+
+      return NextResponse.json({
+        id: report.id,
+        userResolved: true,
+        status: report.status === "CLOSED" ? "CLOSED" : "RESOLVED",
+      });
+    }
+
     const nextStatus =
       body.resolved && report.status !== "CLOSED" ? "RESOLVED" : report.status;
 
@@ -50,7 +86,7 @@ export async function POST(
       where: { id },
       data: {
         userResolved: body.resolved,
-        userResolvedAt: new Date(),
+        userResolvedAt: resolvedAt,
         status: nextStatus,
       },
       select: { id: true, userResolved: true, status: true },

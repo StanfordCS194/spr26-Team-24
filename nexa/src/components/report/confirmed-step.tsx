@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 import { useI18n } from "@/i18n/provider";
+import { SubmissionAssistant } from "@/components/report/submission-assistant";
 
 interface ConfirmedReport {
   id: string;
@@ -12,10 +13,15 @@ interface ConfirmedReport {
 
 interface ConfirmedStepProps {
   report: ConfirmedReport;
+  offline?: boolean;
   onReportAnother: () => void;
 }
 
-export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
+export function ConfirmedStep({
+  report,
+  offline = false,
+  onReportAnother,
+}: ConfirmedStepProps) {
   const { t, locale } = useI18n();
 
   return (
@@ -26,10 +32,12 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
 
       <div>
         <h2 className="text-3xl font-normal tracking-tight">
-          {t("report.submitted")}
+          {offline ? "Saved offline" : t("report.submitted")}
         </h2>
         <p className="mt-2 text-muted-foreground">
-          {t("report.submittedText")}
+          {offline
+            ? "You're offline — we'll file this report automatically when your connection returns."
+            : t("report.submittedText")}
         </p>
       </div>
 
@@ -80,6 +88,8 @@ export function ConfirmedStep({ report, onReportAnother }: ConfirmedStepProps) {
           )}
         </div>
       </div>
+
+      {!offline && <SubmissionAssistant reportId={report.id} />}
 
       <div className="flex flex-wrap justify-center gap-3">
         <Link href="/dashboard" className="btn-cta btn-cta-outline">
