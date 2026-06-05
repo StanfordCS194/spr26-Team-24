@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { ChevronDown, ImageOff, MapPin } from "lucide-react";
 import { ISSUE_TYPE_LABELS, shortenAddress } from "@/lib/constants";
+import { isReportEligibleForFollowUpReminder } from "@/lib/reports/follow-up";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 import { DeleteReportButton } from "@/components/dashboard/delete-report-button";
 import { ResolutionPrompt } from "@/components/dashboard/resolution-prompt";
 
-const RESOLUTION_PROMPT_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
 const STATUSES_HIDING_PROMPT = new Set([
   "DRAFT",
   "CLASSIFYING",
@@ -24,6 +24,7 @@ export interface DashboardReport {
   address: string | null;
   imageUrl: string | null;
   createdAt: Date;
+  updatedAt?: Date | null;
   externalTrackingId?: string | null;
   userResolved?: boolean | null;
 }
@@ -33,7 +34,7 @@ function shouldShowResolutionPrompt(report: DashboardReport): boolean {
   if (report.userResolved !== null && report.userResolved !== undefined)
     return false;
   if (STATUSES_HIDING_PROMPT.has(report.status)) return false;
-  return Date.now() - report.createdAt.getTime() >= RESOLUTION_PROMPT_AFTER_MS;
+  return isReportEligibleForFollowUpReminder(report);
 }
 
 interface ReportCardProps {
