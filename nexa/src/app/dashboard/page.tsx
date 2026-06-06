@@ -3,13 +3,14 @@ import { redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2, Clock3, ClipboardList } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ISSUE_TYPE_LABELS, shortenAddress } from "@/lib/constants";
+import { shortenAddress } from "@/lib/constants";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 import { ReportCard } from "@/components/dashboard/report-card";
 import {
   ReportsMap,
   type ReportMapPoint,
 } from "@/components/dashboard/reports-map";
+import { T } from "@/components/i18n-text";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -62,10 +63,7 @@ export default async function DashboardPage() {
       id: report.id,
       latitude: report.latitude,
       longitude: report.longitude,
-      issueLabel:
-        ISSUE_TYPE_LABELS[report.issueType ?? ""] ||
-        report.issueType ||
-        "Uncategorized",
+      issueType: report.issueType,
       shortLocation: shortenAddress(report.address),
       status: report.status,
       relativeTime: formatRelativeTime(report.createdAt),
@@ -75,16 +73,21 @@ export default async function DashboardPage() {
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="section-label">/ Dashboard</span>
+          <span className="section-label">
+            <T k="dashboard.label" />
+          </span>
           <h1 className="mt-3 text-3xl font-normal tracking-tight">
-            My reports
+            <T k="dashboard.myReports" />
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Tracking reports for {user?.name || user?.email || session.email}
+            <T
+              k="dashboard.tracking"
+              params={{ user: user?.name || user?.email || session.email }}
+            />
           </p>
         </div>
         <Link href="/report" className="btn-cta btn-cta-purple">
-          Report Issue
+          <T k="nav.reportIssue" />
           <ArrowRight className="size-4" />
         </Link>
       </div>
@@ -94,7 +97,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-2 text-muted-foreground">
             <ClipboardList className="size-4" />
             <p className="font-mono text-xs uppercase tracking-wider">
-              Total Reports
+              <T k="dashboard.totalReports" />
             </p>
           </div>
           <p className="mt-3 text-3xl font-semibold">{totalReports}</p>
@@ -104,7 +107,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-2 text-muted-foreground">
             <CheckCircle2 className="size-4" />
             <p className="font-mono text-xs uppercase tracking-wider">
-              Confirmed
+              <T k="dashboard.confirmed" />
             </p>
           </div>
           <p className="mt-3 text-3xl font-semibold">{confirmedReports}</p>
@@ -114,7 +117,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-2 text-muted-foreground">
             <Clock3 className="size-4" />
             <p className="font-mono text-xs uppercase tracking-wider">
-              Most Recent
+              <T k="dashboard.mostRecent" />
             </p>
           </div>
           <p className="mt-3 text-sm font-medium">
@@ -141,9 +144,11 @@ export default async function DashboardPage() {
       <div className="mt-8">
         {reports.length === 0 ? (
           <div className="ep-card p-8 text-center">
-            <p className="text-lg">No reports yet.</p>
+            <p className="text-lg">
+              <T k="dashboard.noReports" />
+            </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Your submitted issues will appear here once you file one.
+              <T k="dashboard.noReportsHint" />
             </p>
           </div>
         ) : (

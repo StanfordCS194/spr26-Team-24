@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { useI18n } from "@/i18n/provider";
 
 interface ResolutionPromptProps {
   reportId: string;
@@ -10,6 +11,7 @@ interface ResolutionPromptProps {
 
 export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const [submitting, setSubmitting] = useState<"yes" | "no" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,11 +28,11 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
         const data = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        throw new Error(data?.error ?? "Failed to record response.");
+        throw new Error(data?.error ?? t("common.somethingWrong"));
       }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(err instanceof Error ? err.message : t("common.somethingWrong"));
       setSubmitting(null);
     }
   };
@@ -40,9 +42,7 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
       className="mt-4 flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 px-4 py-3"
       onClick={(event) => event.stopPropagation()}
     >
-      <p className="flex-1 text-sm">
-        It&apos;s been a few weeks — was this issue fixed?
-      </p>
+      <p className="flex-1 text-sm">{t("dashboard.resolutionQuestion")}</p>
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -55,7 +55,7 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
           ) : (
             <CheckCircle2 className="size-3.5" />
           )}
-          Yes, fixed
+          {t("dashboard.yesFixed")}
         </button>
         <button
           type="button"
@@ -68,7 +68,7 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
           ) : (
             <XCircle className="size-3.5" />
           )}
-          Not yet
+          {t("dashboard.notYet")}
         </button>
       </div>
       {error && (

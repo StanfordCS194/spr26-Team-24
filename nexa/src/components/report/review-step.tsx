@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ErrorBanner } from "@/components/error-banner";
-import { ISSUE_TYPE_LABELS } from "@/lib/constants";
+import { useI18n } from "@/i18n/provider";
 
 interface ClassificationResult {
   issueType: string;
@@ -63,15 +63,17 @@ export function ReviewStep({
   onBack,
   onSubmit,
 }: ReviewStepProps) {
+  const { t } = useI18n();
+
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <span className="section-label">/ Review Classification</span>
+        <span className="section-label">{t("report.reviewLabel")}</span>
         <h2 className="mt-3 text-2xl font-normal tracking-tight sm:text-3xl">
-          Does this look right?
+          {t("report.reviewTitle")}
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Edit any field below before submitting.
+          {t("report.reviewHint")}
         </p>
       </div>
 
@@ -79,10 +81,10 @@ export function ReviewStep({
         <div className="flex items-start justify-between">
           <div>
             <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              AI Classification
+              {t("report.aiClassification")}
             </span>
             <h3 className="mt-2 text-xl font-semibold text-foreground">
-              {ISSUE_TYPE_LABELS[classification.issueType] ||
+              {t(`issue.${classification.issueType}`) ||
                 classification.issueType}
             </h3>
           </div>
@@ -95,7 +97,7 @@ export function ReviewStep({
                   : "bg-ep-green-light text-ep-green"
             }`}
           >
-            {classification.severity}
+            {t(`severity.${classification.severity}`)}
           </span>
         </div>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
@@ -107,7 +109,7 @@ export function ReviewStep({
         <div className="ep-card overflow-hidden">
           <img
             src={imagePreview}
-            alt="Issue"
+            alt={t("report.issuePreview")}
             className="max-h-48 w-full object-contain p-4"
           />
         </div>
@@ -116,7 +118,7 @@ export function ReviewStep({
       <div className="ep-card p-6">
         <div className="mb-3 flex items-center gap-2">
           <Label className="block font-mono text-xs uppercase tracking-wider text-muted-foreground">
-            Your Description
+            {t("report.yourDescription")}
           </Label>
           <Pencil className="size-3 text-muted-foreground" />
         </div>
@@ -124,14 +126,14 @@ export function ReviewStep({
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           className="min-h-20 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
-          placeholder="Describe the issue..."
+          placeholder={t("report.describeIssue")}
         />
       </div>
 
       <div className="ep-card p-6">
         <div className="mb-3 flex items-center gap-2">
           <Label className="block font-mono text-xs uppercase tracking-wider text-muted-foreground">
-            Location
+            {t("report.location")}
           </Label>
           <Pencil className="size-3 text-muted-foreground" />
         </div>
@@ -139,24 +141,24 @@ export function ReviewStep({
           value={address}
           onChange={(e) => onAddressChange(e.target.value)}
           className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-          placeholder="Address or location description"
+          placeholder={t("report.locationPlaceholder")}
         />
       </div>
 
       <div className="ep-card p-6">
         <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-          Where to submit
+          {t("report.whereSubmit")}
         </span>
 
         {officialFormLoading ? (
           <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            Finding official city form...
+            {t("report.findingForm")}
           </div>
         ) : officialForm?.status === "found" ? (
           <div className="mt-3">
             <p className="text-sm text-foreground">
-              Official city website for {officialForm.cityName}
+              {t("report.officialWebsite", { city: officialForm.cityName })}
             </p>
             <a
               href={officialForm.formUrl}
@@ -164,23 +166,23 @@ export function ReviewStep({
               rel="noopener noreferrer"
               className="mt-2 inline-flex items-center gap-1.5 text-sm text-ep-purple underline-offset-4 hover:underline"
             >
-              Open official city form
+              {t("report.openOfficialForm")}
               <ExternalLink className="size-3.5" />
             </a>
             <p className="mt-2 text-xs text-muted-foreground">
-              Confidence: {officialForm.confidence}
+              {t("report.confidence", { confidence: officialForm.confidence })}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
               {officialForm.reason}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Nexa does not submit your data to this external website.
+              {t("report.externalNotice")}
             </p>
           </div>
         ) : (
           <div className="mt-3">
             <p className="text-sm text-foreground">
-              No official city form found.
+              {t("report.noOfficialForm")}
             </p>
             {officialForm?.reason && (
               <p className="mt-2 text-xs text-muted-foreground">
@@ -199,7 +201,7 @@ export function ReviewStep({
           onClick={onBack}
         >
           <ArrowLeft className="size-3.5" />
-          Back
+          {t("common.back")}
         </button>
         <button
           className="btn-cta btn-cta-purple flex-1 justify-center"
@@ -209,11 +211,11 @@ export function ReviewStep({
           {submitting ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Submitting...
+              {t("report.submitting")}
             </>
           ) : (
             <>
-              Submit Report
+              {t("report.submit")}
               <ArrowRight className="size-4" />
             </>
           )}

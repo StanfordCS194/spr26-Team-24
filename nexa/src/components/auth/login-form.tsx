@@ -6,10 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useI18n } from "@/i18n/provider";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useI18n();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,10 +30,8 @@ export function LoginForm() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Login failed");
+        setError(t("auth.loginFailed"));
         return;
       }
 
@@ -39,7 +39,7 @@ export function LoginForm() {
       router.push(redirect);
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t("common.somethingWrong"));
     } finally {
       setLoading(false);
     }
@@ -49,15 +49,17 @@ export function LoginForm() {
     <div className="w-full max-w-sm">
       <div className="ep-card p-8">
         <div className="mb-6">
-          <h1 className="text-xl font-semibold tracking-tight">Welcome back</h1>
+          <h1 className="text-xl font-semibold tracking-tight">
+            {t("auth.welcomeBack")}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Sign in to your Nexa account
+            {t("auth.signInSubtitle")}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <Input
               id="email"
               type="email"
@@ -70,11 +72,11 @@ export function LoginForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Your password"
+              placeholder={t("auth.passwordPlaceholder")}
               autoComplete="current-password"
               required
               value={password}
@@ -89,18 +91,18 @@ export function LoginForm() {
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in\u2026" : "Sign in"}
+            {loading ? t("auth.signingIn") : t("nav.signIn")}
           </Button>
         </form>
       </div>
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        {t("auth.noAccount")}{" "}
         <Link
           href="/register"
           className="font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Create one
+          {t("auth.createOne")}
         </Link>
       </p>
 
