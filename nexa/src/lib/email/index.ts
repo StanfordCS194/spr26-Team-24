@@ -2,6 +2,7 @@ import type { IssueType, ReportStatus } from "@/generated/prisma/enums";
 import { welcomeTemplate } from "./templates/welcome";
 import { reportConfirmationTemplate } from "./templates/report-confirmation";
 import { reportStatusTemplate } from "./templates/report-status";
+import { followUpReminderTemplate } from "./templates/follow-up-reminder";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
@@ -98,6 +99,37 @@ export async function sendReportStatusEmail(
   });
 
   if (!template) return;
+
+  await sendEmail(
+    { email: user.email, name: user.name ?? undefined },
+    template.subject,
+    template.html,
+  );
+}
+
+export async function sendReportFollowUpReminderEmail(
+  user: { email: string; name: string | null },
+  report: {
+    id: string;
+    issueType: IssueType | string | null;
+    address: string | null;
+    description: string | null;
+    aiDescription: string | null;
+    externalTrackingId: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  },
+) {
+  const template = followUpReminderTemplate({
+    name: user.name ?? "",
+    reportId: report.id,
+    issueType: report.issueType,
+    address: report.address,
+    createdAt: report.createdAt,
+    updatedAt: report.updatedAt,
+    externalTrackingId: report.externalTrackingId,
+    summary: report.aiDescription?.trim() || report.description?.trim() || null,
+  });
 
   await sendEmail(
     { email: user.email, name: user.name ?? undefined },
