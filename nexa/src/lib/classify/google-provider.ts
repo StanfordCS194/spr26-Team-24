@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { getGoogleApiKey } from "@/lib/config";
 import {
   CLASSIFICATION_PROMPT,
   parseClassificationResponse,
@@ -6,7 +7,7 @@ import {
 } from "./types";
 
 function getClient() {
-  return new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+  return new GoogleGenAI({ apiKey: getGoogleApiKey() });
 }
 
 function stripPrefix(base64: string): string {

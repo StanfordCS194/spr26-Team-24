@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { getAnthropicKey } from "@/lib/config";
 import {
   CLASSIFICATION_PROMPT,
   parseClassificationResponse,
@@ -6,7 +7,7 @@ import {
 } from "./types";
 
 function getClient() {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return new Anthropic({ apiKey: getAnthropicKey() });
 }
 
 function extractMediaType(

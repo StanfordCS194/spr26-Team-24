@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { getJwtSecret } from "@/lib/config";
 
 // The name of the cookie that holds the session token
 export const SESSION_COOKIE = "nexa-session";
@@ -13,11 +14,10 @@ export interface SessionPayload {
   email: string;
 }
 
-// Encode the secret once — jose requires a Uint8Array
+// Encode the secret once — jose requires a Uint8Array.
+// getJwtSecret() throws a clear, named error when JWT_SECRET is unset.
 function getSecret() {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET environment variable is not set");
-  return new TextEncoder().encode(secret);
+  return new TextEncoder().encode(getJwtSecret());
 }
 
 // Signs a JWT containing the user's id and email, valid for 7 days
