@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAI } from "@/lib/openai";
-import { ISSUE_TYPE_LABELS } from "@/lib/constants";
+import { ISSUE_TYPE_LABELS, US_STATE_CODES } from "@/lib/constants";
 import { IssueType } from "@/generated/prisma/enums";
 import { resolveJurisdiction } from "@/lib/jurisdictions/resolve";
 
@@ -79,22 +79,6 @@ Rules:
 }
 
 Example: For Palo Alto, "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311" is the correct unified 311 page and should be returned for any civic issue type, including road damage.`;
-
-/**
- * US state/territory two-letter codes used as the registrable TLD label in the
- * `.us` locality space (RFC 1480), e.g. `paloalto.ca.us`. The `.us` TLD itself
- * is openly registrable (`evil.us`), so we only trust hosts where `.us` is
- * preceded by a real state code (`.ca.us`, `.ny.us`, …).
- */
-const US_STATE_CODES = new Set([
-  "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga",
-  "hi", "id", "il", "in", "ia", "ks", "ky", "la", "me", "md",
-  "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj",
-  "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc",
-  "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy",
-  // District of Columbia and inhabited territories.
-  "dc", "as", "gu", "mp", "pr", "vi",
-]);
 
 /**
  * Accepts only URLs hosted on an official US government domain. Guards against
