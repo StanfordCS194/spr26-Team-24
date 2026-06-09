@@ -16,6 +16,10 @@ import {
 //
 // Protected by CRON_SECRET: callers must send `Authorization: Bearer <secret>`.
 // Vercel Cron automatically attaches this header when CRON_SECRET is set.
+//
+// Fail closed: if CRON_SECRET is unset/empty we refuse the request (503) and do
+// NOT poll, so a missing secret can never expose this endpoint to unauthenticated
+// callers triggering external Open311 traffic (#99).
 
 // States we still expect updates for. RESOLVED/CLOSED are terminal, so we stop
 // polling them to keep the job cheap.
@@ -30,11 +34,17 @@ const MAX_PER_RUN = 100;
 
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
+  // Fail closed: without a configured secret there is no way to authenticate the
+  // caller, so refuse rather than run polling unauthenticated.
+  if (!secret) {
+    return NextResponse.json(
+      { error: "Cron polling is not configured." },
+      { status: 503 },
+    );
+  }
+  const auth = request.headers.get("authorization");
+  if (auth !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
   try {
