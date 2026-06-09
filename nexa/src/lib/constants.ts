@@ -1,3 +1,29 @@
+/**
+ * Image-processing tuning constants.
+ *
+ * Client and server values intentionally diverge:
+ *   - CLIENT_* runs in the browser canvas (quality is a 0–1 fraction) and is
+ *     sized to fit under the server's ~4.5MB request-body limit (Vercel
+ *     default) so uploads don't 413.
+ *   - SERVER_* runs in sharp (quality is a 0–100 scale) and is tuned smaller to
+ *     cut VLM token cost and latency on every classification call.
+ */
+export const IMAGE_PROCESSING = {
+  /** Longest-edge cap (px) for the browser-side resize before upload. */
+  CLIENT_MAX_DIMENSION: 1280,
+  /** JPEG quality (0–1) for the browser canvas re-encode. */
+  CLIENT_JPEG_QUALITY: 0.82,
+  /** Longest-edge cap (px) for the server-side sharp downscale. */
+  SERVER_MAX_DIMENSION: 1024,
+  /** JPEG quality (0–100) for the server-side sharp re-encode. */
+  SERVER_JPEG_QUALITY: 80,
+} as const;
+
+/** Browser geolocation request timeout (ms). */
+export const GEOLOCATION_TIMEOUT_MS = 10000;
+/** Max age (ms) of a cached browser position we'll accept before re-fetching. */
+export const GEOLOCATION_CACHE_AGE_MS = 60000;
+
 export const ISSUE_TYPE_LABELS: Record<string, string> = {
   ROAD_DAMAGE: "Road Damage",
   STREETLIGHT_OUTAGE: "Streetlight Outage",
