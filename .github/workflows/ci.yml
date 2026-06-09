@@ -35,3 +35,26 @@ jobs:
 
       - name: Check formatting
         run: npm run format:check
+
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nexa
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nexa/package-lock.json
+
+      - run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run tests
+        run: npm run test
