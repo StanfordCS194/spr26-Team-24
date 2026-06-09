@@ -9,6 +9,20 @@ function getClient() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 }
 
+/**
+ * Classify a civic issue with OpenAI (gpt-4o-mini).
+ *
+ * Sends the prompt, optional user `description`, and optional image to the
+ * model, then parses the JSON reply into a normalized {@link ProviderResult}
+ * tagged with `provider: "openai/gpt-4o-mini"` and the measured `latencyMs`.
+ *
+ * @param description - User-supplied text describing the issue (skipped when empty).
+ * @param imageBase64 - Image as a base64 data URL, or null for text-only.
+ * @param options.prompt - Overrides the default `CLASSIFICATION_PROMPT` when set.
+ * @returns The model's classification merged with provider id and latency.
+ *          Rejects if the OpenAI call throws; callers wrap it in their own
+ *          error handling.
+ */
 export async function classifyWithOpenAI(
   description: string,
   imageBase64: string | null,

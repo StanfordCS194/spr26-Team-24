@@ -19,6 +19,21 @@ function extractMimeType(base64: string): string {
   return match?.[1] ?? "image/jpeg";
 }
 
+/**
+ * Classify a civic issue with Google (gemini-2.5-flash).
+ *
+ * Sends the prompt, optional user `description`, and optional image to the
+ * model, then parses the JSON reply into a normalized {@link ProviderResult}
+ * tagged with `provider: "google/gemini-2.5-flash"` and the measured
+ * `latencyMs`.
+ *
+ * @param description - User-supplied text describing the issue (skipped when empty).
+ * @param imageBase64 - Image as a base64 data URL, or null for text-only.
+ * @param options.prompt - Overrides the default `CLASSIFICATION_PROMPT` when set.
+ * @returns The model's classification merged with provider id and latency.
+ *          Rejects if the Google call throws; callers wrap it in their own
+ *          error handling.
+ */
 export async function classifyWithGoogle(
   description: string,
   imageBase64: string | null,
