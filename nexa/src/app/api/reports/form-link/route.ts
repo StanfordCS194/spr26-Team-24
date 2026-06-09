@@ -80,15 +80,57 @@ Rules:
 
 Example: For Palo Alto, "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311" is the correct unified 311 page and should be returned for any civic issue type, including road damage.`;
 
+/**
+ * US state/territory two-letter codes used as the registrable TLD label in the
+ * `.us` locality space (RFC 1480), e.g. `paloalto.ca.us`. The `.us` TLD itself
+ * is openly registrable (`evil.us`), so we only trust hosts where `.us` is
+ * preceded by a real state code (`.ca.us`, `.ny.us`, …).
+ */
+const US_STATE_CODES = new Set([
+  "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga",
+  "hi", "id", "il", "in", "ia", "ks", "ky", "la", "me", "md",
+  "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj",
+  "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc",
+  "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy",
+  // District of Columbia and inhabited territories.
+  "dc", "as", "gu", "mp", "pr", "vi",
+]);
+
+/**
+ * Accepts only URLs hosted on an official US government domain. Guards against
+ * suffix-only bypasses that the old `endsWith(".gov"|".us")` check allowed:
+ * - userinfo tricks (`https://trusted.gov@evil.us/`) resolve `hostname` to the
+ *   attacker host, so any credentials in the URL are rejected outright;
+ * - non-https URLs are rejected;
+ * - `.us` is openly registrable (`evil.us`) and lets attackers append the label
+ *   to anything (`paloalto.gov.evil.us`), so `.us` is trusted only when the
+ *   registrable suffix is `<state>.us` (`paloalto.ca.us`);
+ * - `.gov` registration is restricted to US government entities, so an exact
+ *   `.gov` TLD (with at least one label in front) stays trusted.
+ */
 function isOfficialCityGovUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    if (parsed.protocol !== "https:") return false;
+    // Userinfo (`user:pass@host`) lets an attacker disguise the real host.
+    if (parsed.username !== "" || parsed.password !== "") return false;
+
+    const host = parsed.hostname.toLowerCase();
+    const labels = host.split(".");
+    if (labels.length < 2 || labels.some((label) => label === "")) {
       return false;
     }
-    const host = parsed.hostname.toLowerCase();
-    if (host.endsWith(".gov")) return true;
-    if (host.endsWith(".us")) return true;
+
+    const tld = labels[labels.length - 1];
+
+    // `.gov` is a restricted, government-only TLD: trust any subdomain of it.
+    if (tld === "gov") return true;
+
+    // `.us` only when the registrable suffix is `<state-code>.us`.
+    if (tld === "us" && labels.length >= 3) {
+      return US_STATE_CODES.has(labels[labels.length - 2]);
+    }
+
     return false;
   } catch {
     return false;
