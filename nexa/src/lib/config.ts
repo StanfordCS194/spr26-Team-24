@@ -8,7 +8,7 @@
  *   - the literal env var names live in exactly one place.
  *
  * Getters are lazy and cached — they read `process.env` on first access and
- * memoize the result, mirroring the lazy-client pattern in `src/lib/openai.ts`.
+ * memoize the result.
  * Laziness matters because some env vars are only present at runtime (e.g. on
  * Vercel) and not during the build, so we must not read them at module load.
  */
