@@ -30,7 +30,7 @@ if (typeof window !== "undefined") {
       get length() {
         return Object.keys(store).length;
       },
-    } as Storage;
+    } satisfies Storage;
   })();
   Object.defineProperty(window, "localStorage", {
     configurable: true,
@@ -93,6 +93,6 @@ vi.mock("next/image", () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    return <img {...(props as Record<string, unknown>)} />;
+    return <img {...props} />;
   },
 }));

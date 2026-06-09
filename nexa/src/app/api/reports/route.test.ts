@@ -18,8 +18,10 @@ describe("POST /api/reports", () => {
     // Routing/dedupe helpers query prisma too — stub them so the route runs.
     prismaMock.agency.findFirst.mockResolvedValue(null);
     prismaMock.issueGroup.findMany.mockResolvedValue([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    prismaMock.issueGroup.create.mockResolvedValue({ id: "group_1" } as any);
+    // findOrCreateIssueGroup selects only { id }, so a narrowed shape is correct.
+    prismaMock.issueGroup.create.mockResolvedValue({
+      id: "group_1",
+    } as Awaited<ReturnType<typeof prismaMock.issueGroup.create>>);
     prismaMock.report.create.mockResolvedValue(created);
 
     const request = new NextRequest("http://localhost/api/reports", {
