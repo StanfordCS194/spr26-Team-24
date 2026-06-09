@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n/provider";
+import { safeRedirect } from "@/lib/utils";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export function RegisterForm() {
         return;
       }
 
-      router.push("/");
+      router.push(safeRedirect("/"));
       router.refresh();
     } catch {
       setError(t("common.somethingWrong"));

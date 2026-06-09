@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n/provider";
+import { safeRedirect } from "@/lib/utils";
 
 export function LoginForm() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export function LoginForm() {
         return;
       }
 
-      const redirect = searchParams.get("redirect") || "/";
+      const redirect = safeRedirect(searchParams.get("redirect"));
       router.push(redirect);
       router.refresh();
     } catch {
