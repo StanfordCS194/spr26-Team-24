@@ -14,7 +14,11 @@ describe("seeded agency coverage (issues #195 / #198)", () => {
     );
     expect(epaRoads).toBeDefined();
     expect(epaRoads?.jurisdiction).toBe("city-east-palo-alto");
-    expect(epaRoads?.issueTypes).toEqual(["ROAD_DAMAGE"]);
+    // EPA Public Works still owns ROAD_DAMAGE; the taxonomy-routing expansion
+    // (#264) widened it to the general-civic types it plausibly handles, but
+    // illegal dumping remains with the dedicated EPA Clean City row.
+    expect(epaRoads?.issueTypes).toContain("ROAD_DAMAGE");
+    expect(epaRoads?.issueTypes).not.toContain("ILLEGAL_DUMPING");
     expect(epaRoads?.intakeMethod).toBe("WEB_FORM");
     // Verified intake URL + staff-email fallback (issue #23 research).
     expect(epaRoads?.intakeUrl).toContain("cityofepa.org");
@@ -51,15 +55,17 @@ describe("seeded agency coverage (issues #195 / #198)", () => {
   it("counts the distinct (jurisdiction × issueType × intakeMethod) triples (O2.KR2)", () => {
     const { total, jurisdictions, intakeMethods } = countTriples();
 
-    // HONEST count: the verified seed now yields 34 distinct triples — clearing
-    // the 30 target after onboarding six source-verified SeeClickFix Open311
-    // California cities (Milpitas, Morgan Hill, Gilroy, Watsonville, Vallejo,
-    // San Leandro), each contributing 3 API triples (ROAD_DAMAGE,
-    // ILLEGAL_DUMPING, STREETLIGHT_OUTAGE) whose service_codes were verified
-    // live against the SeeClickFix Open311 API. This assertion is the
-    // regression lock; raise it (never lower it) only when MORE source-verified
-    // triples are added. We do NOT fabricate agencies/fields to inflate it.
-    expect(total).toBe(34);
+    // HONEST count: the verified seed now yields 153 distinct triples. The
+    // taxonomy-routing expansion (#264) wired the 13 new IssueType values to
+    // each agency that handles them — adding live-verified SeeClickFix service
+    // codes per city for the seven Open311 API agencies, and widening the
+    // general WEB_FORM/EMAIL intakes (Palo Alto 311, Mountain View, Santa Clara
+    // County, EPA Public Works, Menlo Park ACT) to the new general-civic types
+    // they plausibly handle. This is on top of the earlier 34 (six SeeClickFix
+    // cities + East Palo Alto). This assertion is the regression lock; raise it
+    // (never lower it) only when MORE source-verified triples are added. We do
+    // NOT fabricate agencies/fields to inflate it.
+    expect(total).toBe(153);
     expect(total).toBeGreaterThanOrEqual(30);
 
     // Across >=2 jurisdictions, with all four intake methods represented.

@@ -20,6 +20,19 @@ export type AgencySeed = {
     | "STREETLIGHT_OUTAGE"
     | "ILLEGAL_DUMPING"
     | "VEHICLE_EMISSIONS"
+    | "GRAFFITI"
+    | "SIDEWALK_DAMAGE"
+    | "TREE_MAINTENANCE"
+    | "TRAFFIC_SIGNAL"
+    | "PUBLIC_SIGNAGE"
+    | "FLOODING_DRAINAGE"
+    | "WATER_SYSTEM"
+    | "PARKS_PLAYGROUNDS"
+    | "WEED_ABATEMENT"
+    | "ABANDONED_VEHICLE"
+    | "PARKING"
+    | "CODE_ENFORCEMENT"
+    | "STREET_SWEEPING"
     | "OTHER"
   >;
   intakeMethod: "API" | "WEB_FORM" | "EMAIL" | "PHONE";
@@ -32,7 +45,27 @@ export const AGENCIES: AgencySeed[] = [
   {
     name: "Palo Alto 311",
     jurisdiction: "city-palo-alto",
-    issueTypes: ["ROAD_DAMAGE", "STREETLIGHT_OUTAGE", "ILLEGAL_DUMPING"],
+    // Palo Alto 311 is the city's UNIFIED report-an-issue portal, so it is the
+    // general-civic intake for the new taxonomy types as well (#264). It has no
+    // machine API, so no service codes — the report routes to the portal for a
+    // human to file. ABANDONED_VEHICLE is left to police/parking enforcement,
+    // and emissions stays with CARB.
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "STREETLIGHT_OUTAGE",
+      "ILLEGAL_DUMPING",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "PARKING",
+      "CODE_ENFORCEMENT",
+      "STREET_SWEEPING",
+    ],
     intakeMethod: "WEB_FORM",
     intakeUrl:
       "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
@@ -77,7 +110,26 @@ export const AGENCIES: AgencySeed[] = [
   {
     name: "Menlo Park ACT",
     jurisdiction: "city-menlo-park",
-    issueTypes: ["ROAD_DAMAGE", "STREETLIGHT_OUTAGE", "ILLEGAL_DUMPING"],
+    // ACT Menlo Park is the city's general Report-a-Concern web desk, so it is
+    // also a general-civic intake for the new taxonomy types (#264) — a
+    // WEB_FORM sibling to the Menlo Park SeeClickFix API row. No service codes
+    // (web form only). ABANDONED_VEHICLE / emissions handled elsewhere.
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "STREETLIGHT_OUTAGE",
+      "ILLEGAL_DUMPING",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "PARKING",
+      "CODE_ENFORCEMENT",
+      "STREET_SWEEPING",
+    ],
     intakeMethod: "WEB_FORM",
     intakeUrl: "https://www.menlopark.gov/Services/ACT-Menlo-Park",
     intakeEmail: null,
@@ -126,7 +178,22 @@ export const AGENCIES: AgencySeed[] = [
     // endpoint is also mirrored in `intakeUrl` (the client falls back to it).
     name: "Menlo Park SeeClickFix (Open311)",
     jurisdiction: "city-menlo-park",
-    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING"],
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "ILLEGAL_DUMPING",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "WATER_SYSTEM",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "PARKING",
+      "CODE_ENFORCEMENT",
+      "STREET_SWEEPING",
+    ],
     intakeMethod: "API",
     intakeUrl: "https://seeclickfix.com/open311/v2",
     intakeEmail: null,
@@ -136,9 +203,25 @@ export const AGENCIES: AgencySeed[] = [
         // Sandbox endpoint for safe testing (not consumed by the client yet;
         // kept here as verified provenance per the #98 caveat).
         sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        // Service codes verified live against the Menlo Park SeeClickFix
+        // catalog (taxonomy routing expansion, #264). The 13 new-taxonomy
+        // codes below sit alongside the pre-existing ROAD_DAMAGE/
+        // ILLEGAL_DUMPING codes; ABANDONED_VEHICLE has no Menlo Park service.
         serviceCodes: {
           ROAD_DAMAGE: "94213",
           ILLEGAL_DUMPING: "94210",
+          GRAFFITI: "22023",
+          SIDEWALK_DAMAGE: "94215",
+          TREE_MAINTENANCE: "94218",
+          TRAFFIC_SIGNAL: "32517",
+          PUBLIC_SIGNAGE: "94214",
+          FLOODING_DRAINAGE: "30942",
+          WATER_SYSTEM: "94219",
+          PARKS_PLAYGROUNDS: "94212",
+          WEED_ABATEMENT: "94220",
+          PARKING: "94209",
+          CODE_ENFORCEMENT: "100710",
+          STREET_SWEEPING: "22033",
         },
       },
     },
@@ -167,7 +250,24 @@ export const AGENCIES: AgencySeed[] = [
     // — we do not invent field-level constraints.
     name: "East Palo Alto Public Works",
     jurisdiction: "city-east-palo-alto",
-    issueTypes: ["ROAD_DAMAGE"],
+    // EPA Public Works is the city's general infrastructure/maintenance desk,
+    // so it is the general-civic intake for the new taxonomy types (#264) via
+    // the same city contact web form (no machine API, so no service codes).
+    // Illegal dumping stays with the dedicated EPA Clean City row.
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "PARKING",
+      "CODE_ENFORCEMENT",
+      "STREET_SWEEPING",
+    ],
     intakeMethod: "WEB_FORM",
     intakeUrl: "https://www.cityofepa.org/contact",
     intakeEmail: "maintenance@cityofepa.org",
@@ -203,7 +303,25 @@ export const AGENCIES: AgencySeed[] = [
   {
     name: "Mountain View Public Works",
     jurisdiction: "city-mountain-view",
-    issueTypes: ["ROAD_DAMAGE", "STREETLIGHT_OUTAGE", "ILLEGAL_DUMPING"],
+    // Mountain View Public Works handles general civic service requests, so it
+    // is the general-civic intake for the new taxonomy types (#264) via its web
+    // form (no machine API, so no service codes).
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "STREETLIGHT_OUTAGE",
+      "ILLEGAL_DUMPING",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "PARKING",
+      "CODE_ENFORCEMENT",
+      "STREET_SWEEPING",
+    ],
     intakeMethod: "WEB_FORM",
     intakeUrl: "https://www.mountainview.gov/our-city/departments/public-works",
     intakeEmail: null,
@@ -217,7 +335,23 @@ export const AGENCIES: AgencySeed[] = [
   {
     name: "Santa Clara County Public Works",
     jurisdiction: "county-santa-clara-unincorporated",
-    issueTypes: ["ROAD_DAMAGE", "STREETLIGHT_OUTAGE"],
+    // SCC Public Works handles roads & infrastructure in unincorporated areas,
+    // so we widen it to the road-maintenance-adjacent new taxonomy types it
+    // plausibly handles (#264) — sidewalk, roadside trees, traffic signals,
+    // signage, drainage/flooding, roadside weed abatement, street sweeping. We
+    // do NOT add parks/parking/code-enforcement, which the county runs through
+    // separate departments. No machine API, so no service codes.
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "STREETLIGHT_OUTAGE",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "WEED_ABATEMENT",
+      "STREET_SWEEPING",
+    ],
     intakeMethod: "WEB_FORM",
     intakeUrl:
       "https://publicworks.sccgov.org/services/road-maintenance/report-problem",
@@ -268,7 +402,20 @@ export const AGENCIES: AgencySeed[] = [
     //   STREETLIGHT_OUTAGE 26659 (Street Lights)
     name: "Milpitas SeeClickFix (Open311)",
     jurisdiction: "city-milpitas",
-    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "ILLEGAL_DUMPING",
+      "STREETLIGHT_OUTAGE",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "WATER_SYSTEM",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "ABANDONED_VEHICLE",
+    ],
     intakeMethod: "API",
     intakeUrl: "https://seeclickfix.com/open311/v2",
     intakeEmail: null,
@@ -276,10 +423,22 @@ export const AGENCIES: AgencySeed[] = [
       open311: {
         endpoint: "https://seeclickfix.com/open311/v2",
         sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        // New-taxonomy codes verified live against the Milpitas catalog (#264).
+        // Milpitas has no GRAFFITI / PARKING / CODE_ENFORCEMENT /
+        // STREET_SWEEPING service, so those are omitted.
         serviceCodes: {
           ROAD_DAMAGE: "26652",
           ILLEGAL_DUMPING: "26647",
           STREETLIGHT_OUTAGE: "26659",
+          SIDEWALK_DAMAGE: "26656",
+          TREE_MAINTENANCE: "26641",
+          TRAFFIC_SIGNAL: "26661",
+          PUBLIC_SIGNAGE: "26657",
+          FLOODING_DRAINAGE: "26645",
+          WATER_SYSTEM: "26664",
+          PARKS_PLAYGROUNDS: "26651",
+          WEED_ABATEMENT: "26668",
+          ABANDONED_VEHICLE: "26639",
         },
       },
     },
@@ -291,7 +450,21 @@ export const AGENCIES: AgencySeed[] = [
     //   STREETLIGHT_OUTAGE 38111 (TRAFFIC - Street Light Outage)
     name: "Morgan Hill SeeClickFix (Open311)",
     jurisdiction: "city-morgan-hill",
-    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "ILLEGAL_DUMPING",
+      "STREETLIGHT_OUTAGE",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "WATER_SYSTEM",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "STREET_SWEEPING",
+    ],
     intakeMethod: "API",
     intakeUrl: "https://seeclickfix.com/open311/v2",
     intakeEmail: null,
@@ -299,10 +472,23 @@ export const AGENCIES: AgencySeed[] = [
       open311: {
         endpoint: "https://seeclickfix.com/open311/v2",
         sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        // New-taxonomy codes verified live against the Morgan Hill catalog
+        // (#264). Morgan Hill has no ABANDONED_VEHICLE / PARKING /
+        // CODE_ENFORCEMENT service, so those are omitted.
         serviceCodes: {
           ROAD_DAMAGE: "38109",
           ILLEGAL_DUMPING: "38127",
           STREETLIGHT_OUTAGE: "38111",
+          GRAFFITI: "38354",
+          SIDEWALK_DAMAGE: "38172",
+          TREE_MAINTENANCE: "38120",
+          TRAFFIC_SIGNAL: "38112",
+          PUBLIC_SIGNAGE: "38093",
+          FLOODING_DRAINAGE: "38126",
+          WATER_SYSTEM: "47772",
+          PARKS_PLAYGROUNDS: "38113",
+          WEED_ABATEMENT: "47016",
+          STREET_SWEEPING: "44358",
         },
       },
     },
@@ -314,7 +500,23 @@ export const AGENCIES: AgencySeed[] = [
     //   STREETLIGHT_OUTAGE 57748 (Streetlights)
     name: "Gilroy SeeClickFix (Open311)",
     jurisdiction: "city-gilroy",
-    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "ILLEGAL_DUMPING",
+      "STREETLIGHT_OUTAGE",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "WATER_SYSTEM",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "ABANDONED_VEHICLE",
+      "PARKING",
+      "CODE_ENFORCEMENT",
+    ],
     intakeMethod: "API",
     intakeUrl: "https://seeclickfix.com/open311/v2",
     intakeEmail: null,
@@ -322,10 +524,24 @@ export const AGENCIES: AgencySeed[] = [
       open311: {
         endpoint: "https://seeclickfix.com/open311/v2",
         sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        // New-taxonomy codes verified live against the Gilroy catalog (#264).
+        // Gilroy has no STREET_SWEEPING service, so it is omitted.
         serviceCodes: {
           ROAD_DAMAGE: "57749",
           ILLEGAL_DUMPING: "62727",
           STREETLIGHT_OUTAGE: "57748",
+          GRAFFITI: "64938",
+          SIDEWALK_DAMAGE: "78303",
+          TREE_MAINTENANCE: "82132",
+          TRAFFIC_SIGNAL: "57751",
+          PUBLIC_SIGNAGE: "65004",
+          FLOODING_DRAINAGE: "57718",
+          WATER_SYSTEM: "57758",
+          PARKS_PLAYGROUNDS: "71573",
+          WEED_ABATEMENT: "65071",
+          ABANDONED_VEHICLE: "64741",
+          PARKING: "64773",
+          CODE_ENFORCEMENT: "65500",
         },
       },
     },
@@ -337,7 +553,13 @@ export const AGENCIES: AgencySeed[] = [
     //   STREETLIGHT_OUTAGE 50067 (Street Light)
     name: "Watsonville SeeClickFix (Open311)",
     jurisdiction: "city-watsonville",
-    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "ILLEGAL_DUMPING",
+      "STREETLIGHT_OUTAGE",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+    ],
     intakeMethod: "API",
     intakeUrl: "https://seeclickfix.com/open311/v2",
     intakeEmail: null,
@@ -345,10 +567,15 @@ export const AGENCIES: AgencySeed[] = [
       open311: {
         endpoint: "https://seeclickfix.com/open311/v2",
         sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        // New-taxonomy codes verified live against the Watsonville catalog
+        // (#264). Watsonville's SeeClickFix catalog only exposes graffiti and
+        // sidewalk among the new types; all other new types are omitted.
         serviceCodes: {
           ROAD_DAMAGE: "50064",
           ILLEGAL_DUMPING: "53301",
           STREETLIGHT_OUTAGE: "50067",
+          GRAFFITI: "50060",
+          SIDEWALK_DAMAGE: "50066",
         },
       },
     },
@@ -360,7 +587,23 @@ export const AGENCIES: AgencySeed[] = [
     //   STREETLIGHT_OUTAGE 3378 (Street Light)
     name: "Vallejo SeeClickFix (Open311)",
     jurisdiction: "city-vallejo",
-    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "ILLEGAL_DUMPING",
+      "STREETLIGHT_OUTAGE",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "WATER_SYSTEM",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "ABANDONED_VEHICLE",
+      "PARKING",
+      "CODE_ENFORCEMENT",
+    ],
     intakeMethod: "API",
     intakeUrl: "https://seeclickfix.com/open311/v2",
     intakeEmail: null,
@@ -368,10 +611,27 @@ export const AGENCIES: AgencySeed[] = [
       open311: {
         endpoint: "https://seeclickfix.com/open311/v2",
         sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        // New-taxonomy codes verified live against the Vallejo catalog (#264).
+        // Vallejo has no STREET_SWEEPING service, so it is omitted. TREE_-
+        // MAINTENANCE and WEED_ABATEMENT both map to Vallejo service 3729
+        // (its single landscaping/vegetation request type) — verified, not a
+        // typo.
         serviceCodes: {
           ROAD_DAMAGE: "3376",
           ILLEGAL_DUMPING: "3613",
           STREETLIGHT_OUTAGE: "3378",
+          GRAFFITI: "3377",
+          SIDEWALK_DAMAGE: "3615",
+          TREE_MAINTENANCE: "3729",
+          TRAFFIC_SIGNAL: "3606",
+          PUBLIC_SIGNAGE: "3614",
+          FLOODING_DRAINAGE: "16034",
+          WATER_SYSTEM: "3743",
+          PARKS_PLAYGROUNDS: "4595",
+          WEED_ABATEMENT: "3729",
+          ABANDONED_VEHICLE: "4064",
+          PARKING: "3731",
+          CODE_ENFORCEMENT: "4718",
         },
       },
     },
@@ -383,7 +643,22 @@ export const AGENCIES: AgencySeed[] = [
     //   STREETLIGHT_OUTAGE 53607 (Street lights)
     name: "San Leandro SeeClickFix (Open311)",
     jurisdiction: "city-san-leandro",
-    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    issueTypes: [
+      "ROAD_DAMAGE",
+      "ILLEGAL_DUMPING",
+      "STREETLIGHT_OUTAGE",
+      "GRAFFITI",
+      "SIDEWALK_DAMAGE",
+      "TREE_MAINTENANCE",
+      "TRAFFIC_SIGNAL",
+      "PUBLIC_SIGNAGE",
+      "FLOODING_DRAINAGE",
+      "PARKS_PLAYGROUNDS",
+      "WEED_ABATEMENT",
+      "ABANDONED_VEHICLE",
+      "PARKING",
+      "CODE_ENFORCEMENT",
+    ],
     intakeMethod: "API",
     intakeUrl: "https://seeclickfix.com/open311/v2",
     intakeEmail: null,
@@ -391,10 +666,24 @@ export const AGENCIES: AgencySeed[] = [
       open311: {
         endpoint: "https://seeclickfix.com/open311/v2",
         sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        // New-taxonomy codes verified live against the San Leandro catalog
+        // (#264). San Leandro has no WATER_SYSTEM / STREET_SWEEPING service,
+        // so those are omitted.
         serviceCodes: {
           ROAD_DAMAGE: "53596",
           ILLEGAL_DUMPING: "53329",
           STREETLIGHT_OUTAGE: "53607",
+          GRAFFITI: "53328",
+          SIDEWALK_DAMAGE: "53602",
+          TREE_MAINTENANCE: "53558",
+          TRAFFIC_SIGNAL: "55102",
+          PUBLIC_SIGNAGE: "53608",
+          FLOODING_DRAINAGE: "53606",
+          PARKS_PLAYGROUNDS: "53591",
+          WEED_ABATEMENT: "20960",
+          ABANDONED_VEHICLE: "23975",
+          PARKING: "21267",
+          CODE_ENFORCEMENT: "28488",
         },
       },
     },

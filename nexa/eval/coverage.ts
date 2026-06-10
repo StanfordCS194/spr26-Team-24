@@ -22,11 +22,15 @@
  * Morgan Hill, Gilroy, Watsonville, Vallejo, San Leandro), each verified live
  * against the SeeClickFix Open311 API (services.json HTTP 200 with the city's own
  * `organization`, every chosen service_code re-confirmed via services/<code>.json
- * HTTP 200) and each backed by a real OSM city-boundary polygon. That brings the
- * verified total to 34 distinct triples across 11 jurisdictions — clearing the 30
- * target WITHOUT inventing any agency, service_code, or field. By default the
- * script exits 0 (it is a documentation/visibility tool); pass `--strict` to make
- * it exit non-zero if the verified data ever regresses below the target.
+ * HTTP 200) and each backed by a real OSM city-boundary polygon — bringing the
+ * total to 34 distinct triples across 11 jurisdictions. The taxonomy-routing
+ * expansion (#264) then wired the 13 new IssueType values to every agency that
+ * handles them (live-verified SeeClickFix service codes per city, plus widening
+ * the general WEB_FORM/EMAIL intakes to the new general-civic types), bringing
+ * the verified total to 153 distinct triples — clearing the 30 target WITHOUT
+ * inventing any agency, service_code, or field. By default the script exits 0 (it
+ * is a documentation/visibility tool); pass `--strict` to make it exit non-zero
+ * if the verified data ever regresses below the target.
  */
 import { AGENCIES } from "../prisma/agencies";
 
