@@ -58,6 +58,11 @@ model Report {
   agencyId           String?
   agency             Agency?      @relation(fields: [agencyId], references: [id])
   externalTrackingId String?
+  // When the report was successfully filed with an agency (the SUBMITTING ->
+  // SUBMITTED transition in src/lib/submission/orchestrate.ts). Persisting this
+  // makes time-to-submit (submittedAt - createdAt) recoverable from the DB
+  // rather than only from the client PostHog event. Null until submitted.
+  submittedAt        DateTime?
   userResolved       Boolean?
   userResolvedAt     DateTime?
   issueGroupId       String?

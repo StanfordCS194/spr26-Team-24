@@ -228,6 +228,9 @@ export async function orchestrateSubmission(
         data: {
           status: ReportStatus.SUBMITTED,
           externalTrackingId: emailResult.messageId,
+          // Stamp the submission time so time-to-submit is recoverable from the
+          // DB (submittedAt - createdAt) rather than only from PostHog. (#241)
+          submittedAt: new Date(),
         },
       });
       return {
@@ -290,6 +293,9 @@ export async function orchestrateSubmission(
       // Prefer the immediate id; fall back to the async token until a later
       // poll resolves it to a real service_request_id.
       externalTrackingId: result.serviceRequestId ?? result.token,
+      // Stamp the submission time so time-to-submit is recoverable from the DB
+      // (submittedAt - createdAt) rather than only from PostHog. (#241)
+      submittedAt: new Date(),
     },
   });
 

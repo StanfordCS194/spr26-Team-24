@@ -95,6 +95,16 @@ describe("orchestrateSubmission — API intake (automated)", () => {
       where: { id: reportId, status: ReportStatus.CONFIRMED },
       data: { status: ReportStatus.SUBMITTING },
     });
+    // Stamped submittedAt on the SUBMITTED transition so time-to-submit is
+    // DB-recoverable (#241).
+    expect(prismaMock.report.update).toHaveBeenCalledWith({
+      where: { id: reportId },
+      data: {
+        status: ReportStatus.SUBMITTED,
+        externalTrackingId: "SR-123",
+        submittedAt: expect.any(Date),
+      },
+    });
   });
 
   it("falls back to the async token when no service_request_id is returned", async () => {
@@ -198,6 +208,9 @@ describe("orchestrateSubmission — non-automated intake (graceful fallback)", (
       expect(prismaMock.report.updateMany).not.toHaveBeenCalled();
       expect(submitToOpen311).not.toHaveBeenCalled();
       expect(submitViaEmail).not.toHaveBeenCalled();
+      // Manual-assist never reaches a SUBMITTED transition, so submittedAt is
+      // never stamped (#241): the report row is left untouched.
+      expect(prismaMock.report.update).not.toHaveBeenCalled();
     },
   );
 });
@@ -244,6 +257,15 @@ describe("orchestrateSubmission — EMAIL intake (email agent, #31)", () => {
     });
     expect(submitViaEmail).toHaveBeenCalledOnce();
     expect(submitToOpen311).not.toHaveBeenCalled();
+    // Stamped submittedAt on the SUBMITTED transition (#241).
+    expect(prismaMock.report.update).toHaveBeenCalledWith({
+      where: { id: reportId },
+      data: {
+        status: ReportStatus.SUBMITTED,
+        externalTrackingId: "msg-789",
+        submittedAt: expect.any(Date),
+      },
+    });
   });
 
   it("falls back to manual_assist (env-gated off) and rolls back to CONFIRMED", async () => {
