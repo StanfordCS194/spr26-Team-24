@@ -23,6 +23,7 @@
     "eval:routing": "tsx eval/routing.ts",
     "eval:validate-boundaries": "tsx eval/validate-boundaries.ts",
     "eval:readiness": "tsx eval/readiness.ts",
+    "eval:end-to-end": "tsx eval/end-to-end.ts",
     "eval:coverage": "tsx eval/coverage.ts",
     "eval:pipeline": "tsx eval/pipeline.ts"
   },

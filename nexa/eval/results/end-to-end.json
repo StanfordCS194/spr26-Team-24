@@ -1,0 +1,795 @@
+{
+  "mode": "end-to-end",
+  "datasetSize": 63,
+  "target": 0.8,
+  "ranAt": "2026-06-10T08:33:18.155Z",
+  "results": [
+    {
+      "caseId": "palo-alto-road_damage-01",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "palo-alto-road_damage-02",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "palo-alto-road_damage-03",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "palo-alto-illegal_dumping-04",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "palo-alto-illegal_dumping-05",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "palo-alto-illegal_dumping-06",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "palo-alto-vehicle_emissions-07",
+      "issueType": "VEHICLE_EMISSIONS",
+      "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+      "outcome": "confident",
+      "resolvedAgencyName": "CARB Smoking Vehicle Complaint",
+      "candidateNames": [
+        "CARB Smoking Vehicle Complaint"
+      ],
+      "correct": true,
+      "reason": "Confident match reached CARB Smoking Vehicle Complaint."
+    },
+    {
+      "caseId": "palo-alto-vehicle_emissions-08",
+      "issueType": "VEHICLE_EMISSIONS",
+      "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+      "outcome": "confident",
+      "resolvedAgencyName": "CARB Smoking Vehicle Complaint",
+      "candidateNames": [
+        "CARB Smoking Vehicle Complaint"
+      ],
+      "correct": true,
+      "reason": "Confident match reached CARB Smoking Vehicle Complaint."
+    },
+    {
+      "caseId": "palo-alto-vehicle_emissions-09",
+      "issueType": "VEHICLE_EMISSIONS",
+      "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+      "outcome": "confident",
+      "resolvedAgencyName": "CARB Smoking Vehicle Complaint",
+      "candidateNames": [
+        "CARB Smoking Vehicle Complaint"
+      ],
+      "correct": true,
+      "reason": "Confident match reached CARB Smoking Vehicle Complaint."
+    },
+    {
+      "caseId": "stanford-campus-road_damage-10",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "stanford-campus-road_damage-11",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "stanford-campus-road_damage-12",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "stanford-campus-illegal_dumping-13",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "stanford-campus-illegal_dumping-14",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "stanford-campus-illegal_dumping-15",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "stanford-campus-vehicle_emissions-16",
+      "issueType": "VEHICLE_EMISSIONS",
+      "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+      "outcome": "confident",
+      "resolvedAgencyName": "CARB Smoking Vehicle Complaint",
+      "candidateNames": [
+        "CARB Smoking Vehicle Complaint"
+      ],
+      "correct": true,
+      "reason": "Confident match reached CARB Smoking Vehicle Complaint."
+    },
+    {
+      "caseId": "stanford-campus-vehicle_emissions-17",
+      "issueType": "VEHICLE_EMISSIONS",
+      "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+      "outcome": "confident",
+      "resolvedAgencyName": "CARB Smoking Vehicle Complaint",
+      "candidateNames": [
+        "CARB Smoking Vehicle Complaint"
+      ],
+      "correct": true,
+      "reason": "Confident match reached CARB Smoking Vehicle Complaint."
+    },
+    {
+      "caseId": "stanford-campus-vehicle_emissions-18",
+      "issueType": "VEHICLE_EMISSIONS",
+      "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+      "outcome": "confident",
+      "resolvedAgencyName": "CARB Smoking Vehicle Complaint",
+      "candidateNames": [
+        "CARB Smoking Vehicle Complaint"
+      ],
+      "correct": true,
+      "reason": "Confident match reached CARB Smoking Vehicle Complaint."
+    },
+    {
+      "caseId": "menlo-park-road_damage-19",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Menlo Park ACT",
+      "outcome": "ambiguous",
+      "resolvedAgencyName": null,
+      "candidateNames": [
+        "Menlo Park ACT",
+        "Menlo Park SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Ambiguous match; expected Menlo Park ACT is in the candidate set."
+    },
+    {
+      "caseId": "menlo-park-road_damage-20",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Menlo Park ACT",
+      "outcome": "ambiguous",
+      "resolvedAgencyName": null,
+      "candidateNames": [
+        "Menlo Park ACT",
+        "Menlo Park SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Ambiguous match; expected Menlo Park ACT is in the candidate set."
+    },
+    {
+      "caseId": "menlo-park-road_damage-21",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Menlo Park ACT",
+      "outcome": "ambiguous",
+      "resolvedAgencyName": null,
+      "candidateNames": [
+        "Menlo Park ACT",
+        "Menlo Park SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Ambiguous match; expected Menlo Park ACT is in the candidate set."
+    },
+    {
+      "caseId": "menlo-park-illegal_dumping-22",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Menlo Park SeeClickFix (Open311)",
+      "outcome": "ambiguous",
+      "resolvedAgencyName": null,
+      "candidateNames": [
+        "Menlo Park ACT",
+        "Menlo Park SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Ambiguous match; expected Menlo Park SeeClickFix (Open311) is in the candidate set."
+    },
+    {
+      "caseId": "menlo-park-illegal_dumping-23",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Menlo Park SeeClickFix (Open311)",
+      "outcome": "ambiguous",
+      "resolvedAgencyName": null,
+      "candidateNames": [
+        "Menlo Park ACT",
+        "Menlo Park SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Ambiguous match; expected Menlo Park SeeClickFix (Open311) is in the candidate set."
+    },
+    {
+      "caseId": "menlo-park-illegal_dumping-24",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Menlo Park SeeClickFix (Open311)",
+      "outcome": "ambiguous",
+      "resolvedAgencyName": null,
+      "candidateNames": [
+        "Menlo Park ACT",
+        "Menlo Park SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Ambiguous match; expected Menlo Park SeeClickFix (Open311) is in the candidate set."
+    },
+    {
+      "caseId": "mountain-view-road_damage-25",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Mountain View Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "Mountain View Public Works",
+      "candidateNames": [
+        "Mountain View Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Mountain View Public Works."
+    },
+    {
+      "caseId": "mountain-view-road_damage-26",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Mountain View Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "Mountain View Public Works",
+      "candidateNames": [
+        "Mountain View Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Mountain View Public Works."
+    },
+    {
+      "caseId": "mountain-view-road_damage-27",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Mountain View Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "Mountain View Public Works",
+      "candidateNames": [
+        "Mountain View Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Mountain View Public Works."
+    },
+    {
+      "caseId": "mountain-view-illegal_dumping-28",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Mountain View Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "Mountain View Public Works",
+      "candidateNames": [
+        "Mountain View Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Mountain View Public Works."
+    },
+    {
+      "caseId": "mountain-view-illegal_dumping-29",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Mountain View Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "Mountain View Public Works",
+      "candidateNames": [
+        "Mountain View Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Mountain View Public Works."
+    },
+    {
+      "caseId": "mountain-view-illegal_dumping-30",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Mountain View Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "Mountain View Public Works",
+      "candidateNames": [
+        "Mountain View Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Mountain View Public Works."
+    },
+    {
+      "caseId": "east-palo-alto-road_damage-31",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "East Palo Alto Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "East Palo Alto Public Works",
+      "candidateNames": [
+        "East Palo Alto Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached East Palo Alto Public Works."
+    },
+    {
+      "caseId": "east-palo-alto-road_damage-32",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "East Palo Alto Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "East Palo Alto Public Works",
+      "candidateNames": [
+        "East Palo Alto Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached East Palo Alto Public Works."
+    },
+    {
+      "caseId": "east-palo-alto-road_damage-33",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "East Palo Alto Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "East Palo Alto Public Works",
+      "candidateNames": [
+        "East Palo Alto Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached East Palo Alto Public Works."
+    },
+    {
+      "caseId": "east-palo-alto-illegal_dumping-34",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "East Palo Alto Clean City",
+      "outcome": "confident",
+      "resolvedAgencyName": "East Palo Alto Clean City",
+      "candidateNames": [
+        "East Palo Alto Clean City"
+      ],
+      "correct": true,
+      "reason": "Confident match reached East Palo Alto Clean City."
+    },
+    {
+      "caseId": "east-palo-alto-illegal_dumping-35",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "East Palo Alto Clean City",
+      "outcome": "confident",
+      "resolvedAgencyName": "East Palo Alto Clean City",
+      "candidateNames": [
+        "East Palo Alto Clean City"
+      ],
+      "correct": true,
+      "reason": "Confident match reached East Palo Alto Clean City."
+    },
+    {
+      "caseId": "east-palo-alto-illegal_dumping-36",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "East Palo Alto Clean City",
+      "outcome": "confident",
+      "resolvedAgencyName": "East Palo Alto Clean City",
+      "candidateNames": [
+        "East Palo Alto Clean City"
+      ],
+      "correct": true,
+      "reason": "Confident match reached East Palo Alto Clean City."
+    },
+    {
+      "caseId": "santa-clara-unincorporated-road_damage-37",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Santa Clara County Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "Santa Clara County Public Works",
+      "candidateNames": [
+        "Santa Clara County Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Santa Clara County Public Works."
+    },
+    {
+      "caseId": "santa-clara-unincorporated-road_damage-38",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Santa Clara County Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "Santa Clara County Public Works",
+      "candidateNames": [
+        "Santa Clara County Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Santa Clara County Public Works."
+    },
+    {
+      "caseId": "santa-clara-unincorporated-road_damage-39",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Santa Clara County Public Works",
+      "outcome": "confident",
+      "resolvedAgencyName": "Santa Clara County Public Works",
+      "candidateNames": [
+        "Santa Clara County Public Works"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Santa Clara County Public Works."
+    },
+    {
+      "caseId": "milpitas-road_damage-40",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Milpitas SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Milpitas SeeClickFix (Open311)",
+      "candidateNames": [
+        "Milpitas SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Milpitas SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "milpitas-road_damage-41",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Milpitas SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Milpitas SeeClickFix (Open311)",
+      "candidateNames": [
+        "Milpitas SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Milpitas SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "milpitas-illegal_dumping-42",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Milpitas SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Milpitas SeeClickFix (Open311)",
+      "candidateNames": [
+        "Milpitas SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Milpitas SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "milpitas-illegal_dumping-43",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Milpitas SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Milpitas SeeClickFix (Open311)",
+      "candidateNames": [
+        "Milpitas SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Milpitas SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "morgan-hill-road_damage-44",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+      "candidateNames": [
+        "Morgan Hill SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Morgan Hill SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "morgan-hill-road_damage-45",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+      "candidateNames": [
+        "Morgan Hill SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Morgan Hill SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "morgan-hill-illegal_dumping-46",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+      "candidateNames": [
+        "Morgan Hill SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Morgan Hill SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "morgan-hill-illegal_dumping-47",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+      "candidateNames": [
+        "Morgan Hill SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Morgan Hill SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "gilroy-road_damage-48",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Gilroy SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Gilroy SeeClickFix (Open311)",
+      "candidateNames": [
+        "Gilroy SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Gilroy SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "gilroy-road_damage-49",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Gilroy SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Gilroy SeeClickFix (Open311)",
+      "candidateNames": [
+        "Gilroy SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Gilroy SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "gilroy-illegal_dumping-50",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Gilroy SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Gilroy SeeClickFix (Open311)",
+      "candidateNames": [
+        "Gilroy SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Gilroy SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "gilroy-illegal_dumping-51",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Gilroy SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Gilroy SeeClickFix (Open311)",
+      "candidateNames": [
+        "Gilroy SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Gilroy SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "watsonville-road_damage-52",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Watsonville SeeClickFix (Open311)",
+      "candidateNames": [
+        "Watsonville SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Watsonville SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "watsonville-road_damage-53",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Watsonville SeeClickFix (Open311)",
+      "candidateNames": [
+        "Watsonville SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Watsonville SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "watsonville-illegal_dumping-54",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Watsonville SeeClickFix (Open311)",
+      "candidateNames": [
+        "Watsonville SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Watsonville SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "watsonville-illegal_dumping-55",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Watsonville SeeClickFix (Open311)",
+      "candidateNames": [
+        "Watsonville SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Watsonville SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "vallejo-road_damage-56",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Vallejo SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Vallejo SeeClickFix (Open311)",
+      "candidateNames": [
+        "Vallejo SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Vallejo SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "vallejo-road_damage-57",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "Vallejo SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Vallejo SeeClickFix (Open311)",
+      "candidateNames": [
+        "Vallejo SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Vallejo SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "vallejo-illegal_dumping-58",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Vallejo SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Vallejo SeeClickFix (Open311)",
+      "candidateNames": [
+        "Vallejo SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Vallejo SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "vallejo-illegal_dumping-59",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Vallejo SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "Vallejo SeeClickFix (Open311)",
+      "candidateNames": [
+        "Vallejo SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Vallejo SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "san-leandro-road_damage-60",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "San Leandro SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "San Leandro SeeClickFix (Open311)",
+      "candidateNames": [
+        "San Leandro SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached San Leandro SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "san-leandro-road_damage-61",
+      "issueType": "ROAD_DAMAGE",
+      "expectedAgencyName": "San Leandro SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "San Leandro SeeClickFix (Open311)",
+      "candidateNames": [
+        "San Leandro SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached San Leandro SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "san-leandro-illegal_dumping-62",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "San Leandro SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "San Leandro SeeClickFix (Open311)",
+      "candidateNames": [
+        "San Leandro SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached San Leandro SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "san-leandro-illegal_dumping-63",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "San Leandro SeeClickFix (Open311)",
+      "outcome": "confident",
+      "resolvedAgencyName": "San Leandro SeeClickFix (Open311)",
+      "candidateNames": [
+        "San Leandro SeeClickFix (Open311)"
+      ],
+      "correct": true,
+      "reason": "Confident match reached San Leandro SeeClickFix (Open311)."
+    }
+  ],
+  "metrics": {
+    "total": 63,
+    "correct": 63,
+    "accuracy": 1,
+    "resolved": 63,
+    "coverage": 1,
+    "ambiguous": 6,
+    "perCategory": {
+      "ROAD_DAMAGE": {
+        "support": 30,
+        "correct": 30,
+        "accuracy": 1
+      },
+      "ILLEGAL_DUMPING": {
+        "support": 27,
+        "correct": 27,
+        "accuracy": 1
+      },
+      "VEHICLE_EMISSIONS": {
+        "support": 6,
+        "correct": 6,
+        "accuracy": 1
+      }
+    }
+  }
+}

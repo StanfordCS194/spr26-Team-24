@@ -143,6 +143,15 @@ jobs:
       - name: Submission-readiness eval (K3 >=90% gate)
         run: npm run eval:readiness
 
+      # O1.KR1 end-to-end agency-accuracy gate (#247). Fully offline, same
+      # in-memory Prisma stub as the readiness eval: the real resolveAgencyId is
+      # driven over the seeded AGENCIES with no network, DB, or LLM. It measures
+      # correct-agency-first-try across the 3 P0 categories (n>=50) and exits
+      # non-zero when accuracy < 80% (mirrors the routing/readiness gates), so
+      # this step fails the job below target.
+      - name: End-to-end agency-accuracy eval (O1.KR1 >=80% gate)
+        run: npm run eval:end-to-end
+
   # Production-build verification (#196). Runs the real `npm run build` so
   # build-time failures (server/client boundary errors, dynamic-import issues,
   # Prisma generate, page-data collection that touches the Prisma singleton) are
