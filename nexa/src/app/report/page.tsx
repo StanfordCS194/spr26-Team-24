@@ -406,9 +406,6 @@ export default function ReportPage() {
             descriptionIsAiSuggestion={descriptionSource === "ai"}
             canSubmit={!!(image.imageBase64 || description.trim())}
             onImageClick={() => document.getElementById("photo-input")?.click()}
-            onTakePhotoClick={() =>
-              document.getElementById("camera-input")?.click()
-            }
             onDrop={handleImageDrop}
             onClearImage={handleClearImage}
             onDescriptionChange={handleDescriptionChange}
@@ -524,22 +521,13 @@ export default function ReportPage() {
       </div>
 
       {/*
-        Two hidden file inputs feed the SAME `handleFileInput` so the on-upload
-        auto-suggest (#261) fires regardless of which control the user picks.
-        `#camera-input` carries `capture="environment"` so mobile opens the rear
-        camera ("Take Photo"); `#photo-input` has no `capture` so mobile opens
-        the gallery/file picker ("Upload Photo"). On desktop `capture` is ignored
-        and both simply open the file picker. `#photo-input` keeps its id because
-        the e2e specs set files on it directly.
+        One hidden file input behind the single "Upload a photo" control. It has
+        no `capture`, so `accept="image/*"` lets a phone's native chooser offer
+        both "Take Photo" and the photo library from this one control, while
+        desktop just opens the file picker. Feeds `handleFileInput`, which drives
+        the on-upload auto-suggest (#261). The id is kept because the e2e specs
+        set files on it directly.
       */}
-      <input
-        id="camera-input"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFileInput}
-      />
       <input
         id="photo-input"
         type="file"

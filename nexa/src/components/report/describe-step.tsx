@@ -2,16 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import {
-  Camera,
-  ImagePlus,
-  MapPin,
-  Mic,
-  Loader2,
-  Sparkles,
-  X,
-  Zap,
-} from "lucide-react";
+import { Camera, MapPin, Mic, Loader2, Sparkles, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -56,10 +47,12 @@ interface DescribeStepProps {
    */
   descriptionIsAiSuggestion: boolean;
   canSubmit: boolean;
-  /** Opens the gallery/file picker (the no-`capture` `#photo-input`). */
+  /**
+   * Opens the photo chooser (`#photo-input`, `accept="image/*"`, no `capture`).
+   * On a phone the native chooser offers both "Take Photo" and the photo
+   * library from this one control; on desktop it's the file picker.
+   */
   onImageClick: () => void;
-  /** Opens the camera (the `capture="environment"` `#camera-input`). */
-  onTakePhotoClick: () => void;
   onDrop: (e: React.DragEvent) => void;
   onClearImage: () => void;
   onDescriptionChange: (value: string) => void;
@@ -88,7 +81,6 @@ export function DescribeStep({
   descriptionIsAiSuggestion,
   canSubmit,
   onImageClick,
-  onTakePhotoClick,
   onDrop,
   onClearImage,
   onDescriptionChange,
@@ -227,35 +219,6 @@ export function DescribeStep({
               </div>
             </>
           )}
-        </div>
-
-        {/*
-          Two explicit, always-available controls. "Take Photo" opens the camera
-          (the `capture="environment"` input) and "Upload Photo" opens the
-          gallery/file picker (the no-`capture` input). Both ultimately feed the
-          same image-change handler, so the on-upload auto-suggest fires either
-          way. On desktop both just open the file picker (`capture` ignored). The
-          drag-and-drop area above still works independently.
-        */}
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onTakePhotoClick}
-            className="flex-1"
-          >
-            <Camera className="size-4" />
-            {t("report.takePhoto")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onImageClick}
-            className="flex-1"
-          >
-            <ImagePlus className="size-4" />
-            {t("report.choosePhoto")}
-          </Button>
         </div>
       </div>
 
