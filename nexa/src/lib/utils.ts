@@ -6,6 +6,26 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Validate a post-auth redirect target to prevent open redirects.
+ *
+ * Returns the target only when it is a same-origin relative path: it must
+ * start with a single "/" (not "//", which the browser treats as a
+ * protocol-relative absolute URL) and must not be an absolute URL with a
+ * scheme. Anything else falls back to "/".
+ */
+export function safeRedirect(target: string | null | undefined): string {
+  if (
+    typeof target === "string" &&
+    target.startsWith("/") &&
+    !target.startsWith("//") &&
+    !target.startsWith("/\\")
+  ) {
+    return target;
+  }
+  return "/";
+}
+
+/**
  * "just now" / "5 minutes ago" / "yesterday" / "3 days ago" for recent times;
  * a short absolute date ("May 13", "May 13, 2025") for anything older than a week.
  */
