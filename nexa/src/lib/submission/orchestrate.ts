@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { IntakeMethod, ReportStatus } from "@/generated/prisma/enums";
 import { resolveAgencyId } from "@/lib/jurisdictions/agency";
 import { parseOpen311Config, submitToOpen311 } from "@/lib/submission/open311";
+import { submitViaEmail } from "@/lib/submission/email";
 
 // ---------------------------------------------------------------------------
 // Submission orchestrator (issue #34)
@@ -14,13 +15,18 @@ import { parseOpen311Config, submitToOpen311 } from "@/lib/submission/open311";
 //   API                -> the Open311 GeoReport agent (`open311.ts`). Fully
 //                         automated: we file the request and store the returned
 //                         service_request_id / token. (issue #32)
-//   WEB_FORM / EMAIL    -> a graceful manual-assist fallback. The per-modality
-//                         email (#31) and web-form (#33) agents are separate;
-//                         until they land, we degrade gracefully by pointing the
-//                         user at the official form / address with their fields
-//                         pre-filled (the `submission-fields` route + assistant)
-//                         rather than failing the request. The report stays
-//                         CONFIRMED so it can be submitted manually.
+//   EMAIL              -> the email submission agent (`email.ts`, issue #31).
+//                         Composes a report email (photo attached) to the
+//                         agency's intakeEmail and sends it via Resend. ENV-
+//                         GATED: when RESEND_API_KEY / SUBMISSION_FROM_EMAIL are
+//                         unset the agent returns `not_configured` and we degrade
+//                         to the same manual-assist fallback below.
+//   WEB_FORM           -> a graceful manual-assist fallback. The web-form agent
+//                         (#33) is separate; until it lands, we degrade
+//                         gracefully by pointing the user at the official form
+//                         with their fields pre-filled (the `submission-fields`
+//                         route + assistant) rather than failing the request.
+//                         The report stays CONFIRMED so it can be filed manually.
 //   PHONE              -> same manual-assist fallback (no automated path).
 //
 // Like `open311.ts`, this never throws to its caller: every outcome is a typed
@@ -81,7 +87,11 @@ export type OrchestrationActor = {
  *       - API: atomically claim CONFIRMED -> SUBMITTING, run the Open311 agent,
  *         then SUBMITTING -> SUBMITTED (storing the tracking id) on success or
  *         roll back to CONFIRMED on failure.
- *       - WEB_FORM / EMAIL / PHONE: leave the report CONFIRMED and return a
+ *       - EMAIL: atomically claim CONFIRMED -> SUBMITTING, run the email agent,
+ *         then SUBMITTING -> SUBMITTED (storing the Resend message id) on
+ *         success; on `not_configured` (env-gated off) or send failure, roll
+ *         back to CONFIRMED and return `manual_assist`.
+ *       - WEB_FORM / PHONE: leave the report CONFIRMED and return a
  *         `manual_assist` result instead of erroring.
  */
 export async function orchestrateSubmission(
@@ -145,18 +155,71 @@ export async function orchestrateSubmission(
     };
   }
 
-  // Non-API intake has no automated agent wired yet (#31/#33). Degrade
-  // gracefully: the report stays CONFIRMED and the caller surfaces the
-  // manual-assist path rather than returning an error.
-  if (agency.intakeMethod !== IntakeMethod.API) {
-    return {
-      status: "manual_assist",
-      reportId: report.id,
-      intakeMethod: agency.intakeMethod,
+  // The manual-assist result every non-automated outcome degrades to: the
+  // report stays CONFIRMED and the caller surfaces the official form/email link
+  // with pre-filled fields rather than returning an error.
+  const manualAssist = (): OrchestrationResult => ({
+    status: "manual_assist",
+    reportId: report.id,
+    intakeMethod: agency!.intakeMethod,
+    agencyName: agency!.name,
+    intakeUrl: agency!.intakeUrl,
+    intakeEmail: agency!.intakeEmail,
+  });
+
+  // WEB_FORM / PHONE have no automated agent (#33 is separate). Degrade
+  // gracefully without claiming the report for submission.
+  if (
+    agency.intakeMethod !== IntakeMethod.API &&
+    agency.intakeMethod !== IntakeMethod.EMAIL
+  ) {
+    return manualAssist();
+  }
+
+  // --- EMAIL path: send a composed report email via Resend (#31) ----------
+  // Env-gated: when the agent is `not_configured` (no RESEND_API_KEY etc.) or a
+  // send fails, we roll the claim back to CONFIRMED and degrade to manual-assist
+  // — never a 400 — so this is a safe no-op until the key is set.
+  if (agency.intakeMethod === IntakeMethod.EMAIL) {
+    const claim = await prisma.report.updateMany({
+      where: { id: reportId, status: ReportStatus.CONFIRMED },
+      data: { status: ReportStatus.SUBMITTING },
+    });
+    if (claim.count !== 1) {
+      return {
+        status: "error",
+        code: "in_progress",
+        message: "This report is already being submitted.",
+      };
+    }
+
+    const emailResult = await submitViaEmail(report, {
       agencyName: agency.name,
-      intakeUrl: agency.intakeUrl,
       intakeEmail: agency.intakeEmail,
-    };
+    });
+
+    if (emailResult.status === "submitted") {
+      const updated = await prisma.report.update({
+        where: { id: reportId },
+        data: {
+          status: ReportStatus.SUBMITTED,
+          externalTrackingId: emailResult.messageId,
+        },
+      });
+      return {
+        status: "submitted",
+        reportId: updated.id,
+        externalTrackingId: updated.externalTrackingId as string,
+      };
+    }
+
+    // `not_configured` (env-gated off) or a send error: roll back so the report
+    // can be filed manually (or retried once the key is set).
+    await prisma.report.update({
+      where: { id: reportId },
+      data: { status: ReportStatus.CONFIRMED },
+    });
+    return manualAssist();
   }
 
   // --- API path: fully automated Open311 submission -----------------------

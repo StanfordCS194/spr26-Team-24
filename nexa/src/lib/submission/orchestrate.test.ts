@@ -19,6 +19,13 @@ vi.mock("@/lib/submission/open311", async () => {
   };
 });
 
+// The EMAIL path delegates to submitViaEmail; stub it so these tests exercise
+// dispatch + status transitions, not the Resend client (tested in email.test.ts).
+const submitViaEmail = vi.fn();
+vi.mock("@/lib/submission/email", () => ({
+  submitViaEmail: (...args: unknown[]) => submitViaEmail(...args),
+}));
+
 // resolveAgencyId hits prisma; stub it so on-demand resolution is deterministic.
 const resolveAgencyId = vi.fn();
 vi.mock("@/lib/jurisdictions/agency", () => ({
@@ -29,6 +36,7 @@ import { orchestrateSubmission } from "./orchestrate";
 
 beforeEach(() => {
   submitToOpen311.mockReset();
+  submitViaEmail.mockReset();
   resolveAgencyId.mockReset();
 });
 
@@ -159,8 +167,8 @@ describe("orchestrateSubmission — API intake (automated)", () => {
   });
 });
 
-describe("orchestrateSubmission — non-API intake (graceful fallback)", () => {
-  it.each([IntakeMethod.WEB_FORM, IntakeMethod.EMAIL, IntakeMethod.PHONE])(
+describe("orchestrateSubmission — non-automated intake (graceful fallback)", () => {
+  it.each([IntakeMethod.WEB_FORM, IntakeMethod.PHONE])(
     "returns manual_assist (not an error) for %s intake",
     async (intakeMethod) => {
       // Arrange
@@ -188,8 +196,123 @@ describe("orchestrateSubmission — non-API intake (graceful fallback)", () => {
       });
       expect(prismaMock.report.updateMany).not.toHaveBeenCalled();
       expect(submitToOpen311).not.toHaveBeenCalled();
+      expect(submitViaEmail).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("orchestrateSubmission — EMAIL intake (email agent, #31)", () => {
+  function stubEmailAgency(reportOverrides = {}): { reportId: string } {
+    return stubReportWithAgency(reportOverrides, {
+      intakeMethod: IntakeMethod.EMAIL,
+      name: "Palo Alto Public Works",
+      intakeUrl: null,
+      intakeEmail: "311@paloalto.gov",
+    });
+  }
+
+  it("claims the report, sends via the email agent, and advances to SUBMITTED", async () => {
+    // Arrange
+    const { reportId } = stubEmailAgency({ userId: null });
+    prismaMock.report.updateMany.mockResolvedValue({ count: 1 } as never);
+    submitViaEmail.mockResolvedValue({
+      status: "submitted",
+      messageId: "msg-789",
+    });
+    prismaMock.report.update.mockResolvedValue(
+      makeReport({
+        id: reportId,
+        status: ReportStatus.SUBMITTED,
+        externalTrackingId: "msg-789",
+      }) as never,
+    );
+
+    // Act
+    const result = await orchestrateSubmission(reportId, {});
+
+    // Assert
+    expect(result).toEqual({
+      status: "submitted",
+      reportId,
+      externalTrackingId: "msg-789",
+    });
+    // Claimed CONFIRMED -> SUBMITTING atomically before sending.
+    expect(prismaMock.report.updateMany).toHaveBeenCalledWith({
+      where: { id: reportId, status: ReportStatus.CONFIRMED },
+      data: { status: ReportStatus.SUBMITTING },
+    });
+    expect(submitViaEmail).toHaveBeenCalledOnce();
+    expect(submitToOpen311).not.toHaveBeenCalled();
+  });
+
+  it("falls back to manual_assist (env-gated off) and rolls back to CONFIRMED", async () => {
+    // Arrange: the agent is not configured (no RESEND_API_KEY).
+    const { reportId } = stubEmailAgency({ userId: null });
+    prismaMock.report.updateMany.mockResolvedValue({ count: 1 } as never);
+    submitViaEmail.mockResolvedValue({
+      status: "not_configured",
+      reason: "RESEND_API_KEY is not set; email submission is disabled.",
+    });
+    prismaMock.report.update.mockResolvedValue(
+      makeReport({ id: reportId, status: ReportStatus.CONFIRMED }) as never,
+    );
+
+    // Act
+    const result = await orchestrateSubmission(reportId, {});
+
+    // Assert: degrade gracefully, never an error; status rolled back.
+    expect(result).toEqual({
+      status: "manual_assist",
+      reportId,
+      intakeMethod: IntakeMethod.EMAIL,
+      agencyName: "Palo Alto Public Works",
+      intakeUrl: null,
+      intakeEmail: "311@paloalto.gov",
+    });
+    expect(prismaMock.report.update).toHaveBeenCalledWith({
+      where: { id: reportId },
+      data: { status: ReportStatus.CONFIRMED },
+    });
+  });
+
+  it("falls back to manual_assist and rolls back when the send errors", async () => {
+    // Arrange
+    const { reportId } = stubEmailAgency({ userId: null });
+    prismaMock.report.updateMany.mockResolvedValue({ count: 1 } as never);
+    submitViaEmail.mockResolvedValue({
+      status: "error",
+      message: "Resend rejected the submission email.",
+    });
+    prismaMock.report.update.mockResolvedValue(
+      makeReport({ id: reportId, status: ReportStatus.CONFIRMED }) as never,
+    );
+
+    // Act
+    const result = await orchestrateSubmission(reportId, {});
+
+    // Assert
+    expect(result).toMatchObject({
+      status: "manual_assist",
+      intakeMethod: IntakeMethod.EMAIL,
+    });
+    expect(prismaMock.report.update).toHaveBeenCalledWith({
+      where: { id: reportId },
+      data: { status: ReportStatus.CONFIRMED },
+    });
+  });
+
+  it("reports in_progress when the atomic claim loses the race", async () => {
+    // Arrange
+    const { reportId } = stubEmailAgency({ userId: null });
+    prismaMock.report.updateMany.mockResolvedValue({ count: 0 } as never);
+
+    // Act
+    const result = await orchestrateSubmission(reportId, {});
+
+    // Assert
+    expect(result).toMatchObject({ status: "error", code: "in_progress" });
+    expect(submitViaEmail).not.toHaveBeenCalled();
+  });
 });
 
 describe("orchestrateSubmission — preconditions", () => {
