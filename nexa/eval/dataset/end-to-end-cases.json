@@ -409,35 +409,35 @@
   },
   {
     "id": "watsonville-road_damage-52",
-    "latitude": 36.91557,
-    "longitude": -121.82574,
+    "latitude": 36.91,
+    "longitude": -121.7681,
     "issueType": "ROAD_DAMAGE",
     "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
-    "note": "city-watsonville interior point reused from routing-cases.json"
+    "note": "city-watsonville central interior point reused from wat-01 (re-anchored off the far-western polygon edge)"
   },
   {
     "id": "watsonville-road_damage-53",
-    "latitude": 36.91332,
-    "longitude": -121.82416,
+    "latitude": 36.9105,
+    "longitude": -121.76,
     "issueType": "ROAD_DAMAGE",
     "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
-    "note": "city-watsonville interior point reused from routing-cases.json"
+    "note": "city-watsonville central interior point reused from wat-02 (re-anchored off the far-western polygon edge)"
   },
   {
     "id": "watsonville-illegal_dumping-54",
-    "latitude": 36.91557,
-    "longitude": -121.82416,
+    "latitude": 36.912,
+    "longitude": -121.765,
     "issueType": "ILLEGAL_DUMPING",
     "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
-    "note": "city-watsonville interior point reused from routing-cases.json"
+    "note": "city-watsonville central interior point reused from wat-03 (re-anchored off the far-western polygon edge)"
   },
   {
     "id": "watsonville-illegal_dumping-55",
-    "latitude": 36.91557,
-    "longitude": -121.82574,
+    "latitude": 36.91,
+    "longitude": -121.7681,
     "issueType": "ILLEGAL_DUMPING",
     "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
-    "note": "city-watsonville interior point reused from routing-cases.json"
+    "note": "city-watsonville central interior point reused from wat-01 (re-anchored off the far-western polygon edge)"
   },
   {
     "id": "vallejo-road_damage-56",
