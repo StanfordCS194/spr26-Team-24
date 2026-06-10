@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { IntakeMethod, ReportStatus } from "@/generated/prisma/enums";
 import { resolveAgencyId } from "@/lib/jurisdictions/agency";
-import { parseOpen311Config, submitToOpen311 } from "@/lib/submission/open311";
+import {
+  canAutoFileOpen311,
+  parseOpen311Config,
+  submitToOpen311,
+} from "@/lib/submission/open311";
 import { submitViaEmail } from "@/lib/submission/email";
 
 // ---------------------------------------------------------------------------
@@ -104,9 +108,12 @@ export type OrchestrationActor = {
  *     stay submittable by any link-holder).
  *  2. Ensure an agency is assigned, resolving + persisting one on demand.
  *  3. Dispatch by `agency.intakeMethod`:
- *       - API: atomically claim CONFIRMED -> SUBMITTING, run the Open311 agent,
- *         then SUBMITTING -> SUBMITTED (storing the tracking id) on success or
- *         roll back to CONFIRMED on failure.
+ *       - API: if the agency's Open311 config can't actually auto-file (no
+ *         usable jurisdiction_id where the endpoint requires one — issue #250),
+ *         short-circuit to `manual_assist` before claiming or POSTing. Otherwise
+ *         atomically claim CONFIRMED -> SUBMITTING, run the Open311 agent, then
+ *         SUBMITTING -> SUBMITTED (storing the tracking id) on success or roll
+ *         back to CONFIRMED on failure.
  *       - EMAIL: atomically claim CONFIRMED -> SUBMITTING, run the email agent,
  *         then SUBMITTING -> SUBMITTED (storing the Resend message id) on
  *         success; on `not_configured` (env-gated off) or send failure, roll
@@ -251,6 +258,22 @@ export async function orchestrateSubmission(
 
   // --- API path: fully automated Open311 submission -----------------------
 
+  const config = parseOpen311Config(agency.requiredFields);
+
+  // Short-circuit un-fileable API agencies to manual-assist BEFORE claiming the
+  // report or attempting the POST (issue #250). Most seeded SeeClickFix agencies
+  // lack the `jurisdiction_id` their multi-tenant write path requires (it's an
+  // internal org id not available via the public API — issue #239), so a POST
+  // would 404 and roll back anyway. Detecting that up front means no doomed POST
+  // and an immediate manual-assist carrying the agency's intakeUrl (the city's
+  // SeeClickFix report page) so the user can still file. The report stays
+  // CONFIRMED — never claimed, never lost. Agencies whose config IS complete
+  // (single-tenant endpoint, or a real jurisdictionId) fall through and still
+  // auto-file with a tracking id below.
+  if (!canAutoFileOpen311(config, agency.intakeUrl)) {
+    return manualAssist();
+  }
+
   // Atomically claim the report for submission. A single conditional update
   // (CONFIRMED -> SUBMITTING) is the DB-level guard against concurrent submits:
   // only one of two simultaneous calls can flip the row, so only one ever
@@ -267,7 +290,6 @@ export async function orchestrateSubmission(
     };
   }
 
-  const config = parseOpen311Config(agency.requiredFields);
   const result = await submitToOpen311(report, {
     config,
     intakeUrl: agency.intakeUrl,
