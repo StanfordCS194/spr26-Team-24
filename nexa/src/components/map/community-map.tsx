@@ -12,6 +12,8 @@ export interface IssueMapPoint {
   status: string;
   reportCount: number;
   relativeTime: string;
+  /** 1-based sequence in the order the issue was first filed (1 = earliest). */
+  order: number;
   // The current user's own report id within this group, if they filed one.
   myReportId: string | null;
 }
@@ -52,9 +54,10 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-// Teardrop pin with the reporter count rendered inside the head.
-function pinSvg(color: string, count: number): string {
-  const label = count > 99 ? "99+" : String(count);
+// Teardrop pin with the issue's filing-order number rendered inside the head.
+// (The reporter count stays in the popup.)
+function pinSvg(color: string, order: number): string {
+  const label = order > 999 ? "999+" : String(order);
   const fontSize = label.length >= 3 ? 7 : 9;
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 36" width="28" height="36" aria-hidden="true">
@@ -130,7 +133,7 @@ export default function CommunityMap({ points, onResolve }: CommunityMapProps) {
 
         const icon = L.divIcon({
           className: "nexa-map-pin",
-          html: pinSvg(color, point.reportCount),
+          html: pinSvg(color, point.order),
           iconSize: [28, 36],
           iconAnchor: [14, 35],
           popupAnchor: [0, -30],
