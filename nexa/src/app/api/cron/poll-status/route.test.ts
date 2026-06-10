@@ -92,7 +92,7 @@ describe("GET /api/cron/poll-status", () => {
     expect(body).toMatchObject({
       checked: 1,
       updated: 1,
-      errors: 0,
+      errorCount: 0,
       ok: true,
       failures: [],
     });
@@ -162,7 +162,7 @@ describe("GET /api/cron/poll-status", () => {
 
     // Assert
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({ checked: 3, errors: 1, ok: true });
+    expect(body).toMatchObject({ checked: 3, errorCount: 1, ok: true });
   });
 
   it("returns 500 with the alert prefix when the DB query throws", async () => {

@@ -2,6 +2,12 @@ import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { createToken, SESSION_COOKIE, cookieOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ClaimSchema } from "@/lib/api/schemas";
+import {
+  parseJsonRequest,
+  RequestParseError,
+  parseErrorResponse,
+} from "@/lib/api/request-parser";
 import { successResponse, errorResponse } from "@/lib/api/response";
 
 // One-shot path to set a password on accounts that never had one. This exists
@@ -12,7 +18,10 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 // password is set, this endpoint becomes a no-op for that user.
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, reportIds } = await request.json();
+    const { email, password, name, reportIds } = await parseJsonRequest(
+      request,
+      ClaimSchema,
+    );
 
     if (!email || !password) {
       return errorResponse("Email and password are required", 400);
@@ -51,11 +60,7 @@ export async function POST(request: NextRequest) {
     // a guest to the account they just claimed. Only orphan reports (userId=null)
     // matching the supplied ids are re-associated, so this can never steal a
     // report that already belongs to someone else.
-    if (
-      Array.isArray(reportIds) &&
-      reportIds.length > 0 &&
-      reportIds.every((id): id is string => typeof id === "string")
-    ) {
+    if (Array.isArray(reportIds) && reportIds.length > 0) {
       await prisma.report.updateMany({
         where: { id: { in: reportIds }, userId: null },
         data: { userId: user.id },
@@ -67,6 +72,9 @@ export async function POST(request: NextRequest) {
     response.cookies.set(SESSION_COOKIE, token, cookieOptions);
     return response;
   } catch (error) {
+    if (error instanceof RequestParseError) {
+      return parseErrorResponse(error);
+    }
     console.error("Account claim error:", error);
     return errorResponse("Failed to set password. Please try again.", 500);
   }

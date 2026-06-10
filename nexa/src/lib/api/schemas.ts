@@ -58,6 +58,16 @@ export const LoginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof LoginSchema>;
 
+/** `POST /api/auth/claim` — set a password on a passwordless account. */
+export const ClaimSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().optional(),
+  password: z.string().optional(),
+  // Anonymous reports filed as a guest, to attach to the claimed account (#17).
+  reportIds: z.array(z.string()).optional(),
+});
+export type ClaimInput = z.infer<typeof ClaimSchema>;
+
 /** `POST /api/reports/[id]/resolution` — mark a report resolved/unresolved. */
 export const ResolutionSchema = z.object({
   resolved: z.boolean({

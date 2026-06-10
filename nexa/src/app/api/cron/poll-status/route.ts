@@ -120,17 +120,21 @@ export async function GET(request: NextRequest) {
       updated++;
     }
 
-    const errors = failures.length;
+    const errorCount = failures.length;
     // Treat the run as unhealthy when too large a share of attempts failed, so
     // Vercel Cron sees a non-2xx and the failure is observable. The summary is
     // always returned so callers can act on it regardless of status code.
-    const errorRate = checked === 0 ? 0 : errors / checked;
+    //
+    // `errorCount` (a number) is deliberately distinct from the shared envelope's
+    // `error` (a message string): a generic consumer must not mistake this count
+    // for a failure message. The per-report detail lives in `failures`.
+    const errorRate = checked === 0 ? 0 : errorCount / checked;
     const ok = errorRate < ERROR_RATE_THRESHOLD;
-    const summary = { checked, updated, errors, failures, ok };
+    const summary = { checked, updated, errorCount, failures, ok };
 
     if (!ok) {
       console.error(
-        `${ALERT_PREFIX} run unhealthy: ${errors}/${checked} reports failed`,
+        `${ALERT_PREFIX} run unhealthy: ${errorCount}/${checked} reports failed`,
       );
       return NextResponse.json(summary, { status: 503 });
     }
