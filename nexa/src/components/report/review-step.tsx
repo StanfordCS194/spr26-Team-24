@@ -125,7 +125,7 @@ export function ReviewStep({
         <Textarea
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
-          className="min-h-20 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+          className="min-h-20 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           placeholder={t("report.describeIssue")}
         />
       </div>
@@ -140,7 +140,7 @@ export function ReviewStep({
         <Input
           value={address}
           onChange={(e) => onAddressChange(e.target.value)}
-          className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+          className="border-0 bg-transparent shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           placeholder={t("report.locationPlaceholder")}
         />
       </div>

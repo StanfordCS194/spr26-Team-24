@@ -68,6 +68,7 @@ export function DescribeStep({
 }: DescribeStepProps) {
   const { t } = useI18n();
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const locationWrapperRef = useRef<HTMLDivElement | null>(null);
   const speech = useSpeechRecognition();
   // Keep the latest description in a ref so the speech callback appends to the
@@ -91,9 +92,49 @@ export function DescribeStep({
   const handleSelectSuggestion = (suggestion: string) => {
     onAddressChange(suggestion);
     setSuggestionsOpen(false);
+    setActiveSuggestion(-1);
   };
 
   const showSuggestions = suggestionsOpen && addressSuggestions.length > 0;
+  const listboxId = "address-suggestions";
+  const activeOptionId =
+    showSuggestions && activeSuggestion >= 0
+      ? `${listboxId}-option-${activeSuggestion}`
+      : undefined;
+
+  const handleAddressKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions) {
+      if (e.key === "ArrowDown") {
+        setSuggestionsOpen(true);
+      }
+      return;
+    }
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setActiveSuggestion((prev) =>
+          prev + 1 >= addressSuggestions.length ? 0 : prev + 1,
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setActiveSuggestion((prev) =>
+          prev <= 0 ? addressSuggestions.length - 1 : prev - 1,
+        );
+        break;
+      case "Enter":
+        if (activeSuggestion >= 0) {
+          e.preventDefault();
+          handleSelectSuggestion(addressSuggestions[activeSuggestion]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setSuggestionsOpen(false);
+        setActiveSuggestion(-1);
+        break;
+    }
+  };
 
   const handleMicToggle = () => {
     if (speech.listening) {
@@ -131,6 +172,8 @@ export function DescribeStep({
               />
               <button
                 type="button"
+                aria-label={t("report.removeImage")}
+                title={t("report.removeImage")}
                 onClick={(e) => {
                   e.stopPropagation();
                   onClearImage();
@@ -190,7 +233,7 @@ export function DescribeStep({
         <Textarea
           id="description"
           placeholder={t("report.descriptionPlaceholder")}
-          className="min-h-28 resize-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0"
+          className="min-h-28 resize-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
         />
@@ -211,27 +254,48 @@ export function DescribeStep({
             <Input
               id="address"
               placeholder={t("report.locationPlaceholder")}
-              className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+              className="border-0 bg-transparent shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={address}
               autoComplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={showSuggestions}
+              aria-controls={listboxId}
+              aria-activedescendant={activeOptionId}
               onChange={(e) => {
                 onAddressChange(e.target.value);
                 setSuggestionsOpen(true);
+                setActiveSuggestion(-1);
               }}
               onFocus={() => setSuggestionsOpen(true)}
+              onKeyDown={handleAddressKeyDown}
             />
             {showSuggestions && (
               <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
-                <ul className="max-h-72 overflow-y-auto py-1 text-sm">
-                  {addressSuggestions.map((suggestion) => (
-                    <li key={suggestion}>
+                <ul
+                  id={listboxId}
+                  role="listbox"
+                  aria-label={t("report.addressSuggestions")}
+                  className="max-h-72 overflow-y-auto py-1 text-sm"
+                >
+                  {addressSuggestions.map((suggestion, index) => (
+                    <li
+                      key={suggestion}
+                      id={`${listboxId}-option-${index}`}
+                      role="option"
+                      aria-selected={index === activeSuggestion}
+                    >
                       <button
                         type="button"
+                        tabIndex={-1}
                         onMouseDown={(e) => {
                           e.preventDefault();
                           handleSelectSuggestion(suggestion);
                         }}
-                        className="flex w-full items-start gap-2 px-4 py-2.5 text-left text-foreground transition-colors hover:bg-muted"
+                        onMouseEnter={() => setActiveSuggestion(index)}
+                        className={`flex w-full items-start gap-2 px-4 py-2.5 text-left text-foreground transition-colors hover:bg-muted ${
+                          index === activeSuggestion ? "bg-muted" : ""
+                        }`}
                       >
                         <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
                         <span className="truncate">{suggestion}</span>
@@ -247,6 +311,7 @@ export function DescribeStep({
             variant="outline"
             onClick={onDetectLocation}
             disabled={locationLoading}
+            aria-label={t("report.detectLocation")}
             className="shrink-0 font-mono text-xs uppercase tracking-wider"
           >
             {locationLoading ? (
@@ -273,6 +338,9 @@ export function DescribeStep({
               </span>
               {accuracy && (
                 <span
+                  aria-label={t("report.gpsAccuracy", {
+                    meters: Math.round(accuracy),
+                  })}
                   className={`rounded-full px-2 py-0.5 ${accuracy <= 20 ? "bg-ep-green-light text-ep-green" : accuracy <= 100 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"}`}
                 >
                   ±{Math.round(accuracy)}m
