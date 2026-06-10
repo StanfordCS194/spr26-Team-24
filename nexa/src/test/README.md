@@ -86,3 +86,37 @@ globally mocked in `vitest.setup.tsx`.
 time don't crash. `NEXT_PUBLIC_POSTHOG_*` are intentionally left unset (the app
 tolerates their absence). For more overrides use a committed `.env.test`; never
 require real secrets in this suite.
+
+## Coverage gate & ratchet policy
+
+Coverage is enforced as a CI gate, not just reported. `npm run test:coverage`
+(v8 provider) fails — locally and in CI — when coverage drops below the
+thresholds in [`vitest.config.ts`](../../vitest.config.ts). The `test` job in
+`.github/workflows/ci.yml` runs this command, publishes the v8 text-summary to
+the GitHub Actions job summary, and uploads the lcov/HTML report as an artifact.
+No Codecov token is required — the built-in threshold failure is the gate.
+
+**Thresholds are a one-way ratchet.** They may only ever be **raised, never
+lowered.** Each floor is pinned a few points under the real measured coverage so
+the current suite passes while making regression impossible.
+
+Floors as of this writing (measured baseline → floor):
+
+| Scope                             | Statements | Branches | Functions | Lines |
+| --------------------------------- | ---------- | -------- | --------- | ----- |
+| **Global** (baseline 86/77/85/89) | 85         | 75       | 83        | 87    |
+| `src/lib/classify/**`             | 95         | —        | —         | 95    |
+| `src/lib/submission/**`           | 90         | —        | —         | 90    |
+| `src/lib/jurisdictions/**`        | 90         | —        | —         | 90    |
+| `src/lib/auth.ts`                 | 90         | —        | —         | 90    |
+
+Rules:
+
+1. A PR that **raises** real coverage should bump the matching floor up to lock
+   the gain in. Long-term target: **global lines 80% / branches 70%** and above
+   (the suite already exceeds this — keep ratcheting toward 90%+).
+2. **Never lower a floor to make a red build green.** Fix it by adding tests, or
+   by `exclude`-ing genuinely non-source paths (generated code, config, the
+   `src/test/` toolkit, `eval/`, `e2e/`) — already excluded in the config.
+3. Coverage is a behavior-coverage gate (QA), kept separate from the eval job
+   (#92), which gates LLM/routing accuracy. They are distinct steps/jobs.
