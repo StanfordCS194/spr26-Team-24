@@ -6,7 +6,7 @@ A full-stack Next.js application for reporting and tracking civic issues (road d
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui
 - **Backend**: Next.js API Routes (under `src/app/api/`)
-- **AI Classification**: Multi-provider consensus engine (OpenAI GPT-4o-mini, Anthropic Claude 3.5 Haiku, Google Gemini 2.0 Flash)
+- **AI Classification**: Multi-provider consensus engine (OpenAI GPT-4o-mini, Anthropic Claude Haiku 4.5, Google Gemini 2.5 Flash)
 - **Database**: PostgreSQL (Neon on Vercel, Docker for local dev), Prisma ORM
 - **Address Autocomplete**: Google Places API (with Nominatim fallback)
 - **Civic Form Lookup**: OpenAI Responses API with `web_search_preview` tool
@@ -31,8 +31,8 @@ When a user submits a report, the `/api/reports/classify` endpoint sends the ima
 | Provider | Model | Strengths |
 |---|---|---|
 | OpenAI | `gpt-4o-mini` | Fast, strong vision, low cost |
-| Anthropic | `claude-3-5-haiku-20241022` | Fast, careful reasoning, low cost |
-| Google | `gemini-2.0-flash` | Fast, good at structured output |
+| Anthropic | `claude-haiku-4-5` | Fast, careful reasoning, low cost |
+| Google | `gemini-2.5-flash` | Fast, good at structured output |
 
 A **consensus engine** then picks the best result:
 
@@ -129,8 +129,8 @@ Open `.env.local` and fill in your API keys. The app can connect to the producti
 | `DATABASE_URL` | Yes | PostgreSQL connection string (Neon or local Docker) |
 | `JWT_SECRET` | Yes | Session token signing |
 | `OPENAI_API_KEY` | Yes | GPT-4o-mini classification + civic form lookup |
-| `ANTHROPIC_API_KEY` | Yes | Claude 3.5 Haiku classification |
-| `GOOGLE_API_KEY` | Yes | Gemini 2.0 Flash classification |
+| `ANTHROPIC_API_KEY` | Yes | Claude Haiku 4.5 classification |
+| `GOOGLE_API_KEY` | Yes | Gemini 2.5 Flash classification |
 | `GOOGLE_MAPS_API_KEY` | Optional | Google Places address autocomplete (falls back to Nominatim) |
 | `NEXT_PUBLIC_POSTHOG_KEY` | For telemetry | PostHog analytics |
 | `NEXT_PUBLIC_POSTHOG_HOST` | For telemetry | PostHog region host |

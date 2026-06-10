@@ -72,7 +72,7 @@ Aggregated into:
 | `two-stage` | sharp resize/rotate + EXIF GPS extract | gpt-4o-mini observation pass | EXIF/caller GPS folded into stage-2 prompt |
 
 Both runs hit the same three VLMs (OpenAI gpt-4o-mini, Anthropic
-claude-haiku-4-5, Google gemini-2.0-flash) and use the same consensus voting.
+claude-haiku-4-5, Google gemini-2.5-flash) and use the same consensus voting.
 The only differences are the inputs the VLMs receive.
 
 ## Running the eval
