@@ -215,7 +215,7 @@ function UserMenu({
                 className={`flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground ${isOnMap ? "bg-muted" : ""}`}
               >
                 <MapPinned className="size-4 text-muted-foreground" />
-                Community Map
+                {t("nav.communityMap")}
               </Menu.LinkItem>
 
               <Menu.Item
