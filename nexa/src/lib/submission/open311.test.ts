@@ -201,6 +201,34 @@ describe("buildRequestParams", () => {
     expect(params.has("jurisdiction_id")).toBe(false);
   });
 
+  it("carries a seeded jurisdiction_id/api_key end-to-end so a SeeClickFix POST is accepted (#239)", () => {
+    // Arrange: parse the exact `requiredFields.open311` shape an API agency is
+    // seeded with (see prisma/agencies.ts). SeeClickFix keys submissions on
+    // jurisdiction_id — a POST without it 404s ("Invalid Jurisdiction ID") — so
+    // the seeded value must survive parse and land in the POST body verbatim.
+    const config = parseOpen311Config({
+      open311: {
+        endpoint: "https://seeclickfix.com/open311/v2",
+        apiKey: "scf-key",
+        jurisdictionId: "76196",
+        serviceCodes: { ROAD_DAMAGE: "94213" },
+      },
+    });
+
+    // Act
+    const serviceCode = resolveServiceCode(IssueType.ROAD_DAMAGE, config);
+    const params = buildRequestParams(
+      makeSubmittable({ issueType: IssueType.ROAD_DAMAGE }),
+      serviceCode as string,
+      config,
+    );
+
+    // Assert: the parsed jurisdiction_id (+ api_key) reach the form body.
+    expect(serviceCode).toBe("94213");
+    expect(params.get("jurisdiction_id")).toBe("76196");
+    expect(params.get("api_key")).toBe("scf-key");
+  });
+
   it("serializes to an x-www-form-urlencoded string", () => {
     // Arrange
     const report = makeSubmittable({

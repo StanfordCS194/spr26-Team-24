@@ -101,12 +101,24 @@ export const AGENCIES: AgencySeed[] = [
     //   - service_code ROAD_DAMAGE    = 94213 (Potholes)
     //   - service_code ILLEGAL_DUMPING = 94210 (Dumping)
     //
-    // CAVEAT (UNVERIFIED): the exact `jurisdiction_id` token required by
-    // POST /requests.json was NOT confirmed — numeric 76196 and the slug both
-    // 404 on per-jurisdiction GET, and no live POST was performed. We therefore
-    // do NOT seed a jurisdictionId (omitting it is correct for single-tenant
-    // posting; confirm with SeeClickFix support and test against the sandbox
-    // before relying on the production write path).
+    // CAVEAT (issue #239, VERIFIED 2026-06-10): the `jurisdiction_id` token
+    // SeeClickFix's Open311 write path keys on is an internal ORGANIZATION id,
+    // NOT the public `/api/v2/places` numeric id. We confirmed this live: the
+    // researched place id 76196 (Menlo Park, place_type "City", confirmed via
+    //   GET https://seeclickfix.com/api/v2/places?lat=37.4530&lng=-122.1817 )
+    // returns `404 "Invalid Jurisdiction ID"` from
+    //   GET https://seeclickfix.com/open311/v2/services.json?jurisdiction_id=76196
+    // — identical to a bogus id — and the slug / org-name forms 404 the same way.
+    // (services.json?lat&long DOES return Menlo Park's catalog, which is how the
+    // service_codes above were verified, but lat/long is not a POST jurisdiction
+    // key.) The real organization id is not obtainable through the public no-auth
+    // API, so per issue #239 we do NOT invent one: jurisdictionId stays unset and
+    // a real POST gracefully degrades to manual-assist (orchestrate rolls
+    // SUBMITTING->CONFIRMED on the resulting 404 — no report is ever lost). The
+    // submission client already sends jurisdiction_id + api_key WHEN configured
+    // (src/lib/submission/open311.ts buildRequestParams), so flipping this agency
+    // to fully-verified is a one-line seed edit once SeeClickFix support supplies
+    // the organization id and one sandbox POST confirms it.
     //
     // The `open311` block below matches the shape consumed by
     // parseOpen311Config()/Open311Config in src/lib/submission/open311.ts:
@@ -229,13 +241,26 @@ export const AGENCIES: AgencySeed[] = [
   // HTTP 200). No value below was invented — each service_code is the exact
   // integer the live catalog returns for that city.
   //
-  // CAVEAT (same as the Menlo Park row, UNVERIFIED): no live POST was performed
-  // and the per-jurisdiction POST `jurisdiction_id` token was not confirmed, so
-  // we omit jurisdictionId. Several of these services also declare service-
-  // specific `required` attributes (e.g. Milpitas pothole "direction",
-  // streetlight "pole number"); those are NOT modelled here (the existing
-  // Open311Config shape carries only serviceCodes), so confirm against the
-  // SeeClickFix sandbox before relying on the production write path.
+  // CAVEAT (same as the Menlo Park row — issue #239, VERIFIED 2026-06-10): we
+  // omit jurisdictionId on every row below for the SAME confirmed reason. The
+  // SeeClickFix Open311 write path keys on an internal ORGANIZATION id, not the
+  // public `/api/v2/places` numeric id. We resolved each city's nearest "City"
+  // place via the live places API (Milpitas 1824, Morgan Hill 1826, Gilroy 1820,
+  // Watsonville 1632, Vallejo 1975, San Leandro 1696), but feeding any of those
+  // numeric ids to GET /open311/v2/services.json?jurisdiction_id=<id> returns
+  // `404 "Invalid Jurisdiction ID"` — so they are NOT valid POST jurisdiction_id
+  // tokens. The real organization ids are not obtainable through the public
+  // no-auth API, so per issue #239 we do NOT invent them: jurisdictionId stays
+  // unset and a real POST degrades to manual-assist (orchestrate rolls back on
+  // the 404 — no report lost). The client already sends jurisdiction_id WHEN
+  // configured, so each city flips to fully-verified by adding its organization
+  // id here once SeeClickFix support supplies it and one sandbox POST confirms.
+  //
+  // Several of these services also declare service-specific `required`
+  // attributes (e.g. Milpitas pothole "direction", streetlight "pole number");
+  // those are NOT modelled here (the existing Open311Config shape carries only
+  // serviceCodes), so confirm against the SeeClickFix sandbox before relying on
+  // the production write path.
   {
     // City of Milpitas — verified service_codes:
     //   ROAD_DAMAGE        26652 (Pothole/Roadway Repairs)
