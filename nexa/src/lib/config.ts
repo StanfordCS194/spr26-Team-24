@@ -201,3 +201,106 @@ export const getDuplicateWindowHours = cached(() =>
     DEFAULT_DUPLICATE_WINDOW_HOURS,
   ),
 );
+
+// --- Soft-required configuration audit (issue #242) ------------------------
+//
+// Hard-required vars (DATABASE_URL, JWT_SECRET) fail fast via requireEnv above:
+// the app genuinely cannot run without them. A second tier of "soft-required"
+// vars are individually optional — each gates a feature that degrades quietly
+// when the var is unset — but in a real production deploy their absence is
+// almost always a misconfiguration (KPIs go uncollected, EMAIL agencies never
+// auto-send, etc.). They must never fail the build, but they SHOULD be visible.
+//
+// `getSoftRequiredEnvWarnings()` computes the audit once (read directly from
+// `process.env`, not the memoized getters, so it reflects the live environment
+// at the moment it is called) and `src/instrumentation.ts` logs each warning at
+// startup in production. `getConfiguredFeatures()` exposes the same audit as a
+// boolean map for `/api/health` WITHOUT leaking any secret values.
+
+/** A soft-required feature gate: whether it is configured + why it matters. */
+export interface SoftRequiredFeature {
+  /** Stable feature key, also used in the `/api/health` `features` map. */
+  feature: string;
+  /** `true` when the env var(s) backing this feature are present. */
+  configured: boolean;
+  /** One-line, secret-free description of what breaks when it is unset. */
+  impact: string;
+}
+
+/** True when any of the named env vars holds a non-empty (trimmed) value. */
+function anyEnvSet(...names: string[]): boolean {
+  return names.some((name) => {
+    const value = process.env[name]?.trim();
+    return value !== undefined && value !== "";
+  });
+}
+
+/**
+ * Audit the soft-required configuration against the live environment. Returns
+ * one entry per feature gate, in a stable order, marking each as configured or
+ * not and describing the impact of it being unset. Reads `process.env` directly
+ * (not the cached getters) so it always reflects the current environment.
+ */
+export function getSoftRequiredFeatures(): SoftRequiredFeature[] {
+  return [
+    {
+      feature: "telemetry",
+      configured: anyEnvSet("NEXT_PUBLIC_POSTHOG_KEY"),
+      impact:
+        "NEXT_PUBLIC_POSTHOG_KEY is unset — time-to-submit / KPI telemetry disabled.",
+    },
+    {
+      feature: "emailSubmission",
+      // Both are required for the EMAIL-intake agent to auto-send (see
+      // src/lib/submission/email.ts); either one missing degrades to manual.
+      configured:
+        anyEnvSet("RESEND_API_KEY") && anyEnvSet("SUBMISSION_FROM_EMAIL"),
+      impact:
+        "RESEND_API_KEY / SUBMISSION_FROM_EMAIL unset — EMAIL-intake agencies degrade to manual-assist; no auto-send.",
+    },
+    {
+      feature: "aiClassification",
+      // Any one provider key is enough to run classification.
+      configured: anyEnvSet(
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "GOOGLE_API_KEY",
+      ),
+      impact:
+        "No OPENAI_API_KEY / ANTHROPIC_API_KEY / GOOGLE_API_KEY set — AI classification unavailable.",
+    },
+    {
+      feature: "addressAutocomplete",
+      configured: anyEnvSet("GOOGLE_MAPS_API_KEY"),
+      impact:
+        "GOOGLE_MAPS_API_KEY is unset — address autocomplete falls back to Nominatim.",
+    },
+    {
+      feature: "statusPollingCron",
+      configured: anyEnvSet("CRON_SECRET"),
+      impact:
+        "CRON_SECRET is unset — status-polling cron disabled / fails closed.",
+    },
+  ];
+}
+
+/**
+ * The unset soft-required features, ready to log as warnings at startup. Each
+ * `impact` string is prefixed by the caller with a single greppable marker.
+ */
+export function getSoftRequiredEnvWarnings(): string[] {
+  return getSoftRequiredFeatures()
+    .filter((f) => !f.configured)
+    .map((f) => f.impact);
+}
+
+/**
+ * A secret-free boolean map of which soft-required features are configured,
+ * suitable for surfacing in `/api/health`. Only reports presence — never the
+ * value of any key.
+ */
+export function getConfiguredFeatures(): Record<string, boolean> {
+  return Object.fromEntries(
+    getSoftRequiredFeatures().map((f) => [f.feature, f.configured]),
+  );
+}
