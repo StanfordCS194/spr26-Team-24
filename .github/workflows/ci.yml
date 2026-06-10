@@ -58,3 +58,28 @@ jobs:
 
       - name: Run tests
         run: npm run test
+
+  eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nexa
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nexa/package-lock.json
+
+      - run: npm ci
+
+      # Offline, deterministic routing eval (pure polygon lookups — no network,
+      # no LLM, no DB). Gates the build on O2.KR1 routing accuracy: the runner
+      # exits non-zero when accuracy is below target, failing this job.
+      # The classification LLM eval is intentionally NOT run here — it needs paid
+      # API keys / network and would break PRs from forks.
+      - name: Routing eval (accuracy gate)
+        run: npm run eval:routing
