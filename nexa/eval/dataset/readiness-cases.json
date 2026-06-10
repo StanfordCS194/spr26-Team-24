@@ -238,5 +238,45 @@
       "vehicleColor": "dark",
       "observationDatetime": "2026-06-09T17:45:00-07:00"
     }
+  },
+  {
+    "id": "road-epa-13",
+    "issueType": "ROAD_DAMAGE",
+    "note": "East Palo Alto road damage -> EPA Public Works (WEB_FORM, issue #195). Before this jurisdiction was seeded, EPA reports resolved to no_agency and could not be submitted.",
+    "report": {
+      "description": "Crumbling asphalt and a wide pothole at the intersection.",
+      "aiDescription": "Damaged road surface with pothole in East Palo Alto.",
+      "latitude": 37.4625,
+      "longitude": -122.15081,
+      "address": "University Ave & Bay Rd, East Palo Alto, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-epa-13.jpg",
+      "contactEmail": "reporter13@example.com",
+      "contactName": "Robin Ortiz",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "dump-epa-14",
+    "issueType": "ILLEGAL_DUMPING",
+    "note": "East Palo Alto illegal dumping -> EPA Clean City (EMAIL intake, issue #195). Exercises the EMAIL channel (cleancity@cityofepa.org) added in this PR.",
+    "report": {
+      "description": "Couch and bags of household trash dumped at the curb.",
+      "aiDescription": "Illegally dumped furniture and refuse in East Palo Alto.",
+      "latitude": 37.45857,
+      "longitude": -122.13351,
+      "address": "Pulgas Ave & Weeks St, East Palo Alto, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/dump-epa-14.jpg",
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
   }
 ]

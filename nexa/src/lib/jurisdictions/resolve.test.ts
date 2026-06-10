@@ -65,10 +65,16 @@ describe("resolveJurisdiction", () => {
     expect(result?.portal?.url).toContain("paloalto.gov");
   });
 
-  it("returns a null portal when the matched jurisdiction has no verified endpoint", () => {
-    // Arrange: East Palo Alto matches a polygon but its registry portal is null.
+  it("returns a null portal when the matched jurisdiction has no verified endpoint for the issue type", () => {
+    // Arrange: East Palo Alto matches a polygon and now has verified
+    // ROAD_DAMAGE / ILLEGAL_DUMPING intakes (issue #195), but no STREETLIGHT
+    // intake — that issue type falls through to its null `default`.
     // Act
-    const result = resolveJurisdiction(37.4688, -122.1411, "ROAD_DAMAGE");
+    const result = resolveJurisdiction(
+      37.4688,
+      -122.1411,
+      "STREETLIGHT_OUTAGE",
+    );
 
     // Assert
     expect(result?.jurisdiction.id).toBe("city-east-palo-alto");

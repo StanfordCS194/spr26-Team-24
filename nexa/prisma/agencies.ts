@@ -132,6 +132,63 @@ export const AGENCIES: AgencySeed[] = [
     },
   },
   {
+    // ─── East Palo Alto — Public Works (issue #195) ──────────────────────────
+    // VERIFIED per the issue #23 agency-research comment ("East Palo Alto hole
+    // RESOLVED", source-verified 2026-06-09). Before this row the EPA polygon
+    // (boundaries.json: jurisdictionId='city-east-palo-alto') routed reports but
+    // had ZERO seeded agencies, so every East Palo Alto report resolved to
+    // no_agency and could not be submitted (issue #195).
+    //
+    // Verified facts:
+    //   - EPA Public Works handles ROAD_DAMAGE.
+    //   - Intake is the city contact web form (cityofepa.org/contact) with a
+    //     verified staff email fallback (maintenance@cityofepa.org; the research
+    //     also lists engineering@cityofepa.org). We model the web form as the
+    //     primary intake (intakeMethod=WEB_FORM) and carry the verified email in
+    //     intakeEmail as the fallback channel.
+    //   - EPA exposes NO machine API — the research explicitly CORRECTS an
+    //     earlier "EPA uses SeeClickFix" claim (SeeClickFix is Menlo Park's
+    //     provider, not EPA's), so this stays WEB_FORM, never API.
+    //
+    // The exact form-path / per-field validation was NOT deep-verified, so
+    // requiredFields stays minimal (only the fields any city contact form needs)
+    // — we do not invent field-level constraints.
+    name: "East Palo Alto Public Works",
+    jurisdiction: "city-east-palo-alto",
+    issueTypes: ["ROAD_DAMAGE"],
+    intakeMethod: "WEB_FORM",
+    intakeUrl: "https://www.cityofepa.org/contact",
+    intakeEmail: "maintenance@cityofepa.org",
+    requiredFields: {
+      description: { type: "string", required: true },
+      location_address: { type: "string", required: true },
+      contact_email: { type: "string", required: false },
+    },
+  },
+  {
+    // ─── East Palo Alto — Clean City (issue #195) ────────────────────────────
+    // VERIFIED per the issue #23 agency-research comment (source-verified
+    // 2026-06-09): EPA Clean City handles ILLEGAL_DUMPING. The verified intake
+    // channels are the Clean City email (cleancity@cityofepa.org) and the city
+    // phone line (650) 853-3100 — the research lists NO web form for this
+    // program, so intakeMethod=EMAIL (the published address) and the verified
+    // hotline is carried in requiredFields.contact_phone.value so the readiness
+    // harness and prefill copy-over surface it as a fallback channel.
+    name: "East Palo Alto Clean City",
+    jurisdiction: "city-east-palo-alto",
+    issueTypes: ["ILLEGAL_DUMPING"],
+    intakeMethod: "EMAIL",
+    intakeUrl: null,
+    intakeEmail: "cleancity@cityofepa.org",
+    requiredFields: {
+      // Verified East Palo Alto Clean City hotline (issue #23 research).
+      contact_phone: { type: "string", value: "(650) 853-3100" },
+      description: { type: "string", required: true },
+      location_address: { type: "string", required: true },
+      contact_email: { type: "string", required: false },
+    },
+  },
+  {
     name: "Mountain View Public Works",
     jurisdiction: "city-mountain-view",
     issueTypes: ["ROAD_DAMAGE", "STREETLIGHT_OUTAGE", "ILLEGAL_DUMPING"],
