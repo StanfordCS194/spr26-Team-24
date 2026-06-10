@@ -90,6 +90,35 @@ describe("GET /api/issues/map", () => {
     expect(body.data.points[0].myReportId).toBeNull();
   });
 
+  it("numbers pins by filing order (1 = earliest), independent of display order", async () => {
+    // Arrange: findMany returns newest-active first, but the EARLIER-created
+    // group must still get order 1.
+    mockedGetSession.mockResolvedValue({ userId: "viewer", email: "v@x.com" });
+    prismaMock.issueGroup.findMany.mockResolvedValue([
+      makeGroupRow({
+        id: "newer",
+        createdAt: new Date("2025-03-01T00:00:00.000Z"),
+      }),
+      makeGroupRow({
+        id: "older",
+        createdAt: new Date("2025-01-01T00:00:00.000Z"),
+      }),
+    ] as never);
+
+    // Act
+    const response = await GET();
+    const body = await response.json();
+
+    // Assert: order is by createdAt, not array position.
+    const byId = Object.fromEntries(
+      body.data.points.map((p: { id: string; order: number }) => [
+        p.id,
+        p.order,
+      ]),
+    );
+    expect(byId).toEqual({ older: 1, newer: 2 });
+  });
+
   it("returns an empty points array when there are no issue groups", async () => {
     // Arrange
     mockedGetSession.mockResolvedValue({ userId: "viewer", email: "v@x.com" });
