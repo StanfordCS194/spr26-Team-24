@@ -26,12 +26,23 @@ export async function POST(request: NextRequest) {
     const validIssueType = issueType ?? null;
 
     // Route the report to the responsible agency from its location + issue
-    // type so the submission pipeline has somewhere to file it.
-    const agencyId = await resolveAgencyId({
+    // type so the submission pipeline has somewhere to file it. When routing is
+    // unresolved or ambiguous we persist agencyId=null and log why rather than
+    // failing the request — the report can still be created and routed later.
+    const { agencyId, candidates } = await resolveAgencyId({
       latitude,
       longitude,
       issueType: validIssueType,
     });
+    if (!agencyId) {
+      const reason =
+        candidates.length > 1
+          ? `ambiguous: ${candidates.length} candidate agencies (${candidates.join(", ")})`
+          : "no agency covers this jurisdiction + issue type";
+      console.warn(
+        `Report routing unresolved (issueType=${validIssueType}, lat=${latitude}, lng=${longitude}): ${reason}`,
+      );
+    }
 
     // Group this report with any existing open report about the same nearby
     // issue so duplicate reports from different people share one case. Returns

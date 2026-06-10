@@ -52,7 +52,7 @@ export async function POST(
     // was added later) may not have an agency yet — resolve it on demand.
     let agency = report.agency;
     if (!agency) {
-      const agencyId = await resolveAgencyId({
+      const { agencyId } = await resolveAgencyId({
         latitude: report.latitude,
         longitude: report.longitude,
         issueType: report.issueType,
