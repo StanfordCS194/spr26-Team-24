@@ -1,8 +1,8 @@
 {
   "mode": "readiness",
-  "datasetSize": 12,
+  "datasetSize": 20,
   "target": 0.9,
-  "ranAt": "2026-06-10T06:46:48.472Z",
+  "ranAt": "2026-06-10T07:38:27.147Z",
   "results": [
     {
       "caseId": "road-pa-01",
@@ -345,46 +345,286 @@
       ],
       "ready": false,
       "reason": "Required field(s) not populated from report."
+    },
+    {
+      "caseId": "road-epa-13",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-east-palo-alto::East Palo Alto Public Works",
+      "agencyName": "East Palo Alto Public Works",
+      "intakeMethod": "WEB_FORM",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "dump-epa-14",
+      "issueType": "ILLEGAL_DUMPING",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-east-palo-alto::East Palo Alto Clean City",
+      "agencyName": "East Palo Alto Clean City",
+      "intakeMethod": "EMAIL",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "email intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "road-mil-15-api",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-milpitas::Milpitas SeeClickFix (Open311)",
+      "agencyName": "Milpitas SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "serviceCode": "26652",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "dump-mh-16-api",
+      "issueType": "ILLEGAL_DUMPING",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-morgan-hill::Morgan Hill SeeClickFix (Open311)",
+      "agencyName": "Morgan Hill SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "serviceCode": "38127",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "light-gil-17-api",
+      "issueType": "STREETLIGHT_OUTAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-gilroy::Gilroy SeeClickFix (Open311)",
+      "agencyName": "Gilroy SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "serviceCode": "57748",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "road-wat-18-api",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-watsonville::Watsonville SeeClickFix (Open311)",
+      "agencyName": "Watsonville SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "serviceCode": "50064",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "dump-val-19-api",
+      "issueType": "ILLEGAL_DUMPING",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-vallejo::Vallejo SeeClickFix (Open311)",
+      "agencyName": "Vallejo SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "serviceCode": "3613",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "light-sl-20-api",
+      "issueType": "STREETLIGHT_OUTAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-san-leandro::San Leandro SeeClickFix (Open311)",
+      "agencyName": "San Leandro SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "serviceCode": "53607",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
     }
   ],
   "metrics": {
-    "total": 12,
-    "ready": 11,
-    "readiness": 0.9166666666666666,
-    "resolved": 12,
+    "total": 20,
+    "ready": 19,
+    "readiness": 0.95,
+    "resolved": 20,
     "coverage": 1,
     "perCategory": {
       "ROAD_DAMAGE": {
-        "support": 5,
-        "ready": 5,
+        "support": 8,
+        "ready": 8,
         "readiness": 1
       },
       "ILLEGAL_DUMPING": {
-        "support": 4,
-        "ready": 4,
+        "support": 7,
+        "ready": 7,
         "readiness": 1
       },
       "VEHICLE_EMISSIONS": {
         "support": 3,
         "ready": 2,
         "readiness": 0.6666666666666666
+      },
+      "STREETLIGHT_OUTAGE": {
+        "support": 2,
+        "ready": 2,
+        "readiness": 1
       }
     },
     "perIntakeMethod": {
       "WEB_FORM": {
-        "support": 7,
-        "ready": 7,
+        "support": 8,
+        "ready": 8,
         "readiness": 1
       },
       "API": {
-        "support": 2,
-        "ready": 2,
+        "support": 8,
+        "ready": 8,
         "readiness": 1
       },
       "PHONE": {
         "support": 3,
         "ready": 2,
         "readiness": 0.6666666666666666
+      },
+      "EMAIL": {
+        "support": 1,
+        "ready": 1,
+        "readiness": 1
       }
     }
   }

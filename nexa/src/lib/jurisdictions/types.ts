@@ -8,6 +8,12 @@ export type JurisdictionId =
   | "city-menlo-park"
   | "city-mountain-view"
   | "city-east-palo-alto"
+  | "city-milpitas"
+  | "city-morgan-hill"
+  | "city-gilroy"
+  | "city-watsonville"
+  | "city-vallejo"
+  | "city-san-leandro"
   | "county-santa-clara-unincorporated";
 
 export type Jurisdiction = {
