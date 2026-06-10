@@ -1,0 +1,50 @@
+[
+  {
+    "id": "pothole-paloalto",
+    "image": "test-photos/pothole-1.jpg",
+    "mime": "image/jpeg",
+    "providedLocation": {
+      "latitude": 37.36378,
+      "longitude": -122.19389,
+      "address": "Page Mill Rd & El Camino Real, Palo Alto, CA"
+    },
+    "expected": {
+      "issueType": "ROAD_DAMAGE",
+      "description": "Deep pothole in the right lane near the crosswalk, roughly 40cm wide and a hazard to cyclists."
+    },
+    "contactEmail": "reporter@example.com",
+    "note": "Real team test photo, no EXIF GPS -> location SOURCE is the provided coordinate. Palo Alto pothole routes to Palo Alto 311 (WEB_FORM, unambiguous)."
+  },
+  {
+    "id": "dumping-menlopark-api",
+    "image": "test-photos/illegal-dumping-1.jpg",
+    "mime": "image/jpeg",
+    "providedLocation": {
+      "latitude": 37.42467,
+      "longitude": -122.21866,
+      "address": "Bay Rd near Marsh Rd, Menlo Park, CA"
+    },
+    "expected": {
+      "issueType": "ILLEGAL_DUMPING",
+      "description": "Old tires and bags of household trash dumped along the creek path overnight."
+    },
+    "contactEmail": null,
+    "note": "Menlo Park dumping routes AMBIGUOUSLY (ACT web form + SeeClickFix Open311). Exercises disambiguation candidates and the real Open311 GeoReport v2 buildRequestParams payload for the API candidate."
+  },
+  {
+    "id": "emissions-paloalto-phone",
+    "image": "test-photos/exhaust-smoke-1.jpg",
+    "mime": "image/jpeg",
+    "providedLocation": {
+      "latitude": 37.36378,
+      "longitude": -122.19389,
+      "address": "University Ave & Middlefield Rd, Palo Alto, CA"
+    },
+    "expected": {
+      "issueType": "VEHICLE_EMISSIONS",
+      "description": "Sedan emitting heavy blue/black smoke while idling at the light."
+    },
+    "contactEmail": null,
+    "note": "Smoking-vehicle report routes to the CARB Smoking Vehicle Complaint (PHONE hotline). Exercises the prefill copy-over guide for a non-API intake method."
+  }
+]
