@@ -8,11 +8,12 @@ import { expect, test, type Page } from "@playwright/test";
 //
 // K2_RUNS times (default 15) and reads the LITERAL `time_to_submit_ms` value the
 // APP emits on its `report_submitted` PostHog event — not a re-implementation.
-// The provider's measurement tap (`before_send`, gated on
+// The provider's measurement tap (a `capture` wrapper, gated on
 // NEXT_PUBLIC_POSTHOG_CAPTURE_DEBUG, set by playwright.config.ts) mirrors every
-// captured event onto window.__phEvents, so we read the exact number with no
-// network/batching/encoding to decode. Median + p90 are computed and asserted
-// against the SLO (median <= 60s, p90 <= 180s).
+// captured event onto window.__phEvents synchronously, so we read the exact
+// number with no network/batching/encoding to decode and no dependency on the
+// SDK send pipeline. Median + p90 are computed and asserted against the SLO
+// (median <= 60s, p90 <= 180s).
 //
 // This spec is intentionally KEPT OUT of the default `chromium` (CI) project and
 // the `full-workflow-video` project — it runs under its own `k2-measure`
@@ -158,13 +159,13 @@ async function stubReportRoutes(page: Page) {
     }),
   );
   // PostHog ingestion. The SDK's host is a SAME-ORIGIN sentinel path
-  // (`/__posthog_e2e`, set in playwright.config.ts) so every event POST stays on
-  // the machine. We must return 200 (not abort): `before_send` — the tap that
-  // mirrors events onto window.__phEvents — runs when the SDK FLUSHES an event,
-  // so the request has to succeed for the tap to fire. The exact response body
-  // is irrelevant; the app reads its metric from window.__phEvents, not the wire.
-  // (Scoped to the sentinel path so it never matches the posthog-js JS chunk
-  // under /_next/static — aborting that would break the page.)
+  // (`/__posthog_e2e`, set in playwright.config.ts), so every event POST stays
+  // on the machine; we return 200 so the SDK is happy and never retries. The
+  // measurement does NOT depend on these requests — the `capture` wrapper tap
+  // mirrors events onto window.__phEvents synchronously, before any send — this
+  // route just keeps the network quiet. (Scoped to the sentinel path so it never
+  // matches the posthog-js JS chunk under /_next/static, aborting which would
+  // break the page.)
   await page.route("**/__posthog_e2e/**", (route) =>
     route.fulfill({ status: 200, json: { status: 1 } }),
   );
