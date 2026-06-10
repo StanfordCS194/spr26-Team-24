@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  Copy,
+  ExternalLink,
+  Loader2,
+  Send,
+} from "lucide-react";
 import type { ApiResponse } from "@/lib/api/response";
 
 interface PrefillField {
@@ -23,16 +30,96 @@ interface SubmissionFieldsResponse {
   fields: PrefillField[];
 }
 
+// Shape returned by POST /api/reports/[id]/submit (see the orchestrator).
+interface SubmitResponse {
+  reportId: string;
+  status: string;
+  submitted: boolean;
+  externalTrackingId?: string;
+  manualAssist?: {
+    intakeMethod: string;
+    agencyName: string;
+    intakeUrl: string | null;
+    intakeEmail: string | null;
+  };
+}
+
 interface SubmissionAssistantProps {
   reportId: string;
 }
 
+// What the orchestrator told us to do with this report.
+type Outcome =
+  | { kind: "loading" }
+  // Automated (API) submission succeeded — nothing left for the user to do.
+  | { kind: "submitted"; trackingId?: string }
+  // No automated agent; show the copy-over guide for the official form/email.
+  | { kind: "manual" }
+  // Submission attempt failed (network/agency error) — let the user retry.
+  | { kind: "error"; message: string };
+
+/**
+ * After a report is confirmed, this drives its submission. It first asks the
+ * orchestrator (POST /submit) to file the report with the right agent:
+ *
+ *   - API agencies are submitted automatically — we show a success state with
+ *     the tracking id, completing the flow in-app (issue #34 acceptance: a
+ *     confirmed in-coverage report submitted end-to-end without leaving the app).
+ *   - WEB_FORM / EMAIL agencies have no automated agent yet, so the orchestrator
+ *     returns a `manualAssist` result and we fall back to the copy-over guide:
+ *     the official form/address plus each field pre-filled.
+ */
 export function SubmissionAssistant({ reportId }: SubmissionAssistantProps) {
-  const [data, setData] = useState<SubmissionFieldsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [outcome, setOutcome] = useState<Outcome>({ kind: "loading" });
+  const [fields, setFields] = useState<SubmissionFieldsResponse | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
+  // Attempt submission once on mount. The orchestrator decides — automated for
+  // API intake, manual-assist otherwise — so we don't need to know the agency's
+  // method up front.
   useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      let next: Outcome;
+      try {
+        const res = await fetch(`/api/reports/${reportId}/submit`, {
+          method: "POST",
+        });
+        const payload = (await res.json()) as ApiResponse<SubmitResponse>;
+
+        if (payload.success && payload.data.submitted) {
+          next = {
+            kind: "submitted",
+            trackingId: payload.data.externalTrackingId,
+          };
+        } else if (payload.success) {
+          // manualAssist (or anything non-submitted) -> show the copy-over guide.
+          next = { kind: "manual" };
+        } else if (payload.code === "already_submitted") {
+          // Re-render of an already-filed report (e.g. remount) is a success.
+          next = { kind: "submitted" };
+        } else {
+          next = { kind: "error", message: payload.error };
+        }
+      } catch {
+        next = {
+          kind: "error",
+          message: "Could not reach the submission service.",
+        };
+      }
+      if (!cancelled) setOutcome(next);
+    }
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [reportId]);
+
+  // Lazily load the copy-over fields only when we're in the manual-assist path.
+  useEffect(() => {
+    if (outcome.kind !== "manual" || fields !== null) return;
     let cancelled = false;
     async function load() {
       try {
@@ -41,19 +128,17 @@ export function SubmissionAssistant({ reportId }: SubmissionAssistantProps) {
           ? ((await res.json()) as ApiResponse<SubmissionFieldsResponse>)
           : null;
         if (!cancelled) {
-          setData(payload && payload.success ? payload.data : null);
+          setFields(payload && payload.success ? payload.data : null);
         }
       } catch {
-        if (!cancelled) setData(null);
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setFields(null);
       }
     }
     void load();
     return () => {
       cancelled = true;
     };
-  }, [reportId]);
+  }, [outcome.kind, reportId, fields]);
 
   const handleCopy = async (key: string, value: string) => {
     await navigator.clipboard.writeText(value);
@@ -61,7 +146,67 @@ export function SubmissionAssistant({ reportId }: SubmissionAssistantProps) {
     setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 2000);
   };
 
-  if (loading) {
+  const handleRetry = () => setOutcome({ kind: "loading" });
+
+  if (outcome.kind === "loading") {
+    return (
+      <div className="ep-card flex w-full max-w-md items-center gap-2 p-6 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" />
+        Filing your report…
+      </div>
+    );
+  }
+
+  if (outcome.kind === "submitted") {
+    return (
+      <div className="ep-card w-full max-w-md p-6 text-left">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="size-5 text-ep-green" />
+          <span className="text-sm font-medium text-foreground">
+            Filed with the agency
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Nexa submitted this report for you. You can track its status from your
+          dashboard.
+        </p>
+        {outcome.trackingId && (
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              Tracking ID
+            </span>
+            <span className="font-mono text-sm">{outcome.trackingId}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (outcome.kind === "error") {
+    return (
+      <div className="ep-card w-full max-w-md p-6 text-left">
+        <span className="text-sm font-medium text-foreground">
+          We couldn&apos;t file this report automatically
+        </span>
+        {outcome.message && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            {outcome.message}
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={handleRetry}
+          className="btn-cta btn-cta-purple mt-4 inline-flex"
+        >
+          <Send className="size-4" />
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  // outcome.kind === "manual": show the copy-over guide once fields load.
+  if (fields === null) {
     return (
       <div className="ep-card flex w-full max-w-md items-center gap-2 p-6 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" />
@@ -70,34 +215,34 @@ export function SubmissionAssistant({ reportId }: SubmissionAssistantProps) {
     );
   }
 
-  if (!data?.agency || data.fields.length === 0) {
+  if (!fields.agency || fields.fields.length === 0) {
     return null;
   }
 
   return (
     <div className="ep-card w-full max-w-md p-6 text-left">
       <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-        File with {data.agency.name}
+        File with {fields.agency.name}
       </span>
       <p className="mt-2 text-sm text-muted-foreground">
         Nexa doesn&apos;t submit for you. Open the official form and copy each
         value below into the matching field.
       </p>
 
-      {data.formUrl && (
+      {fields.formUrl && (
         <a
-          href={data.formUrl}
+          href={fields.formUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-3 inline-flex items-center gap-1.5 text-sm text-ep-purple underline-offset-4 hover:underline"
         >
-          Open {data.agency.name} form
+          Open {fields.agency.name} form
           <ExternalLink className="size-3.5" />
         </a>
       )}
 
       <div className="mt-5 flex flex-col gap-4">
-        {data.fields.map((field) => (
+        {fields.fields.map((field) => (
           <div key={field.key}>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">
