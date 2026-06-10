@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { MapPinned } from "lucide-react";
 import type { IssueMapPoint } from "@/components/map/community-map";
 import type { ApiResponse } from "@/lib/api/response";
+import { useI18n } from "@/i18n/provider";
 
 // Leaflet touches `window`/`document`, so render the map only on the client.
 const CommunityMap = dynamic(() => import("@/components/map/community-map"), {
@@ -26,6 +27,7 @@ interface CommunityMapPanelProps {
 export default function CommunityMapPanel({
   initialPoints,
 }: CommunityMapPanelProps) {
+  const { t } = useI18n();
   const [points, setPoints] = useState<IssueMapPoint[]>(initialPoints);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,15 +53,13 @@ export default function CommunityMapPanel({
           .json()
           .catch(() => null)) as ApiResponse<unknown> | null;
         setError(
-          payload && !payload.success
-            ? payload.error
-            : "Failed to mark resolved.",
+          payload && !payload.success ? payload.error : t("map.resolveFailed"),
         );
         throw new Error("resolve-failed");
       }
       await refetch();
     },
-    [refetch],
+    [refetch, t],
   );
 
   if (points.length === 0) {

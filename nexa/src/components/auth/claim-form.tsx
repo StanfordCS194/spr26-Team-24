@@ -11,9 +11,11 @@ import {
   clearPendingReportIds,
   getPendingReportIds,
 } from "@/lib/pending-reports";
+import { useI18n } from "@/i18n/provider";
 
 export function ClaimForm() {
   const router = useRouter();
+  const { t } = useI18n();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +48,7 @@ export function ClaimForm() {
       const payload = (await res.json()) as ApiResponse<unknown>;
 
       if (!res.ok || !payload.success) {
-        setError(!payload.success ? payload.error : "Failed to claim account");
+        setError(!payload.success ? payload.error : t("auth.claimFailed"));
         return;
       }
 
@@ -54,7 +56,7 @@ export function ClaimForm() {
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t("common.somethingWrong"));
     } finally {
       setLoading(false);
     }
@@ -65,21 +67,20 @@ export function ClaimForm() {
       <div className="ep-card p-8">
         <div className="mb-6">
           <h1 className="text-xl font-semibold tracking-tight">
-            Claim your account
+            {t("auth.claimTitle")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            If your account was created before passwords were required, set one
-            here to take it over.
+            {t("auth.claimSubtitle")}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder={t("auth.emailPlaceholder")}
               autoComplete="email"
               required
               value={email}
@@ -88,11 +89,11 @@ export function ClaimForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="name">Name (optional)</Label>
+            <Label htmlFor="name">{t("auth.nameOptional")}</Label>
             <Input
               id="name"
               type="text"
-              placeholder="Jane Smith"
+              placeholder={t("auth.namePlaceholder")}
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -100,11 +101,11 @@ export function ClaimForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password">New password</Label>
+            <Label htmlFor="password">{t("auth.newPassword")}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder={t("auth.passwordNewPlaceholder")}
               autoComplete="new-password"
               required
               minLength={8}
@@ -120,18 +121,18 @@ export function ClaimForm() {
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Setting password…" : "Set password & sign in"}
+            {loading ? t("auth.settingPassword") : t("auth.setPassword")}
           </Button>
         </form>
       </div>
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        Already have a password?{" "}
+        {t("auth.hasPassword")}{" "}
         <Link
           href="/login"
           className="font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Sign in
+          {t("nav.signIn")}
         </Link>
       </p>
     </div>
