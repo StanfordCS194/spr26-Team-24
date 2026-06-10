@@ -23,6 +23,9 @@ interface SubmitResponse {
     agencyName: string;
     intakeUrl: string | null;
     intakeEmail: string | null;
+    // PHONE-intake agencies (e.g. the CARB smoking-vehicle hotline) surface a
+    // hotline number here so the user can call it in. (issue #193)
+    intakePhone: string | null;
   };
 }
 
@@ -40,6 +43,7 @@ type State =
       agencyName: string;
       intakeUrl: string | null;
       intakeEmail: string | null;
+      intakePhone: string | null;
     }
   // Submission attempt failed (network/agency error) — let the user retry.
   | { kind: "error"; message: string };
@@ -77,9 +81,15 @@ export function SubmitReportAction({ reportId }: SubmitReportActionProps) {
         return;
       }
       if (payload.success && payload.data.manualAssist) {
-        const { agencyName, intakeUrl, intakeEmail } =
+        const { agencyName, intakeUrl, intakeEmail, intakePhone } =
           payload.data.manualAssist;
-        setState({ kind: "manual", agencyName, intakeUrl, intakeEmail });
+        setState({
+          kind: "manual",
+          agencyName,
+          intakeUrl,
+          intakeEmail,
+          intakePhone,
+        });
         return;
       }
       setState({
@@ -97,9 +107,17 @@ export function SubmitReportAction({ reportId }: SubmitReportActionProps) {
   const submitting = state.kind === "submitting";
 
   if (state.kind === "manual") {
+    // Prefer an online channel (form/email); fall back to the hotline number
+    // for PHONE-intake agencies (e.g. CARB) as a tel: link. (issue #193)
     const href =
       state.intakeUrl ??
-      (state.intakeEmail ? `mailto:${state.intakeEmail}` : null);
+      (state.intakeEmail
+        ? `mailto:${state.intakeEmail}`
+        : state.intakePhone
+          ? `tel:${state.intakePhone.replace(/[^+\d]/g, "")}`
+          : null);
+    const isPhone =
+      !state.intakeUrl && !state.intakeEmail && !!state.intakePhone;
     return (
       <div
         className="mt-4 rounded-md border border-border bg-muted/30 px-4 py-3"
@@ -115,7 +133,9 @@ export function SubmitReportAction({ reportId }: SubmitReportActionProps) {
             rel="noopener noreferrer"
             className="mt-2 inline-flex items-center gap-1.5 text-sm text-ep-purple underline-offset-4 hover:underline"
           >
-            {t("dashboard.openOfficialForm")}
+            {isPhone
+              ? `${t("dashboard.callHotline")}: ${state.intakePhone}`
+              : t("dashboard.openOfficialForm")}
             <ExternalLink className="size-3.5" />
           </a>
         )}

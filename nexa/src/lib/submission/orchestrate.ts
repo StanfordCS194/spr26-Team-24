@@ -50,9 +50,12 @@ export type OrchestrationResult =
       reportId: string;
       intakeMethod: IntakeMethod;
       agencyName: string;
-      // Where the user should file: the agency's form URL or intake email.
+      // Where the user should file: the agency's form URL, intake email, or —
+      // for PHONE intake (e.g. the CARB smoking-vehicle hotline) — a phone
+      // number. At least one is non-null for any submittable agency. (issue #193)
       intakeUrl: string | null;
       intakeEmail: string | null;
+      intakePhone: string | null;
     }
   | {
       // A precondition failed (report missing, not owned, already submitted, no
@@ -68,6 +71,23 @@ export type OrchestrationResult =
         | "submit_failed";
       message: string;
     };
+
+/**
+ * Pulls the contact-phone value out of an agency's required-fields schema.
+ *
+ * PHONE-intake agencies (e.g. the CARB smoking-vehicle hotline) store their
+ * hotline as `requiredFields.contact_phone.value` rather than in a dedicated
+ * Agency column. Returns null when no such embedded value is present. (#193)
+ */
+function contactPhoneFromRequiredFields(
+  requiredFields: unknown,
+): string | null {
+  if (!requiredFields || typeof requiredFields !== "object") return null;
+  const phone = (requiredFields as Record<string, unknown>).contact_phone;
+  if (!phone || typeof phone !== "object") return null;
+  const value = (phone as Record<string, unknown>).value;
+  return typeof value === "string" && value.trim() !== "" ? value : null;
+}
 
 /** Caller identity used to authorize the submission. */
 export type OrchestrationActor = {
@@ -165,6 +185,10 @@ export async function orchestrateSubmission(
     agencyName: agency!.name,
     intakeUrl: agency!.intakeUrl,
     intakeEmail: agency!.intakeEmail,
+    // PHONE-intake agencies record their hotline inside the required-fields
+    // schema (contact_phone.value) rather than a dedicated column — read it
+    // there so the client can surface it. (issue #193)
+    intakePhone: contactPhoneFromRequiredFields(agency!.requiredFields),
   });
 
   // WEB_FORM / PHONE have no automated agent (#33 is separate). Degrade

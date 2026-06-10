@@ -41,6 +41,9 @@ interface SubmitResponse {
     agencyName: string;
     intakeUrl: string | null;
     intakeEmail: string | null;
+    // PHONE-intake agencies (e.g. the CARB smoking-vehicle hotline) surface a
+    // hotline number here so the user can call it in. (issue #193)
+    intakePhone: string | null;
   };
 }
 
@@ -219,14 +222,19 @@ export function SubmissionAssistant({ reportId }: SubmissionAssistantProps) {
     return null;
   }
 
+  // PHONE-intake agencies (e.g. the CARB smoking-vehicle hotline) have no online
+  // form — the user calls the number surfaced below — so the copy adapts. (#193)
+  const isPhone = fields.agency.intakeMethod === "PHONE";
+
   return (
     <div className="ep-card w-full max-w-md p-6 text-left">
       <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
         File with {fields.agency.name}
       </span>
       <p className="mt-2 text-sm text-muted-foreground">
-        Nexa doesn&apos;t submit for you. Open the official form and copy each
-        value below into the matching field.
+        {isPhone
+          ? "Nexa doesn't submit for you. Call the number below and read off each value to file your report."
+          : "Nexa doesn't submit for you. Open the official form and copy each value below into the matching field."}
       </p>
 
       {fields.formUrl && (

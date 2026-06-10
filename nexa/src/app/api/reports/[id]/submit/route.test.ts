@@ -82,6 +82,7 @@ describe("POST /api/reports/[id]/submit", () => {
       agencyName: "Palo Alto 311",
       intakeUrl: "https://paloalto.gov/311",
       intakeEmail: null,
+      intakePhone: null,
     });
 
     // Act

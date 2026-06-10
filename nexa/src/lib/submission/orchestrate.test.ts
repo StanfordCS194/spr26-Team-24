@@ -193,6 +193,7 @@ describe("orchestrateSubmission — non-automated intake (graceful fallback)", (
         agencyName: "Palo Alto 311",
         intakeUrl: "https://paloalto.gov/311",
         intakeEmail: "311@paloalto.gov",
+        intakePhone: null,
       });
       expect(prismaMock.report.updateMany).not.toHaveBeenCalled();
       expect(submitToOpen311).not.toHaveBeenCalled();
@@ -268,6 +269,7 @@ describe("orchestrateSubmission — EMAIL intake (email agent, #31)", () => {
       agencyName: "Palo Alto Public Works",
       intakeUrl: null,
       intakeEmail: "311@paloalto.gov",
+      intakePhone: null,
     });
     expect(prismaMock.report.update).toHaveBeenCalledWith({
       where: { id: reportId },
