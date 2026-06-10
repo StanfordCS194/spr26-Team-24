@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { getOpenAiKey } from "@/lib/config";
+import { DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import {
   CLASSIFICATION_PROMPT,
   parseClassificationResponse,
@@ -54,12 +55,15 @@ export async function classifyWithOpenAI(
 
   messages.push({ role: "user", content });
 
-  const response = await getClient().chat.completions.create({
-    model: "gpt-4o-mini",
-    messages,
-    max_tokens: 300,
-    temperature: 0.1,
-  });
+  const response = await getClient().chat.completions.create(
+    {
+      model: "gpt-4o-mini",
+      messages,
+      max_tokens: 300,
+      temperature: 0.1,
+    },
+    { timeout: DEFAULT_LLM_TIMEOUT_MS },
+  );
 
   const raw = response.choices[0]?.message?.content ?? "{}";
   const parsed = parseClassificationResponse(raw);

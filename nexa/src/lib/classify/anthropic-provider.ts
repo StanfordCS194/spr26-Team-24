@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getAnthropicKey } from "@/lib/config";
+import { DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import { stripDataUrlPrefix } from "./image-utils";
 import {
   CLASSIFICATION_PROMPT,
@@ -61,11 +62,14 @@ export async function classifyWithAnthropic(
   }
   content.push({ type: "text", text: textPrompt });
 
-  const response = await getClient().messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 300,
-    messages: [{ role: "user", content }],
-  });
+  const response = await getClient().messages.create(
+    {
+      model: "claude-haiku-4-5",
+      max_tokens: 300,
+      messages: [{ role: "user", content }],
+    },
+    { timeout: DEFAULT_LLM_TIMEOUT_MS },
+  );
 
   const raw =
     response.content[0]?.type === "text" ? response.content[0].text : "{}";
