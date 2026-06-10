@@ -20,7 +20,8 @@
     "eval:fetch:download": "tsx eval/dataset/fetch.ts --download",
     "eval": "tsx eval/run.ts",
     "eval:baseline": "tsx eval/run.ts --mode=baseline",
-    "eval:two-stage": "tsx eval/run.ts --mode=two-stage"
+    "eval:two-stage": "tsx eval/run.ts --mode=two-stage",
+    "eval:routing": "tsx eval/routing.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
