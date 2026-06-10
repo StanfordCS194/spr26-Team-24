@@ -164,13 +164,15 @@ export default function LocationMap({
       />
       {/* Keyboard parity for the draggable pin: a focusable control that nudges
           the marker via the same onMove handler. Sibling (not a Leaflet-owned
-          child) so Leaflet's DOM ownership of the container is never disturbed. */}
+          child) so Leaflet's DOM ownership of the container is never disturbed.
+          Visually hidden by default (mouse users just drag the pin) but revealed
+          on focus so keyboard / screen-reader users still get the control. */}
       <button
         type="button"
         aria-label={t("report.mapPinKeyboardLabel")}
         aria-describedby={instructionsId}
         onKeyDown={handleKeyDown}
-        className="absolute left-2 top-2 z-[1000] rounded-md border border-border bg-background/90 px-2 py-1 text-xs text-muted-foreground shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[1000] focus:rounded-md focus:border focus:border-border focus:bg-background/90 focus:px-2 focus:py-1 focus:text-xs focus:text-muted-foreground focus:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {t("report.mapPinKeyboardLabel")}
       </button>
