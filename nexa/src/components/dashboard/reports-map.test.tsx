@@ -17,6 +17,9 @@ const marker = {
     popupHtml.push(html);
     return marker;
   }),
+  on: vi.fn(() => marker),
+  openPopup: vi.fn(() => marker),
+  closePopup: vi.fn(() => marker),
 };
 
 const map = {
@@ -113,6 +116,24 @@ describe("ReportsMap", () => {
     await waitFor(() => expect(divIconCalls.length).toBe(2));
     expect(divIconCalls[0].html).toContain("#22c55e");
     expect(divIconCalls[1].html).toContain("#9b87f5");
+  });
+
+  it("opens a pin's popup on hover and closes it on mouse-out", async () => {
+    // Arrange / Act
+    renderWithProviders(<ReportsMap points={[makePoint({ id: "h" })]} />);
+
+    // Assert: hover handlers are wired so pins preview without a click.
+    await waitFor(() =>
+      expect(marker.on).toHaveBeenCalledWith("mouseover", expect.any(Function)),
+    );
+    expect(marker.on).toHaveBeenCalledWith("mouseout", expect.any(Function));
+
+    // Invoke the registered handlers to confirm they open/close the popup.
+    const calls = marker.on.mock.calls as unknown as [string, () => void][];
+    calls.find(([evt]) => evt === "mouseover")?.[1]();
+    calls.find(([evt]) => evt === "mouseout")?.[1]();
+    expect(marker.openPopup).toHaveBeenCalled();
+    expect(marker.closePopup).toHaveBeenCalled();
   });
 
   it("escapes HTML in popup content", async () => {

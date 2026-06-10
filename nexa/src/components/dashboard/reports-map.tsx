@@ -112,9 +112,15 @@ export function ReportsMap({ points }: ReportsMapProps) {
           </div>
         `;
 
-        L.marker([point.latitude, point.longitude], { icon })
+        const marker = L.marker([point.latitude, point.longitude], { icon })
           .addTo(map)
           .bindPopup(popupHtml, { closeButton: false, offset: [0, -2] });
+
+        // Open the popup on hover so you can scan pins without clicking; clicks
+        // still work (and remain the only path on touch, where hover never
+        // fires). Closing on mouseout keeps only the hovered pin's popup open.
+        marker.on("mouseover", () => marker.openPopup());
+        marker.on("mouseout", () => marker.closePopup());
 
         latLngs.push([point.latitude, point.longitude]);
       }
