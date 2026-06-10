@@ -1,6 +1,7 @@
 import sharp from "sharp";
 import exifr from "exifr";
 import { IMAGE_PROCESSING } from "@/lib/constants";
+import { stripDataUrlPrefix } from "./image-utils";
 
 export interface PreprocessedImage {
   // base64 data URL ready to be passed to VLMs as image_url
@@ -21,18 +22,6 @@ export interface PreprocessedImage {
 
 const MAX_DIMENSION = IMAGE_PROCESSING.SERVER_MAX_DIMENSION;
 const JPEG_QUALITY = IMAGE_PROCESSING.SERVER_JPEG_QUALITY;
-
-/**
- * Strip a `data:image/...;base64,` prefix if present and return the raw base64
- * payload.
- */
-function stripDataUrlPrefix(input: string): string {
-  const comma = input.indexOf(",");
-  if (input.startsWith("data:") && comma !== -1) {
-    return input.slice(comma + 1);
-  }
-  return input;
-}
 
 /**
  * Normalize a user-supplied image for downstream classification:
