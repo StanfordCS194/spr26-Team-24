@@ -1,0 +1,506 @@
+[
+  {
+    "id": "palo-alto-road_damage-01",
+    "latitude": 37.35109,
+    "longitude": -122.19389,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "city-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "palo-alto-road_damage-02",
+    "latitude": 37.36378,
+    "longitude": -122.19389,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "city-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "palo-alto-road_damage-03",
+    "latitude": 37.37646,
+    "longitude": -122.19389,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "city-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "palo-alto-illegal_dumping-04",
+    "latitude": 37.33841,
+    "longitude": -122.18512,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "city-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "palo-alto-illegal_dumping-05",
+    "latitude": 37.35109,
+    "longitude": -122.18512,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "city-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "palo-alto-illegal_dumping-06",
+    "latitude": 37.36378,
+    "longitude": -122.18512,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "city-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "palo-alto-vehicle_emissions-07",
+    "latitude": 37.37646,
+    "longitude": -122.18512,
+    "issueType": "VEHICLE_EMISSIONS",
+    "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+    "note": "city-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "palo-alto-vehicle_emissions-08",
+    "latitude": 37.31304,
+    "longitude": -122.17635,
+    "issueType": "VEHICLE_EMISSIONS",
+    "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+    "note": "city-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "palo-alto-vehicle_emissions-09",
+    "latitude": 37.35109,
+    "longitude": -122.19389,
+    "issueType": "VEHICLE_EMISSIONS",
+    "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+    "note": "city-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "stanford-campus-road_damage-10",
+    "latitude": 37.42954,
+    "longitude": -122.17078,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "stanford-campus interior point reused from routing-cases.json"
+  },
+  {
+    "id": "stanford-campus-road_damage-11",
+    "latitude": 37.42712,
+    "longitude": -122.1838,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "stanford-campus interior point reused from routing-cases.json"
+  },
+  {
+    "id": "stanford-campus-road_damage-12",
+    "latitude": 37.42875,
+    "longitude": -122.1838,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "stanford-campus interior point reused from routing-cases.json"
+  },
+  {
+    "id": "stanford-campus-illegal_dumping-13",
+    "latitude": 37.43038,
+    "longitude": -122.1838,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "stanford-campus interior point reused from routing-cases.json"
+  },
+  {
+    "id": "stanford-campus-illegal_dumping-14",
+    "latitude": 37.43201,
+    "longitude": -122.1838,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "stanford-campus interior point reused from routing-cases.json"
+  },
+  {
+    "id": "stanford-campus-illegal_dumping-15",
+    "latitude": 37.42224,
+    "longitude": -122.18153,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "stanford-campus interior point reused from routing-cases.json"
+  },
+  {
+    "id": "stanford-campus-vehicle_emissions-16",
+    "latitude": 37.42387,
+    "longitude": -122.18153,
+    "issueType": "VEHICLE_EMISSIONS",
+    "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+    "note": "stanford-campus interior point reused from routing-cases.json"
+  },
+  {
+    "id": "stanford-campus-vehicle_emissions-17",
+    "latitude": 37.4255,
+    "longitude": -122.18153,
+    "issueType": "VEHICLE_EMISSIONS",
+    "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+    "note": "stanford-campus interior point reused from routing-cases.json"
+  },
+  {
+    "id": "stanford-campus-vehicle_emissions-18",
+    "latitude": 37.42954,
+    "longitude": -122.17078,
+    "issueType": "VEHICLE_EMISSIONS",
+    "expectedAgencyName": "CARB Smoking Vehicle Complaint",
+    "note": "stanford-campus interior point reused from routing-cases.json"
+  },
+  {
+    "id": "menlo-park-road_damage-19",
+    "latitude": 37.44865,
+    "longitude": -122.17515,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Menlo Park ACT",
+    "note": "city-menlo-park interior point reused from routing-cases.json (ambiguous routing — expected agency must be in the candidate set)"
+  },
+  {
+    "id": "menlo-park-road_damage-20",
+    "latitude": 37.42467,
+    "longitude": -122.21866,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Menlo Park ACT",
+    "note": "city-menlo-park interior point reused from routing-cases.json (ambiguous routing — expected agency must be in the candidate set)"
+  },
+  {
+    "id": "menlo-park-road_damage-21",
+    "latitude": 37.42467,
+    "longitude": -122.20888,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Menlo Park ACT",
+    "note": "city-menlo-park interior point reused from routing-cases.json (ambiguous routing — expected agency must be in the candidate set)"
+  },
+  {
+    "id": "menlo-park-illegal_dumping-22",
+    "latitude": 37.42467,
+    "longitude": -122.1991,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Menlo Park SeeClickFix (Open311)",
+    "note": "city-menlo-park interior point reused from routing-cases.json (ambiguous routing — expected agency must be in the candidate set)"
+  },
+  {
+    "id": "menlo-park-illegal_dumping-23",
+    "latitude": 37.44015,
+    "longitude": -122.1991,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Menlo Park SeeClickFix (Open311)",
+    "note": "city-menlo-park interior point reused from routing-cases.json (ambiguous routing — expected agency must be in the candidate set)"
+  },
+  {
+    "id": "menlo-park-illegal_dumping-24",
+    "latitude": 37.43241,
+    "longitude": -122.18933,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Menlo Park SeeClickFix (Open311)",
+    "note": "city-menlo-park interior point reused from routing-cases.json (ambiguous routing — expected agency must be in the candidate set)"
+  },
+  {
+    "id": "mountain-view-road_damage-25",
+    "latitude": 37.40154,
+    "longitude": -122.08137,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Mountain View Public Works",
+    "note": "city-mountain-view interior point reused from routing-cases.json"
+  },
+  {
+    "id": "mountain-view-road_damage-26",
+    "latitude": 37.40875,
+    "longitude": -122.11272,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Mountain View Public Works",
+    "note": "city-mountain-view interior point reused from routing-cases.json"
+  },
+  {
+    "id": "mountain-view-road_damage-27",
+    "latitude": 37.40096,
+    "longitude": -122.10788,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Mountain View Public Works",
+    "note": "city-mountain-view interior point reused from routing-cases.json"
+  },
+  {
+    "id": "mountain-view-illegal_dumping-28",
+    "latitude": 37.40096,
+    "longitude": -122.10304,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Mountain View Public Works",
+    "note": "city-mountain-view interior point reused from routing-cases.json"
+  },
+  {
+    "id": "mountain-view-illegal_dumping-29",
+    "latitude": 37.40875,
+    "longitude": -122.10304,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Mountain View Public Works",
+    "note": "city-mountain-view interior point reused from routing-cases.json"
+  },
+  {
+    "id": "mountain-view-illegal_dumping-30",
+    "latitude": 37.39317,
+    "longitude": -122.0982,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Mountain View Public Works",
+    "note": "city-mountain-view interior point reused from routing-cases.json"
+  },
+  {
+    "id": "east-palo-alto-road_damage-31",
+    "latitude": 37.45857,
+    "longitude": -122.13351,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "East Palo Alto Public Works",
+    "note": "city-east-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "east-palo-alto-road_damage-32",
+    "latitude": 37.46892,
+    "longitude": -122.15358,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "East Palo Alto Public Works",
+    "note": "city-east-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "east-palo-alto-road_damage-33",
+    "latitude": 37.47105,
+    "longitude": -122.15358,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "East Palo Alto Public Works",
+    "note": "city-east-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "east-palo-alto-illegal_dumping-34",
+    "latitude": 37.47319,
+    "longitude": -122.15358,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "East Palo Alto Clean City",
+    "note": "city-east-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "east-palo-alto-illegal_dumping-35",
+    "latitude": 37.4625,
+    "longitude": -122.15081,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "East Palo Alto Clean City",
+    "note": "city-east-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "east-palo-alto-illegal_dumping-36",
+    "latitude": 37.46464,
+    "longitude": -122.15081,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "East Palo Alto Clean City",
+    "note": "city-east-palo-alto interior point reused from routing-cases.json"
+  },
+  {
+    "id": "santa-clara-unincorporated-road_damage-37",
+    "latitude": 37.24497,
+    "longitude": -121.76879,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Santa Clara County Public Works",
+    "note": "county-santa-clara-unincorporated interior point reused from routing-cases.json"
+  },
+  {
+    "id": "santa-clara-unincorporated-road_damage-38",
+    "latitude": 37.28744,
+    "longitude": -122.13637,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Santa Clara County Public Works",
+    "note": "county-santa-clara-unincorporated interior point reused from routing-cases.json"
+  },
+  {
+    "id": "santa-clara-unincorporated-road_damage-39",
+    "latitude": 37.3663,
+    "longitude": -122.13637,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Santa Clara County Public Works",
+    "note": "county-santa-clara-unincorporated interior point reused from routing-cases.json"
+  },
+  {
+    "id": "milpitas-road_damage-40",
+    "latitude": 37.41862,
+    "longitude": -121.9299,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Milpitas SeeClickFix (Open311)",
+    "note": "city-milpitas interior point reused from routing-cases.json"
+  },
+  {
+    "id": "milpitas-road_damage-41",
+    "latitude": 37.41979,
+    "longitude": -121.9299,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Milpitas SeeClickFix (Open311)",
+    "note": "city-milpitas interior point reused from routing-cases.json"
+  },
+  {
+    "id": "milpitas-illegal_dumping-42",
+    "latitude": 37.42097,
+    "longitude": -121.9299,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Milpitas SeeClickFix (Open311)",
+    "note": "city-milpitas interior point reused from routing-cases.json"
+  },
+  {
+    "id": "milpitas-illegal_dumping-43",
+    "latitude": 37.41862,
+    "longitude": -121.9299,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Milpitas SeeClickFix (Open311)",
+    "note": "city-milpitas interior point reused from routing-cases.json"
+  },
+  {
+    "id": "morgan-hill-road_damage-44",
+    "latitude": 37.12387,
+    "longitude": -121.69618,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+    "note": "city-morgan-hill interior point reused from routing-cases.json"
+  },
+  {
+    "id": "morgan-hill-road_damage-45",
+    "latitude": 37.12522,
+    "longitude": -121.69618,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+    "note": "city-morgan-hill interior point reused from routing-cases.json"
+  },
+  {
+    "id": "morgan-hill-illegal_dumping-46",
+    "latitude": 37.12657,
+    "longitude": -121.69618,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+    "note": "city-morgan-hill interior point reused from routing-cases.json"
+  },
+  {
+    "id": "morgan-hill-illegal_dumping-47",
+    "latitude": 37.12387,
+    "longitude": -121.69618,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Morgan Hill SeeClickFix (Open311)",
+    "note": "city-morgan-hill interior point reused from routing-cases.json"
+  },
+  {
+    "id": "gilroy-road_damage-48",
+    "latitude": 36.99637,
+    "longitude": -121.64129,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Gilroy SeeClickFix (Open311)",
+    "note": "city-gilroy interior point reused from routing-cases.json"
+  },
+  {
+    "id": "gilroy-road_damage-49",
+    "latitude": 36.99764,
+    "longitude": -121.64129,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Gilroy SeeClickFix (Open311)",
+    "note": "city-gilroy interior point reused from routing-cases.json"
+  },
+  {
+    "id": "gilroy-illegal_dumping-50",
+    "latitude": 36.9989,
+    "longitude": -121.64129,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Gilroy SeeClickFix (Open311)",
+    "note": "city-gilroy interior point reused from routing-cases.json"
+  },
+  {
+    "id": "gilroy-illegal_dumping-51",
+    "latitude": 36.99637,
+    "longitude": -121.64129,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Gilroy SeeClickFix (Open311)",
+    "note": "city-gilroy interior point reused from routing-cases.json"
+  },
+  {
+    "id": "watsonville-road_damage-52",
+    "latitude": 36.91557,
+    "longitude": -121.82574,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
+    "note": "city-watsonville interior point reused from routing-cases.json"
+  },
+  {
+    "id": "watsonville-road_damage-53",
+    "latitude": 36.91332,
+    "longitude": -121.82416,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
+    "note": "city-watsonville interior point reused from routing-cases.json"
+  },
+  {
+    "id": "watsonville-illegal_dumping-54",
+    "latitude": 36.91557,
+    "longitude": -121.82416,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
+    "note": "city-watsonville interior point reused from routing-cases.json"
+  },
+  {
+    "id": "watsonville-illegal_dumping-55",
+    "latitude": 36.91557,
+    "longitude": -121.82574,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Watsonville SeeClickFix (Open311)",
+    "note": "city-watsonville interior point reused from routing-cases.json"
+  },
+  {
+    "id": "vallejo-road_damage-56",
+    "latitude": 38.12024,
+    "longitude": -122.38386,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Vallejo SeeClickFix (Open311)",
+    "note": "city-vallejo interior point reused from routing-cases.json"
+  },
+  {
+    "id": "vallejo-road_damage-57",
+    "latitude": 38.12214,
+    "longitude": -122.38386,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "Vallejo SeeClickFix (Open311)",
+    "note": "city-vallejo interior point reused from routing-cases.json"
+  },
+  {
+    "id": "vallejo-illegal_dumping-58",
+    "latitude": 38.12405,
+    "longitude": -122.38386,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Vallejo SeeClickFix (Open311)",
+    "note": "city-vallejo interior point reused from routing-cases.json"
+  },
+  {
+    "id": "vallejo-illegal_dumping-59",
+    "latitude": 38.12024,
+    "longitude": -122.38386,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Vallejo SeeClickFix (Open311)",
+    "note": "city-vallejo interior point reused from routing-cases.json"
+  },
+  {
+    "id": "san-leandro-road_damage-60",
+    "latitude": 37.70885,
+    "longitude": -122.20861,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "San Leandro SeeClickFix (Open311)",
+    "note": "city-san-leandro interior point reused from routing-cases.json"
+  },
+  {
+    "id": "san-leandro-road_damage-61",
+    "latitude": 37.7101,
+    "longitude": -122.20861,
+    "issueType": "ROAD_DAMAGE",
+    "expectedAgencyName": "San Leandro SeeClickFix (Open311)",
+    "note": "city-san-leandro interior point reused from routing-cases.json"
+  },
+  {
+    "id": "san-leandro-illegal_dumping-62",
+    "latitude": 37.71136,
+    "longitude": -122.20861,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "San Leandro SeeClickFix (Open311)",
+    "note": "city-san-leandro interior point reused from routing-cases.json"
+  },
+  {
+    "id": "san-leandro-illegal_dumping-63",
+    "latitude": 37.70885,
+    "longitude": -122.20861,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "San Leandro SeeClickFix (Open311)",
+    "note": "city-san-leandro interior point reused from routing-cases.json"
+  }
+]

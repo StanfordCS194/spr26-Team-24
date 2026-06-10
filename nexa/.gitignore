@@ -54,3 +54,6 @@ next-env.d.ts
 # Exception: the K3 submission-readiness baseline is committed (issue #197) so CI
 # has a checked-in reference point for the >=90% gate.
 !/eval/results/readiness.json
+# Exception: the O1.KR1 end-to-end agency-accuracy baseline is committed (issue
+# #247) so CI has a checked-in reference point for the >=80% gate.
+!/eval/results/end-to-end.json
