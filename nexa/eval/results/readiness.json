@@ -1,0 +1,391 @@
+{
+  "mode": "readiness",
+  "datasetSize": 12,
+  "target": 0.9,
+  "ranAt": "2026-06-10T06:46:48.472Z",
+  "results": [
+    {
+      "caseId": "road-pa-01",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::Palo Alto 311",
+      "agencyName": "Palo Alto 311",
+      "intakeMethod": "WEB_FORM",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "road-mv-02",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-mountain-view::Mountain View Public Works",
+      "agencyName": "Mountain View Public Works",
+      "intakeMethod": "WEB_FORM",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "road-scc-03",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "county-santa-clara-unincorporated::Santa Clara County Public Works",
+      "agencyName": "Santa Clara County Public Works",
+      "intakeMethod": "WEB_FORM",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "road-mp-04-api",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": true,
+      "agencyId": "city-menlo-park::Menlo Park SeeClickFix (Open311)",
+      "agencyName": "Menlo Park SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "serviceCode": "94213",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "[ambiguous routing -> chose Menlo Park SeeClickFix (Open311)] API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "road-pa-05-aifallback",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::Palo Alto 311",
+      "agencyName": "Palo Alto 311",
+      "intakeMethod": "WEB_FORM",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "dump-pa-06",
+      "issueType": "ILLEGAL_DUMPING",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::Palo Alto 311",
+      "agencyName": "Palo Alto 311",
+      "intakeMethod": "WEB_FORM",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "dump-mv-07",
+      "issueType": "ILLEGAL_DUMPING",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-mountain-view::Mountain View Public Works",
+      "agencyName": "Mountain View Public Works",
+      "intakeMethod": "WEB_FORM",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "dump-mp-08-api",
+      "issueType": "ILLEGAL_DUMPING",
+      "resolved": true,
+      "disambiguated": true,
+      "agencyId": "city-menlo-park::Menlo Park SeeClickFix (Open311)",
+      "agencyName": "Menlo Park SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "serviceCode": "94210",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "[ambiguous routing -> chose Menlo Park SeeClickFix (Open311)] API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "dump-pa-09-nophoto",
+      "issueType": "ILLEGAL_DUMPING",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::Palo Alto 311",
+      "agencyName": "Palo Alto 311",
+      "intakeMethod": "WEB_FORM",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "emit-pa-10",
+      "issueType": "VEHICLE_EMISSIONS",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::CARB Smoking Vehicle Complaint",
+      "agencyName": "CARB Smoking Vehicle Complaint",
+      "intakeMethod": "PHONE",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "license_plate",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "vehicle_make",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "observation_location",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "observation_datetime",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "phone hotline intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "emit-pa-11",
+      "issueType": "VEHICLE_EMISSIONS",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::CARB Smoking Vehicle Complaint",
+      "agencyName": "CARB Smoking Vehicle Complaint",
+      "intakeMethod": "PHONE",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "license_plate",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "vehicle_make",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "observation_location",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "observation_datetime",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "reason": "phone hotline intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "emit-pa-12-incomplete",
+      "issueType": "VEHICLE_EMISSIONS",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::CARB Smoking Vehicle Complaint",
+      "agencyName": "CARB Smoking Vehicle Complaint",
+      "intakeMethod": "PHONE",
+      "serviceCode": null,
+      "missingFields": [
+        "license_plate"
+      ],
+      "fieldChecks": [
+        {
+          "field": "license_plate",
+          "required": true,
+          "satisfied": false
+        },
+        {
+          "field": "vehicle_make",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "observation_location",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "observation_datetime",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": false,
+      "reason": "Required field(s) not populated from report."
+    }
+  ],
+  "metrics": {
+    "total": 12,
+    "ready": 11,
+    "readiness": 0.9166666666666666,
+    "resolved": 12,
+    "coverage": 1,
+    "perCategory": {
+      "ROAD_DAMAGE": {
+        "support": 5,
+        "ready": 5,
+        "readiness": 1
+      },
+      "ILLEGAL_DUMPING": {
+        "support": 4,
+        "ready": 4,
+        "readiness": 1
+      },
+      "VEHICLE_EMISSIONS": {
+        "support": 3,
+        "ready": 2,
+        "readiness": 0.6666666666666666
+      }
+    },
+    "perIntakeMethod": {
+      "WEB_FORM": {
+        "support": 7,
+        "ready": 7,
+        "readiness": 1
+      },
+      "API": {
+        "support": 2,
+        "ready": 2,
+        "readiness": 1
+      },
+      "PHONE": {
+        "support": 3,
+        "ready": 2,
+        "readiness": 0.6666666666666666
+      }
+    }
+  }
+}

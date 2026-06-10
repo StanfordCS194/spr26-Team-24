@@ -184,3 +184,50 @@ If the gate alone does not recover all three, the next lever to evaluate
 (empirically) is raising `MIN_OBSERVATION_SIGNALS`, or adding a stage-1
 confidence signal to the observation schema — do **not** ship either without
 eval data.
+
+---
+
+## Submission-readiness baseline (K3) — issue #197
+
+`npm run eval:readiness` runs the offline submission-readiness harness
+(`eval/readiness.ts`): for each synthetic civic report it reuses the production
+`resolveAgencyId` (backed by an in-memory Prisma stub) plus the real Open311
+param builders to confirm we can reach an agency's intake channel and populate
+every required field — **without any network, DB, or real POST**.
+
+The harness exits non-zero when readiness falls below the **≥90% K3 target**
+(same gating pattern as `eval/routing.ts` at 85%), so the eval CI job fails on
+regressions. CI now runs this step and a committed baseline lives at
+`eval/results/readiness.json` (un-ignored via `nexa/.gitignore`).
+
+### Baseline
+
+| Metric                  | Value         |
+| ----------------------- | ------------- |
+| Submission readiness    | **91.7%** (11/12) — PASS vs ≥90% |
+| Routed (reached agency) | 100.0% (12/12) |
+
+| Issue type        | Support | Readiness |
+| ----------------- | ------- | --------- |
+| ROAD_DAMAGE       | 5       | 100.0%    |
+| ILLEGAL_DUMPING   | 4       | 100.0%    |
+| VEHICLE_EMISSIONS | 3       | 66.7%     |
+
+| Intake method | Support | Readiness |
+| ------------- | ------- | --------- |
+| API           | 2       | 100.0%    |
+| WEB_FORM      | 7       | 100.0%    |
+| PHONE         | 3       | 66.7%     |
+
+The single not-ready case (`emit-pa-12-incomplete`) is an intentionally
+incomplete CARB smoking-vehicle report missing required vehicle fields — it
+keeps the dataset honest about the floor. Above the 90% gate.
+
+### How to reproduce
+
+```bash
+cd nexa
+npm ci
+npx prisma generate   # readiness imports the generated Prisma client
+npm run eval:readiness # exits 0 at >=90%, non-zero below
+```
