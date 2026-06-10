@@ -23,6 +23,9 @@ function baseProps() {
     officialForm: null as OfficialForm,
     officialFormLoading: false,
     agencyCandidates: null as Candidates,
+    agencyCandidatesLoading: false,
+    agencyCandidatesError: false,
+    onRetryAgencyCandidates: vi.fn(),
     selectedAgencyId: null as string | null,
     onSelectAgency: vi.fn(),
     onDescriptionChange: vi.fn(),
@@ -299,6 +302,68 @@ describe("ReviewStep", () => {
 
     // Assert: no picker, no regression to the submit button.
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Submit Report/ }),
+    ).not.toBeDisabled();
+  });
+
+  it("shows an error message and a retry when the candidate fetch fails", async () => {
+    // Arrange: fetch failed (no candidates), error flagged.
+    const props = baseProps();
+    const { user } = renderWithProviders(
+      <ReviewStep {...props} agencyCandidates={null} agencyCandidatesError />,
+    );
+
+    // Assert: informative error + retry, and submission is NOT blocked (the
+    // user is never stuck — the create route still routes server-side).
+    expect(
+      screen.getByText(/We couldn't load filing options/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Submit Report/ }),
+    ).not.toBeDisabled();
+
+    // Act: retry re-runs the lookup.
+    await user.click(screen.getByRole("button", { name: /^Retry$/ }));
+
+    // Assert
+    expect(props.onRetryAgencyCandidates).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the retry button and shows retrying text while reloading", () => {
+    // Arrange / Act: error flagged and a retry already in flight.
+    renderWithProviders(
+      <ReviewStep
+        {...baseProps()}
+        agencyCandidates={null}
+        agencyCandidatesError
+        agencyCandidatesLoading
+      />,
+    );
+
+    // Assert
+    const retrying = screen.getByText("Retrying...");
+    expect(retrying.closest("button")).toBeDisabled();
+  });
+
+  it("shows an informative message when the candidate list is empty", () => {
+    // Arrange / Act: fetch succeeded but no agency covers this spot.
+    renderWithProviders(
+      <ReviewStep
+        {...baseProps()}
+        agencyCandidates={{
+          agencyId: null,
+          candidates: [],
+          disambiguation: null,
+        }}
+      />,
+    );
+
+    // Assert: no picker, an informative message, submission unblocked.
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/No specific agency matched this location/),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Submit Report/ }),
     ).not.toBeDisabled();

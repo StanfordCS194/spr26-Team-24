@@ -153,6 +153,12 @@ const enMessages = {
   "report.intake.WEB_FORM": "Web form",
   "report.intake.EMAIL": "Email",
   "report.intake.PHONE": "Phone",
+  "report.candidateError":
+    "We couldn't load filing options. You can still submit and we'll route your report for you.",
+  "report.candidateRetry": "Retry",
+  "report.candidateRetrying": "Retrying...",
+  "report.noAgencyMatch":
+    "No specific agency matched this location. You can still submit and we'll route your report for you.",
   "report.noOfficialForm": "No official city form found.",
   "report.submit": "Submit Report",
   "report.submitting": "Submitting...",
@@ -400,6 +406,12 @@ export const messages = {
     "report.intake.WEB_FORM": "Formulario web",
     "report.intake.EMAIL": "Correo electrónico",
     "report.intake.PHONE": "Teléfono",
+    "report.candidateError":
+      "No pudimos cargar las opciones de envío. Aún puedes enviarlo y dirigiremos tu reporte por ti.",
+    "report.candidateRetry": "Reintentar",
+    "report.candidateRetrying": "Reintentando...",
+    "report.noAgencyMatch":
+      "Ninguna agencia específica coincidió con esta ubicación. Aún puedes enviarlo y dirigiremos tu reporte por ti.",
     "report.noOfficialForm": "No se encontró formulario oficial de la ciudad.",
     "report.submit": "Enviar reporte",
     "report.submitting": "Enviando...",
@@ -633,6 +645,12 @@ export const messages = {
     "report.intake.WEB_FORM": "网页表单",
     "report.intake.EMAIL": "电子邮件",
     "report.intake.PHONE": "电话",
+    "report.candidateError":
+      "无法加载提交选项。您仍可提交，我们会为您转交报告。",
+    "report.candidateRetry": "重试",
+    "report.candidateRetrying": "正在重试...",
+    "report.noAgencyMatch":
+      "没有与此位置匹配的特定机构。您仍可提交，我们会为您转交报告。",
     "report.noOfficialForm": "未找到官方城市表格。",
     "report.submit": "提交报告",
     "report.submitting": "正在提交...",
@@ -873,6 +891,12 @@ export const messages = {
     "report.intake.WEB_FORM": "Formulaire web",
     "report.intake.EMAIL": "E-mail",
     "report.intake.PHONE": "Téléphone",
+    "report.candidateError":
+      "Impossible de charger les options de dépôt. Vous pouvez tout de même soumettre et nous acheminerons votre signalement pour vous.",
+    "report.candidateRetry": "Réessayer",
+    "report.candidateRetrying": "Nouvel essai...",
+    "report.noAgencyMatch":
+      "Aucune agence spécifique ne correspond à cet emplacement. Vous pouvez tout de même soumettre et nous acheminerons votre signalement pour vous.",
     "report.noOfficialForm": "Aucun formulaire officiel trouvé.",
     "report.submit": "Envoyer le signalement",
     "report.submitting": "Envoi...",
