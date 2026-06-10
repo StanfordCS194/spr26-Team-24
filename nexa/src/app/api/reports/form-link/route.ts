@@ -11,6 +11,7 @@ import {
   parseErrorResponse,
 } from "@/lib/api/request-parser";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import type {
   FormLookupConfidence,
   OfficialFormLookupResult,
@@ -428,6 +429,9 @@ Do not say "not_found" just because there is no "${issueLabel}"-specific form â€
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = enforceRateLimit(request.headers);
+    if (limited) return limited;
+
     const { issueType, address, latitude, longitude } = await parseJsonRequest(
       request,
       FormLinkRequestSchema,

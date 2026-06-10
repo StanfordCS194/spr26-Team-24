@@ -8,9 +8,13 @@ import {
   parseErrorResponse,
 } from "@/lib/api/request-parser";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = enforceRateLimit(request.headers);
+    if (limited) return limited;
+
     const {
       description,
       imageBase64,
