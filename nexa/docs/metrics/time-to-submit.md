@@ -19,10 +19,21 @@ see `src/app/report/page.tsx` (`posthog?.capture("report_classified", …)` and
 (`flowStartedAt`) is started by `markCaptureStart()` on the first photo or first
 description keystroke. The event payloads are:
 
-| Event               | Properties                                                                  |
-| ------------------- | --------------------------------------------------------------------------- |
-| `report_submitted`  | `report_id`, `issue_type`, `time_to_submit_ms`, `has_image`, `has_location` |
-| `report_classified` | `issue_type`, `severity`, `has_image`, `has_location`                       |
+| Event               | Properties                                                                             |
+| ------------------- | -------------------------------------------------------------------------------------- |
+| `report_submitted`  | `report_id`, `issue_type`, `time_to_submit_ms`, `has_image`, `has_location`, `offline` |
+| `report_classified` | `issue_type`, `severity`, `has_image`, `has_location`                                  |
+
+### Offline submissions (#237)
+
+`report_submitted` is emitted for offline-queued reports too: when an
+offline-parked report is successfully **replayed** on reconnect,
+`src/lib/offline-queue.ts` `flushQueue()` emits the same `report_submitted`
+event with `time_to_submit_ms` measured from first capture → successful replay
+(the capture-start timestamp is persisted with the queued item) and an
+`offline: true` flag so the offline cohort can be filtered in or out of the read
+independently. This closes the gap where offline reports — a core PWA field-use
+case — were excluded from the K2 median/p90. The online path is unchanged.
 
 PostHog is initialised in `src/components/posthog-provider.tsx` against host
 `NEXT_PUBLIC_POSTHOG_HOST` (default `https://us.i.posthog.com`) with project key
@@ -100,15 +111,41 @@ Read the P50 and P90 values straight off the chart for the snapshot table.
 
 - Dashboard link: _TODO — paste the committed PostHog dashboard URL here._
 
+## Reproducible internal measurement (`e2e/k2-measure.spec.ts`)
+
+For a reproducible reading that does not need a live PostHog instance, the
+`k2-measure` Playwright project drives the real guest
+capture → classify → review → submit → confirmation flow `K2_RUNS` times
+(default 15) and reads the **literal** `time_to_submit_ms` the app emits — it
+intercepts the PostHog capture payload via a measurement-only `capture` tap
+(`window.__phEvents`, gated on `NEXT_PUBLIC_POSTHOG_CAPTURE_DEBUG`, set only by
+`playwright.config.ts`; a no-op in production) — then computes median + p90. It
+is kept **out** of the default CI e2e project so it never slows or destabilises
+CI. Run it explicitly:
+
+```bash
+npx playwright test --project=k2-measure
+# or with a larger sample:
+K2_RUNS=25 npx playwright test --project=k2-measure
+```
+
 ## Snapshot
 
-> **Remaining manual / ops action.** Populating this table requires the live
-> PostHog instance plus a real sample (>= 10 P0 test reports submitted end-to-end
-> so the percentiles are meaningful). That is a human/ops step — do **not**
-> fabricate values. Run Option A or read Option B, then add a dated row below.
-> Add a new row each time the snapshot is refreshed (e.g. in the weekly eval
-> summary). Fill the "met?" columns from the values vs the SLO targets.
+> **Honest caveat — read this with the numbers.** Internal/prototype automated
+> runs PASS (median/p90 << 60s/180s); these EXCLUDE real LLM latency
+> (classifyWithConsensus mean 5,471 ms baseline / 7,302 ms two-stage per
+> `eval/results/SUMMARY.md`); realistic end-to-end ≈6-10 s (still passes); true
+> production K2 needs the documented HogQL read (`NEXT_PUBLIC_POSTHOG_KEY` must
+> be set) and is biased online-only until #237 is fixed (now fixed by the
+> offline-replay emit above).
+>
+> The row below is the measured internal-run reading from
+> `e2e/k2-measure.spec.ts` (every network call stubbed, so it reflects UI /
+> transition time only). For the live-traffic snapshot, run Option A or read
+> Option B against PostHog and add a dated row — do **not** fabricate those
+> values.
 
-| Date (UTC) | n      | Median (ms) | p90 (ms) | Median <= 60s? | p90 <= 180s? | Notes  |
-| ---------- | ------ | ----------- | -------- | -------------- | ------------ | ------ |
-| _TODO_     | _TODO_ | _TODO_      | _TODO_   | _TODO_         | _TODO_       | _TODO_ |
+| Date (UTC) | n      | Median (ms) | p90 (ms) | Median <= 60s? | p90 <= 180s? | Notes                                                                                     |
+| ---------- | ------ | ----------- | -------- | -------------- | ------------ | ----------------------------------------------------------------------------------------- |
+| 2026-06-10 | 15     | 388         | 400      | yes            | yes          | Internal `e2e/k2-measure.spec.ts` run (stubbed network; excludes LLM latency, see caveat) |
+| _TODO_     | _TODO_ | _TODO_      | _TODO_   | _TODO_         | _TODO_       | Live PostHog read (Option A/B) — fill from production traffic                             |
