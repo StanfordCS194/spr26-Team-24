@@ -12,7 +12,7 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 // password is set, this endpoint becomes a no-op for that user.
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    const { email, password, name, reportIds } = await request.json();
 
     if (!email || !password) {
       return errorResponse("Email and password are required", 400);
@@ -46,6 +46,21 @@ export async function POST(request: NextRequest) {
           data: { email, name: name ?? null, passwordHash },
           select: { id: true, email: true, name: true },
         });
+
+    // Upgrade path for anonymous reporting: attach any reports the user filed as
+    // a guest to the account they just claimed. Only orphan reports (userId=null)
+    // matching the supplied ids are re-associated, so this can never steal a
+    // report that already belongs to someone else.
+    if (
+      Array.isArray(reportIds) &&
+      reportIds.length > 0 &&
+      reportIds.every((id): id is string => typeof id === "string")
+    ) {
+      await prisma.report.updateMany({
+        where: { id: { in: reportIds }, userId: null },
+        data: { userId: user.id },
+      });
+    }
 
     const token = await createToken({ userId: user.id, email: user.email });
     const response = successResponse(user);

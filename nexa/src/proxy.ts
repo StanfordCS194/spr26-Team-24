@@ -5,8 +5,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken, SESSION_COOKIE } from "@/lib/auth";
 
-// Pages that require a logged-in user — any path that starts with these strings is protected
-const PROTECTED_ROUTES = ["/report", "/dashboard"];
+// Pages that require a logged-in user — any path that starts with these strings is protected.
+// `/report` is intentionally NOT here: anonymous (guest) reporting is allowed so a
+// first-time visitor can file a report without an account. `/dashboard` stays protected
+// because viewing report history still requires a signed-in user.
+const PROTECTED_ROUTES = ["/dashboard"];
 
 // Pages that logged-in users should not see (they're already authenticated)
 const AUTH_ROUTES = ["/login", "/register"];

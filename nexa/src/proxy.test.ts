@@ -28,7 +28,7 @@ async function validToken(): Promise<string> {
 
 describe("proxy() middleware", () => {
   describe("protected routes", () => {
-    it.each(["/report", "/dashboard", "/dashboard/reports/abc", "/report/new"])(
+    it.each(["/dashboard", "/dashboard/reports/abc"])(
       "redirects %s with no session to /login preserving redirect=path",
       async (path) => {
         // Arrange
@@ -119,10 +119,28 @@ describe("proxy() middleware", () => {
     });
   });
 
+  describe("anonymous reporting (guest access to /report)", () => {
+    it.each(["/report", "/report/new", "/reportage"])(
+      "calls next() for %s with no session — guest reporting is allowed",
+      async (path) => {
+        // Arrange — /report is intentionally NOT protected so guests can file a
+        // report without an account; /reportage shares the prefix and is public too.
+        const request = makeRequest(path);
+
+        // Act
+        const response = await proxy(request);
+
+        // Assert
+        expect(response.headers.get("location")).toBeNull();
+        expect(response.headers.get("x-middleware-next")).toBe("1");
+      },
+    );
+  });
+
   describe("prefix (startsWith) semantics", () => {
-    it("treats /reportage as protected because it starts with /report", async () => {
+    it("treats /dashboardx as protected because it starts with /dashboard", async () => {
       // Arrange — documents the as-implemented startsWith behavior.
-      const request = makeRequest("/reportage");
+      const request = makeRequest("/dashboardx");
 
       // Act
       const response = await proxy(request);
@@ -131,7 +149,7 @@ describe("proxy() middleware", () => {
       // Assert
       expect(response.status).toBe(307);
       expect(location.pathname).toBe("/login");
-      expect(location.searchParams.get("redirect")).toBe("/reportage");
+      expect(location.searchParams.get("redirect")).toBe("/dashboardx");
     });
 
     it("does NOT treat /registerish as an auth route redirect when logged out", async () => {
