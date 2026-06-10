@@ -16,7 +16,7 @@ describe("POST /api/reports", () => {
       issueType: "ROAD_DAMAGE",
     });
     // Routing/dedupe helpers query prisma too — stub them so the route runs.
-    prismaMock.agency.findFirst.mockResolvedValue(null);
+    prismaMock.agency.findMany.mockResolvedValue([]);
     prismaMock.issueGroup.findMany.mockResolvedValue([]);
     // findOrCreateIssueGroup selects only { id }, so a narrowed shape is correct.
     prismaMock.issueGroup.create.mockResolvedValue({
@@ -46,7 +46,7 @@ describe("POST /api/reports", () => {
 
   it("returns 500 when the database write throws", async () => {
     // Arrange
-    prismaMock.agency.findFirst.mockResolvedValue(null);
+    prismaMock.agency.findMany.mockResolvedValue([]);
     prismaMock.issueGroup.findMany.mockResolvedValue([]);
     prismaMock.report.create.mockRejectedValue(new Error("db down"));
 

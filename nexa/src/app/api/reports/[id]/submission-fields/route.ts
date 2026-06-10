@@ -36,7 +36,7 @@ export async function GET(
     // Resolve the agency for display without persisting (this is a read).
     let agency = report.agency;
     if (!agency) {
-      const agencyId = await resolveAgencyId({
+      const { agencyId } = await resolveAgencyId({
         latitude: report.latitude,
         longitude: report.longitude,
         issueType: report.issueType,
