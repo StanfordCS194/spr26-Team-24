@@ -110,6 +110,13 @@ jobs:
 
       - run: npm ci
 
+      # The readiness eval imports the production agency resolver, which
+      # transitively imports the generated Prisma client (@/generated/prisma).
+      # Generate it so eval:readiness can load. (routing/validate-boundaries are
+      # pure polygon lookups and don't need it, but generating here is harmless.)
+      - name: Generate Prisma client
+        run: npx prisma generate
+
       # Offline, deterministic routing eval (pure polygon lookups — no network,
       # no LLM, no DB). Gates the build on O2.KR1 routing accuracy: the runner
       # exits non-zero when accuracy is below target, failing this job.
@@ -125,3 +132,118 @@ jobs:
       # boundary data, failing this job.
       - name: Validate jurisdiction boundary GeoJSON
         run: npm run eval:validate-boundaries
+
+      # K3 submission-readiness gate (#197). Fully offline: an in-memory Prisma
+      # stub backs the real resolveAgencyId, and the harness builds GeoReport v2
+      # bodies / fills web-form & email fields WITHOUT any network, DB, or POST.
+      # eval/readiness.ts exits non-zero when readiness < 90% (mirrors the
+      # eval/routing.ts gate at 85%), so this step fails the job below target.
+      # The committed eval/results/readiness.json baseline records the current
+      # 91.7% (11/12) — see eval/results/SUMMARY.md.
+      - name: Submission-readiness eval (K3 >=90% gate)
+        run: npm run eval:readiness
+
+  # Production-build verification (#196). Runs the real `npm run build` so
+  # build-time failures (server/client boundary errors, dynamic-import issues,
+  # Prisma generate, page-data collection that touches the Prisma singleton) are
+  # caught pre-merge instead of by Vercel after merge.
+  #
+  # `npm run build` is `prisma generate && (migrate deploy unless DATABASE_URL is
+  # empty) && next build`. We must NOT leave DATABASE_URL empty: next build's
+  # page-data collection imports modules that construct the Prisma client, whose
+  # getDatabaseUrl() throws MissingEnvError when DATABASE_URL is unset. So we set
+  # DATABASE_URL — but a non-empty URL also makes the script run `migrate deploy`,
+  # which needs a reachable DB. We therefore provide a throwaway Postgres service
+  # and point DATABASE_URL at it: migrate deploy applies the migrations cleanly
+  # and next build then collects page data successfully. JWT_SECRET is likewise a
+  # dummy required by src/lib/auth.ts at module load.
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nexa
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nexa
+          POSTGRES_PASSWORD: nexa
+          POSTGRES_DB: nexa_ci
+        ports:
+          - 5432:5432
+        # Wait until Postgres is accepting connections before the build runs.
+        options: >-
+          --health-cmd "pg_isready -U nexa"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Dummy-but-reachable URL: lets `prisma migrate deploy` succeed and lets
+      # next build's page-data collection resolve DATABASE_URL without throwing.
+      DATABASE_URL: postgresql://nexa:nexa@localhost:5432/nexa_ci
+      # Dummy JWT secret so auth-module init during build doesn't throw.
+      JWT_SECRET: ci-build-dummy-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nexa/package-lock.json
+
+      - run: npm ci
+
+      # Real production build. `npm run build` itself runs prisma generate and
+      # migrate deploy; this step fails the pipeline on any compile/build error.
+      - name: Build (next build)
+        run: npm run build
+
+  # Playwright e2e specs in CI (#202). The specs are deterministic and offline:
+  # every client network call is stubbed via page.route, and the Playwright
+  # webServer boots `npm run dev` with a fixed JWT_SECRET (see playwright.config.ts).
+  # retries: 2 in CI absorb flakes, but a reproducible spec failure still fails
+  # the job — a real gate. DATABASE_URL is intentionally NOT set: the webServer
+  # env omits it, the public pages under test never hit the DB, and leaving it
+  # unset keeps the suite fully offline.
+  e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nexa
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nexa/package-lock.json
+
+      - run: npm ci
+
+      # The dev server (and the e2e build of the app) imports the generated
+      # Prisma client; generate it so `npm run dev` can start.
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # Install only the Chromium browser (the single configured project) plus
+      # its OS dependencies.
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright e2e
+        run: npm run test:e2e
+
+      # Keep the HTML report on failure for debugging the PR.
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: nexa/playwright-report
+          if-no-files-found: ignore

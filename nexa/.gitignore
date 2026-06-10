@@ -51,3 +51,6 @@ next-env.d.ts
 # (manifest + SUMMARY.md are committed; raw JSON predictions and image bytes are not)
 /eval/dataset/_cache/
 /eval/results/*.json
+# Exception: the K3 submission-readiness baseline is committed (issue #197) so CI
+# has a checked-in reference point for the >=90% gate.
+!/eval/results/readiness.json
