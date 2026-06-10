@@ -52,6 +52,7 @@ export async function POST(
             agencyName: result.agencyName,
             intakeUrl: result.intakeUrl,
             intakeEmail: result.intakeEmail,
+            intakePhone: result.intakePhone,
           },
         });
 

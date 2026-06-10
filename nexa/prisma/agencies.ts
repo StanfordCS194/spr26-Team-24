@@ -53,11 +53,14 @@ export const AGENCIES: AgencySeed[] = [
     // is the CARB "Smoking Vehicle Complaint", phone (800) 242-4450.
     // The source comment did not provide an exact CARB web-form URL, so we keep
     // intakeUrl null (unverified) rather than invent one; the verified phone
-    // number is recorded below as the authoritative contact channel.
+    // hotline is the authoritative contact channel, so intakeMethod is PHONE
+    // (issue #193 — this is the only working modality for VEHICLE_EMISSIONS).
+    // The number itself lives in requiredFields.contact_phone.value so the
+    // prefill copy-over guide surfaces it alongside the other fields.
     name: "CARB Smoking Vehicle Complaint",
     jurisdiction: "city-palo-alto",
     issueTypes: ["VEHICLE_EMISSIONS"],
-    intakeMethod: "WEB_FORM",
+    intakeMethod: "PHONE",
     intakeUrl: null,
     intakeEmail: null,
     requiredFields: {

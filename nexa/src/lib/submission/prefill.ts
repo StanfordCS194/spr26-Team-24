@@ -19,7 +19,7 @@ export type PrefillField = {
   hint?: string;
 };
 
-type FieldSpec = { type?: string; required?: boolean };
+type FieldSpec = { type?: string; required?: boolean; value?: unknown };
 
 export type PrefillReport = {
   description: string | null;
@@ -41,10 +41,19 @@ function valueForKey(
   key: string,
   type: string,
   report: PrefillReport,
+  embeddedValue?: string | null,
 ): { value: string | null; hint?: string } {
   const k = key.toLowerCase();
   const description =
     report.description?.trim() || report.aiDescription?.trim();
+
+  // A field can carry an authoritative value baked into the agency schema
+  // itself (e.g. the CARB hotline number, which isn't derived from the report
+  // but is the channel the user must contact). When present it always wins —
+  // there's nothing in the report to override it with. (issue #193)
+  if (embeddedValue != null && embeddedValue !== "") {
+    return { value: embeddedValue };
+  }
 
   if (type === "file" || /photo|image|attachment/.test(k)) {
     return {
@@ -95,7 +104,8 @@ export function buildPrefillFields(
     const spec = (rawSpec ?? {}) as FieldSpec;
     const type = typeof spec.type === "string" ? spec.type : "string";
     const required = spec.required === true;
-    const { value, hint } = valueForKey(key, type, report);
+    const embeddedValue = typeof spec.value === "string" ? spec.value : null;
+    const { value, hint } = valueForKey(key, type, report, embeddedValue);
     return { key, label: humanize(key), value, required, type, hint };
   });
 
