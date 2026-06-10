@@ -53,6 +53,8 @@ const enMessages = {
   "home.statsTitle": "Reporting made radically simpler.",
   "home.statAverage": "Average report time",
   "home.statAccuracy": "Routing accuracy",
+  "home.statMunicipalities": "Municipalities covered",
+  "home.servicedLabel": "Cities we currently service:",
   "home.statIssueTypes": "Issue types supported",
   "home.challenge": "/ Challenge",
   "home.challengeText":
@@ -376,6 +378,8 @@ export const messages = {
     "home.statsTitle": "Reportar es radicalmente más simple.",
     "home.statAverage": "Tiempo promedio de reporte",
     "home.statAccuracy": "Precisión de enrutamiento",
+    "home.statMunicipalities": "Municipios cubiertos",
+    "home.servicedLabel": "Ciudades que atendemos actualmente:",
     "home.statIssueTypes": "Tipos de problemas soportados",
     "home.challenge": "/ Reto",
     "home.challengeText":
@@ -691,6 +695,8 @@ export const messages = {
     "home.statsTitle": "让报告变得极其简单。",
     "home.statAverage": "平均报告时间",
     "home.statAccuracy": "路由准确率",
+    "home.statMunicipalities": "覆盖的城市",
+    "home.servicedLabel": "我们目前服务的城市：",
     "home.statIssueTypes": "支持的问题类型",
     "home.challenge": "/ 挑战",
     "home.challengeText":
@@ -1001,6 +1007,8 @@ export const messages = {
     "home.statsTitle": "Le signalement rendu radicalement plus simple.",
     "home.statAverage": "Temps moyen de signalement",
     "home.statAccuracy": "Précision du routage",
+    "home.statMunicipalities": "Municipalités couvertes",
+    "home.servicedLabel": "Villes que nous desservons actuellement :",
     "home.statIssueTypes": "Types de problèmes pris en charge",
     "home.challenge": "/ Défi",
     "home.challengeText":

@@ -2,9 +2,29 @@
 
 import { useI18n } from "@/i18n/provider";
 
+// Municipalities Nexa currently routes reports for. Mirrors the verified
+// jurisdictions seeded in prisma/agencies.ts (kept in sync by hand — there are
+// only a handful and they change rarely). The count drives the stat below.
+const SERVICED_MUNICIPALITIES = [
+  "Palo Alto",
+  "Menlo Park",
+  "East Palo Alto",
+  "Mountain View",
+  "Santa Clara County",
+  "Milpitas",
+  "Morgan Hill",
+  "Gilroy",
+  "Watsonville",
+  "Vallejo",
+  "San Leandro",
+] as const;
+
 const STATS = [
   { value: "30s", labelKey: "home.statAverage" },
-  { value: "100%", labelKey: "home.statAccuracy" },
+  {
+    value: String(SERVICED_MUNICIPALITIES.length),
+    labelKey: "home.statMunicipalities",
+  },
   { value: "18", labelKey: "home.statIssueTypes" },
 ] as const;
 
@@ -67,6 +87,16 @@ export function StatsSection() {
             ))}
           </div>
         </div>
+
+        {/* Small-font roll of the municipalities we actually route reports for. */}
+        <p className="mt-10 text-center text-xs leading-relaxed text-muted-foreground">
+          <span className="font-mono uppercase tracking-wider">
+            {t("home.servicedLabel")}
+          </span>{" "}
+          <span className="text-foreground">
+            {SERVICED_MUNICIPALITIES.join(" · ")}
+          </span>
+        </p>
       </div>
     </section>
   );
