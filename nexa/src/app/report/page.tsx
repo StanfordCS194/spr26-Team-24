@@ -106,14 +106,38 @@ export default function ReportPage() {
       },
       {
         onSuccess: (data) => {
+          // Precedence: explicit user GPS / address pick > photo EXIF > none.
+          // The server extracts EXIF GPS during preprocessing and reports it via
+          // `preprocess.exifGpsUsed` + `locationUsed`. When the user shared no
+          // location, fold those coords into the report (reverse-geocoded to an
+          // address by the hook). `applyExifFallback` no-ops if the user already
+          // has a location, so the explicit pick always wins and the result
+          // stays overridable. `lat`/`lng` below read the (possibly updated)
+          // coords so routing runs on whatever location we settled on.
+          let lat = geo.latitude;
+          let lng = geo.longitude;
+          if (
+            lat === null &&
+            lng === null &&
+            data.preprocess?.exifGpsUsed &&
+            typeof data.locationUsed?.latitude === "number" &&
+            typeof data.locationUsed?.longitude === "number"
+          ) {
+            geo.applyExifFallback(
+              data.locationUsed.latitude,
+              data.locationUsed.longitude,
+            );
+            lat = data.locationUsed.latitude;
+            lng = data.locationUsed.longitude;
+          }
           void formLookup.lookup(data.winner.issueType, {
             address: geo.address,
-            latitude: geo.latitude,
-            longitude: geo.longitude,
+            latitude: lat,
+            longitude: lng,
           });
           void agencyCandidates.lookup(data.winner.issueType, {
-            latitude: geo.latitude,
-            longitude: geo.longitude,
+            latitude: lat,
+            longitude: lng,
           });
           setStep("review");
           posthog?.capture("report_classified", {
@@ -221,6 +245,7 @@ export default function ReportPage() {
             latitude={geo.latitude}
             longitude={geo.longitude}
             accuracy={geo.accuracy}
+            locationSource={geo.source}
             locationLoading={geo.loading}
             locationSuggesting={addressLookup.suggesting}
             addressSuggestions={addressLookup.suggestions.map(

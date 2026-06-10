@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders, screen, waitFor } from "@/test";
 
 import { DescribeStep } from "./describe-step";
+import type { LocationSource } from "@/hooks/use-geolocation";
 
 // The real LocationMap pulls in Leaflet (touches `window` at import). Replace it
 // with a marker we can assert on so "map renders only when lat+lon set" is
@@ -42,6 +43,7 @@ function baseProps() {
     latitude: null as number | null,
     longitude: null as number | null,
     accuracy: null as number | null,
+    locationSource: null as LocationSource,
     locationLoading: false,
     locationSuggesting: false,
     addressSuggestions: [] as string[],
@@ -287,6 +289,37 @@ describe("DescribeStep", () => {
 
     // Assert
     expect(screen.getByTestId("location-map")).toBeInTheDocument();
+  });
+
+  it("shows the photo-EXIF source hint only when locationSource is exif", () => {
+    // Arrange / Act: a user-sourced location shows no "from photo" hint.
+    const { rerender } = renderWithProviders(
+      <DescribeStep
+        {...baseProps()}
+        latitude={40.5}
+        longitude={-74.2}
+        locationSource="user"
+      />,
+    );
+
+    // Assert
+    expect(screen.queryByText("From photo")).not.toBeInTheDocument();
+
+    // Act: an EXIF-sourced location surfaces the hint + override guidance.
+    rerender(
+      <DescribeStep
+        {...baseProps()}
+        latitude={40.5}
+        longitude={-74.2}
+        locationSource="exif"
+      />,
+    );
+
+    // Assert
+    expect(screen.getByText("From photo")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Location set from the photo's GPS data/),
+    ).toBeInTheDocument();
   });
 
   it("disables the classify button when canSubmit is false", () => {
