@@ -33,6 +33,16 @@ interface ReviewStepProps {
    * picker so the user disambiguates which one to file with.
    */
   agencyCandidates: AgencyCandidatesResult | null;
+  /** Whether the candidate fetch is still in flight. */
+  agencyCandidatesLoading: boolean;
+  /**
+   * True when the candidate fetch failed. The user is never blocked by this —
+   * the create route still routes/validates server-side — but we surface a
+   * retry so they aren't left at a silent dead-end.
+   */
+  agencyCandidatesError: boolean;
+  /** Re-runs the candidate fetch after a failure. */
+  onRetryAgencyCandidates: () => void;
   /** The agency the user has selected from an ambiguous candidate set. */
   selectedAgencyId: string | null;
   onSelectAgency: (agencyId: string) => void;
@@ -52,6 +62,9 @@ export function ReviewStep({
   officialForm,
   officialFormLoading,
   agencyCandidates,
+  agencyCandidatesLoading,
+  agencyCandidatesError,
+  onRetryAgencyCandidates,
   selectedAgencyId,
   onSelectAgency,
   onDescriptionChange,
@@ -68,6 +81,14 @@ export function ReviewStep({
   const isAmbiguous =
     !!agencyCandidates &&
     agencyCandidates.candidates.length > 1 &&
+    !agencyCandidates.agencyId;
+
+  // The fetch resolved but no agency covers this location + issue type. Not an
+  // error: the user can still submit and the create route routes/validates it.
+  // We say so plainly rather than leaving the section blank.
+  const isEmptyCandidates =
+    !!agencyCandidates &&
+    agencyCandidates.candidates.length === 0 &&
     !agencyCandidates.agencyId;
 
   return (
@@ -235,6 +256,38 @@ export function ReviewStep({
               );
             })}
           </div>
+        </div>
+      )}
+
+      {agencyCandidatesError && (
+        <div className="flex flex-col gap-3">
+          <ErrorBanner message={t("report.candidateError")} />
+          <button
+            type="button"
+            className="btn-cta btn-cta-outline self-start"
+            onClick={onRetryAgencyCandidates}
+            disabled={agencyCandidatesLoading}
+          >
+            {agencyCandidatesLoading ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                {t("report.candidateRetrying")}
+              </>
+            ) : (
+              t("report.candidateRetry")
+            )}
+          </button>
+        </div>
+      )}
+
+      {isEmptyCandidates && (
+        <div className="ep-card p-6">
+          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            {t("report.chooseAgency")}
+          </span>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("report.noAgencyMatch")}
+          </p>
         </div>
       )}
 

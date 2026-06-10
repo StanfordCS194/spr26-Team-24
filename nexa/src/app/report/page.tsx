@@ -253,6 +253,9 @@ export default function ReportPage() {
               officialForm={formLookup.officialForm}
               officialFormLoading={formLookup.loading}
               agencyCandidates={agencyCandidates.result}
+              agencyCandidatesLoading={agencyCandidates.loading}
+              agencyCandidatesError={agencyCandidates.error}
+              onRetryAgencyCandidates={agencyCandidates.retry}
               selectedAgencyId={selectedAgencyId}
               onSelectAgency={setSelectedAgencyId}
               onDescriptionChange={handleDescriptionChange}
