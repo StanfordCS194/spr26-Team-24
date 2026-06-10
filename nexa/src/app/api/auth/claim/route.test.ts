@@ -6,8 +6,9 @@ import { prismaMock } from "@/test/prisma-mock";
 import { POST } from "./route";
 
 // Integration test (node project) for the account-claim route with Prisma
-// deep-mocked. Covers the original passwordless-account upgrade AND the
-// anonymous-reporting addition where `reportIds` attach guest reports.
+// deep-mocked. Covers the original passwordless-account upgrade, the
+// anonymous-reporting addition where `reportIds` attach guest reports, and the
+// shared malformed-JSON 400 envelope.
 
 function makeRequest(body: unknown): NextRequest {
   return new NextRequest("http://localhost/api/auth/claim", {
@@ -85,5 +86,19 @@ describe("POST /api/auth/claim", () => {
     // Assert — no report mutation happens on the rejected path.
     expect(response.status).toBe(409);
     expect(prismaMock.report.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("returns a 400 envelope error for a malformed JSON body", async () => {
+    const request = new NextRequest("http://localhost/api/auth/claim", {
+      method: "POST",
+      body: "{ not valid json",
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe("Request body must be valid JSON.");
   });
 });

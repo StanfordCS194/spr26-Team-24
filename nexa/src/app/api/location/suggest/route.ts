@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getGoogleMapsApiKey } from "@/lib/config";
 import { fetchWithTimeout } from "@/lib/http";
-import { successResponse } from "@/lib/api/response";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 type NominatimSearchResult = {
   display_name?: string;
@@ -179,7 +179,12 @@ export async function GET(request: NextRequest) {
 
     return successResponse({ suggestions });
   } catch (error) {
+    // Surface upstream geocoding failures as an envelope error (500) instead of
+    // an empty success: a swallowed `{ suggestions: [] }` is indistinguishable
+    // from a legitimately-empty result and hides outages. The client treats a
+    // non-2xx the same as an empty list, so the graceful UX for real empties is
+    // preserved while genuine failures stay observable.
     console.error("Location suggestion error:", error);
-    return successResponse({ suggestions: [] });
+    return errorResponse("Failed to look up location suggestions.", 500);
   }
 }
