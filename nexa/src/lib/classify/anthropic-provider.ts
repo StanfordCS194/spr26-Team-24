@@ -23,6 +23,21 @@ function stripPrefix(base64: string): string {
   return idx >= 0 ? base64.slice(idx + 1) : base64;
 }
 
+/**
+ * Classify a civic issue with Anthropic (claude-haiku-4-5).
+ *
+ * Sends the prompt, optional user `description`, and optional image to the
+ * model, then parses the JSON reply into a normalized {@link ProviderResult}
+ * tagged with `provider: "anthropic/claude-haiku-4-5"` and the measured
+ * `latencyMs`.
+ *
+ * @param description - User-supplied text describing the issue (skipped when empty).
+ * @param imageBase64 - Image as a base64 data URL, or null for text-only.
+ * @param options.prompt - Overrides the default `CLASSIFICATION_PROMPT` when set.
+ * @returns The model's classification merged with provider id and latency.
+ *          Rejects if the Anthropic call throws; callers wrap it in their own
+ *          error handling.
+ */
 export async function classifyWithAnthropic(
   description: string,
   imageBase64: string | null,
