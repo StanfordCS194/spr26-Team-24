@@ -353,8 +353,11 @@ export const AGENCIES: AgencySeed[] = [
       "STREET_SWEEPING",
     ],
     intakeMethod: "WEB_FORM",
-    intakeUrl:
-      "https://publicworks.sccgov.org/services/road-maintenance/report-problem",
+    // The old publicworks.sccgov.org host no longer resolves (NXDOMAIN). The
+    // County's Roads & Airports Department moved to roads.santaclaracounty.gov;
+    // this is its service-requests hub for reporting road/expressway problems
+    // (potholes, traffic signals, signage, etc.) in unincorporated areas.
+    intakeUrl: "https://roads.santaclaracounty.gov/services/service-requests",
     intakeEmail: null,
     requiredFields: {
       description: { type: "string", required: true },
