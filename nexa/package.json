@@ -7,6 +7,7 @@
     "build": "prisma generate && ([ -n \"$DATABASE_URL\" ] && prisma migrate deploy || true) && next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
@@ -23,6 +24,9 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",
