@@ -1,4 +1,5 @@
-// Nexa service worker — offline app shell + static asset caching.
+// Nexa service worker — offline app shell + static asset caching, plus Web
+// Push handling (issue #38).
 // Part of the PWA work (issue #41). Pairs with the web app manifest and the
 // offline report queue (src/lib/offline-queue.ts), which replays queued POSTs
 // from the page on reconnect rather than here.
@@ -84,5 +85,55 @@ self.addEventListener("fetch", (event) => {
         .catch(() => cached);
       return cached || network;
     }),
+  );
+});
+
+// --- Web Push (issue #38) -------------------------------------------------
+// Payloads are JSON produced by sendPush() in src/lib/push: { title, body,
+// url?, tag? }. We tolerate a missing/garbled payload so a push never throws.
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: "Nexa", body: event.data ? event.data.text() : "" };
+  }
+
+  const title = data.title || "Nexa";
+  const options = {
+    body: data.body || "",
+    icon: "/icon.svg",
+    badge: "/icon.svg",
+    tag: data.tag || undefined,
+    data: { url: data.url || "/dashboard" },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target =
+    (event.notification.data && event.notification.data.url) || "/dashboard";
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        // Focus an existing tab on the same origin if one is open.
+        for (const client of clientList) {
+          const url = new URL(client.url);
+          if (url.origin === self.location.origin && "focus" in client) {
+            client.navigate(target);
+            return client.focus();
+          }
+        }
+        // Otherwise open a new tab.
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(target);
+        }
+        return undefined;
+      }),
   );
 });

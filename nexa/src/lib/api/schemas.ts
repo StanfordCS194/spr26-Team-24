@@ -75,3 +75,22 @@ export const ResolutionSchema = z.object({
   }),
 });
 export type ResolutionInput = z.infer<typeof ResolutionSchema>;
+
+/**
+ * `POST /api/push/subscribe` — store a browser Web Push subscription (#38).
+ * Shape mirrors the JSON produced by `PushSubscription.toJSON()` in the browser.
+ */
+export const PushSubscribeSchema = z.object({
+  endpoint: z.string().min(1, "endpoint is required"),
+  keys: z.object({
+    p256dh: z.string().min(1, "keys.p256dh is required"),
+    auth: z.string().min(1, "keys.auth is required"),
+  }),
+});
+export type PushSubscribeInput = z.infer<typeof PushSubscribeSchema>;
+
+/** `POST /api/push/unsubscribe` — drop a stored subscription by endpoint. */
+export const PushUnsubscribeSchema = z.object({
+  endpoint: z.string().min(1, "endpoint is required"),
+});
+export type PushUnsubscribeInput = z.infer<typeof PushUnsubscribeSchema>;

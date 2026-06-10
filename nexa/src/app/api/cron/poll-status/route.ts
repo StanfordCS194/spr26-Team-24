@@ -6,6 +6,7 @@ import {
   parseOpen311Config,
   STATUS_RANK,
 } from "@/lib/submission/open311";
+import { sendPush } from "@/lib/push";
 
 // GET /api/cron/poll-status
 //
@@ -118,6 +119,24 @@ export async function GET(request: NextRequest) {
         data: { status: result.reportStatus },
       });
       updated++;
+
+      // The status genuinely advanced — notify the reporter via Web Push (#38).
+      // Complementary to the email path; never blocks the poll. `sendPush` is a
+      // NO-OP when VAPID keys are unset, so this is safe with no config.
+      await sendPush(report.userId, {
+        title: "Report status updated",
+        body: `Your report${
+          report.address ? ` at ${report.address}` : ""
+        } is now ${result.reportStatus.replace(/_/g, " ").toLowerCase()}.`,
+        url: `/dashboard/reports/${report.id}`,
+        tag: `report-${report.id}`,
+      }).catch((error) => {
+        // A push failure must never fail the poll or mask the status update.
+        console.error(`${ALERT_PREFIX} push notify failed`, {
+          reportId: report.id,
+          error,
+        });
+      });
     }
 
     const errorCount = failures.length;

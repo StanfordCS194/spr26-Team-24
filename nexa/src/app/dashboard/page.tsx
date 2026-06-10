@@ -11,6 +11,7 @@ import {
   type ReportMapPoint,
 } from "@/components/dashboard/reports-map";
 import { T } from "@/components/i18n-text";
+import { PushOptIn } from "@/components/push-opt-in";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -86,10 +87,13 @@ export default async function DashboardPage() {
             />
           </p>
         </div>
-        <Link href="/report" className="btn-cta btn-cta-purple">
-          <T k="nav.reportIssue" />
-          <ArrowRight className="size-4" />
-        </Link>
+        <div className="flex flex-col items-end gap-2">
+          <Link href="/report" className="btn-cta btn-cta-purple">
+            <T k="nav.reportIssue" />
+            <ArrowRight className="size-4" />
+          </Link>
+          <PushOptIn />
+        </div>
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
