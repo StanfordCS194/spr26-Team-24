@@ -122,3 +122,20 @@ export const PushUnsubscribeSchema = z.object({
   endpoint: z.string().min(1, "endpoint is required"),
 });
 export type PushUnsubscribeInput = z.infer<typeof PushUnsubscribeSchema>;
+
+/**
+ * `POST /api/uploads/presign` — request a presigned URL to upload a report
+ * image to object storage (#30). The client resizes to JPEG (and falls back to
+ * PNG for some sources), so we only allow those two content types; the value is
+ * signed into the URL and must match the PUT's `Content-Type` header. Defaults
+ * to `image/jpeg` to match the client resizer's output.
+ */
+export const PresignUploadSchema = z.object({
+  contentType: z
+    .enum(["image/jpeg", "image/png"], {
+      error: "contentType must be image/jpeg or image/png.",
+    })
+    .optional()
+    .default("image/jpeg"),
+});
+export type PresignUploadInput = z.infer<typeof PresignUploadSchema>;
