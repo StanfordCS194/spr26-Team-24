@@ -39,9 +39,15 @@ export default function ReportPage() {
   // never clobbers what the user wrote. "none" = empty/untouched (safe to fill),
   // "ai" = an AI suggestion the user has not edited (safe to replace with a
   // fresh suggestion when the image changes), "user" = the user typed or edited
-  // it (never overwrite). Once "user", auto-suggest leaves the field alone.
+  // it (never overwrite), "cleared" = the user explicitly wiped the field with
+  // the one-tap Clear control (#263). Once "user", auto-suggest leaves the field
+  // alone. "cleared" must stick against the *same* image but still allow a *new*
+  // image to re-suggest: the same-image guard is already enforced by
+  // `lastAnalyzedImage` (the auto-suggest effect never re-runs for unchanged
+  // bytes), so "cleared" only needs to read as "fillable" to a fresh image —
+  // which it does, since the suggestion guard blocks "user" alone.
   const [descriptionSource, setDescriptionSource] = useState<
-    "none" | "ai" | "user"
+    "none" | "ai" | "user" | "cleared"
   >("none");
 
   // On-upload auto-suggestion UI state (distinct from the explicit "Analyze
@@ -347,6 +353,17 @@ export default function ReportPage() {
     }
   };
 
+  // One-tap clear for the whole description (#263). Wipes the field and marks it
+  // "cleared" so the on-upload auto-suggest does not re-treat the empty field as
+  // fresh AI text. The clear sticks for the current image: that effect keys off
+  // the image bytes and is further guarded by `lastAnalyzedImage`, so it never
+  // re-fires for the same photo. A *new* image still re-suggests — "cleared" is
+  // not "user", so the suggestion guard lets a fresh result fill the field.
+  const handleClearDescription = () => {
+    setDescription("");
+    setDescriptionSource("cleared");
+  };
+
   const handleImageDrop = (e: React.DragEvent) => {
     markCaptureStart();
     image.handleDrop(e);
@@ -409,6 +426,7 @@ export default function ReportPage() {
             onDrop={handleImageDrop}
             onClearImage={handleClearImage}
             onDescriptionChange={handleDescriptionChange}
+            onClearDescription={handleClearDescription}
             onAddressChange={handleAddressChange}
             onDetectLocation={geo.detect}
             onLocationChange={geo.movePin}

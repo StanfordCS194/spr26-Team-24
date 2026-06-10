@@ -23,6 +23,7 @@ vi.mock("@/components/report/describe-step", () => ({
     autoSuggesting: boolean;
     detectedIssueType: string | null;
     onDescriptionChange: (v: string) => void;
+    onClearDescription: () => void;
     onClassify: () => void;
   }) => (
     <div>
@@ -33,6 +34,7 @@ vi.mock("@/components/report/describe-step", () => ({
       <button onClick={() => props.onDescriptionChange("user typed")}>
         type
       </button>
+      <button onClick={() => props.onClearDescription()}>clear</button>
       <button onClick={() => props.onClassify()}>analyze</button>
     </div>
   ),
@@ -218,6 +220,79 @@ describe("ReportPage auto-suggest on upload", () => {
       expect(screen.getByTestId("review-step")).toBeInTheDocument(),
     );
     expect(classify).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears the AI suggestion and keeps it cleared for the same image (#263)", async () => {
+    // Arrange: upload a photo so the field auto-fills with the AI suggestion.
+    stubFetch();
+    const { user } = renderWithProviders(<ReportPage />);
+    setImage("data:image/jpeg;base64,AAAA");
+    await waitFor(() =>
+      expect(screen.getByTestId("description")).toHaveTextContent(
+        WINNER.aiDescription,
+      ),
+    );
+
+    // Act: one-tap clear.
+    await user.click(screen.getByText("clear"));
+
+    // Assert: the field is wiped and no longer badged as an AI suggestion.
+    expect(screen.getByTestId("description")).toHaveTextContent("");
+    expect(screen.getByTestId("is-ai")).toHaveTextContent("false");
+
+    // Assert: the clear sticks — the suggestion does NOT re-populate from the
+    // same image. Settle pending effects, then re-check the field stays empty.
+    await waitFor(() =>
+      expect(screen.getByTestId("auto-suggesting")).toHaveTextContent("false"),
+    );
+    expect(screen.getByTestId("description")).toHaveTextContent("");
+    expect(screen.getByTestId("is-ai")).toHaveTextContent("false");
+  });
+
+  it("can type a new description after clearing the suggestion (#263)", async () => {
+    // Arrange: auto-fill then clear.
+    stubFetch();
+    const { user } = renderWithProviders(<ReportPage />);
+    setImage("data:image/jpeg;base64,AAAA");
+    await waitFor(() =>
+      expect(screen.getByTestId("description")).toHaveTextContent(
+        WINNER.aiDescription,
+      ),
+    );
+    await user.click(screen.getByText("clear"));
+
+    // Act: the user writes their own description.
+    await user.click(screen.getByText("type"));
+
+    // Assert: their text is kept and not treated as an AI suggestion.
+    expect(screen.getByTestId("description")).toHaveTextContent("user typed");
+    expect(screen.getByTestId("is-ai")).toHaveTextContent("false");
+  });
+
+  it("re-suggests for a NEW image after a clear (#263)", async () => {
+    // Arrange: auto-fill from one image, then clear it.
+    stubFetch();
+    const { user } = renderWithProviders(<ReportPage />);
+    setImage("data:image/jpeg;base64,AAAA");
+    await waitFor(() =>
+      expect(screen.getByTestId("description")).toHaveTextContent(
+        WINNER.aiDescription,
+      ),
+    );
+    await user.click(screen.getByText("clear"));
+    expect(screen.getByTestId("description")).toHaveTextContent("");
+
+    // Act: upload a genuinely different image.
+    setImage("data:image/jpeg;base64,BBBB");
+
+    // Assert: a fresh suggestion fills the cleared field — the clear only
+    // suppressed the SAME image, not a new one.
+    await waitFor(() =>
+      expect(screen.getByTestId("description")).toHaveTextContent(
+        WINNER.aiDescription,
+      ),
+    );
+    expect(screen.getByTestId("is-ai")).toHaveTextContent("true");
   });
 
   it("degrades gracefully when classification fails", async () => {

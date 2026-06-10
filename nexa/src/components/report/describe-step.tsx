@@ -56,6 +56,8 @@ interface DescribeStepProps {
   onDrop: (e: React.DragEvent) => void;
   onClearImage: () => void;
   onDescriptionChange: (value: string) => void;
+  /** Wipes the entire description in one tap (#263). */
+  onClearDescription: () => void;
   onAddressChange: (value: string) => void;
   onDetectLocation: () => void;
   onLocationChange: (latitude: number, longitude: number) => void;
@@ -84,6 +86,7 @@ export function DescribeStep({
   onDrop,
   onClearImage,
   onDescriptionChange,
+  onClearDescription,
   onAddressChange,
   onDetectLocation,
   onLocationChange,
@@ -245,28 +248,50 @@ export function DescribeStep({
               )
             )}
           </div>
-          {speech.supported && (
-            <button
-              type="button"
-              onClick={handleMicToggle}
-              aria-label={
-                speech.listening
-                  ? t("report.stopDictation")
-                  : t("report.dictateDescription")
-              }
-              aria-pressed={speech.listening}
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
-                speech.listening
-                  ? "bg-red-50 text-red-600 hover:bg-red-100"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <Mic
-                className={`size-3.5 ${speech.listening ? "animate-pulse" : ""}`}
-              />
-              {speech.listening ? t("report.dictating") : t("report.dictate")}
-            </button>
-          )}
+          <div className="flex shrink-0 items-center gap-1.5">
+            {/*
+              One-tap Clear (#263): wipes the whole description — handy for
+              dropping an AI suggestion the user does not want. Shown only when
+              the field has content, reusing the same X icon as the image-clear
+              control. The parent marks the cleared field so the on-upload
+              auto-suggest does not immediately re-populate it from the same
+              photo.
+            */}
+            {description.trim() !== "" && (
+              <button
+                type="button"
+                onClick={onClearDescription}
+                aria-label={t("report.clearDescription")}
+                title={t("report.clearDescription")}
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X className="size-3.5" />
+                {t("report.clear")}
+              </button>
+            )}
+            {speech.supported && (
+              <button
+                type="button"
+                onClick={handleMicToggle}
+                aria-label={
+                  speech.listening
+                    ? t("report.stopDictation")
+                    : t("report.dictateDescription")
+                }
+                aria-pressed={speech.listening}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
+                  speech.listening
+                    ? "bg-red-50 text-red-600 hover:bg-red-100"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <Mic
+                  className={`size-3.5 ${speech.listening ? "animate-pulse" : ""}`}
+                />
+                {speech.listening ? t("report.dictating") : t("report.dictate")}
+              </button>
+            )}
+          </div>
         </div>
         <Textarea
           id="description"

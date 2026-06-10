@@ -157,6 +157,8 @@ const enMessages = {
   "report.aiSuggestion": "AI suggestion",
   "report.aiSuggestionHint":
     "We drafted this from your photo — edit or clear it and write your own.",
+  "report.clear": "Clear",
+  "report.clearDescription": "Clear description",
   "report.detectedIssue": "Detected issue:",
   "report.reviewLabel": "/ Review Classification",
   "report.reviewTitle": "Does this look right?",
@@ -476,6 +478,8 @@ export const messages = {
     "report.aiSuggestion": "Sugerencia de IA",
     "report.aiSuggestionHint":
       "Redactamos esto a partir de tu foto: edítalo o bórralo y escribe el tuyo.",
+    "report.clear": "Borrar",
+    "report.clearDescription": "Borrar descripción",
     "report.detectedIssue": "Problema detectado:",
     "report.reviewLabel": "/ Revisar clasificación",
     "report.reviewTitle": "¿Esto se ve correcto?",
@@ -781,6 +785,8 @@ export const messages = {
     "report.aiSuggestion": "AI 建议",
     "report.aiSuggestionHint":
       "我们根据您的照片草拟了此内容，可编辑或删除后自行填写。",
+    "report.clear": "清除",
+    "report.clearDescription": "清除描述",
     "report.detectedIssue": "检测到的问题：",
     "report.reviewLabel": "/ 检查分类",
     "report.reviewTitle": "看起来正确吗？",
@@ -1091,6 +1097,8 @@ export const messages = {
     "report.aiSuggestion": "Suggestion IA",
     "report.aiSuggestionHint":
       "Nous avons rédigé ceci à partir de votre photo : modifiez-le ou effacez-le et écrivez le vôtre.",
+    "report.clear": "Effacer",
+    "report.clearDescription": "Effacer la description",
     "report.detectedIssue": "Problème détecté :",
     "report.reviewLabel": "/ Vérifier la classification",
     "report.reviewTitle": "Est-ce correct ?",

@@ -58,6 +58,7 @@ function baseProps() {
     onDrop: vi.fn(),
     onClearImage: vi.fn(),
     onDescriptionChange: vi.fn(),
+    onClearDescription: vi.fn(),
     onAddressChange: vi.fn(),
     onDetectLocation: vi.fn(),
     onLocationChange: vi.fn(),
@@ -140,6 +141,48 @@ describe("DescribeStep", () => {
 
     // Assert
     expect(props.onDescriptionChange).toHaveBeenCalledWith("x");
+  });
+
+  it("hides the clear-description control when the field is empty", () => {
+    // Arrange / Act: empty description -> nothing to clear.
+    renderWithProviders(<DescribeStep {...baseProps()} description="" />);
+
+    // Assert
+    expect(
+      screen.queryByRole("button", { name: "Clear description" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the clear-description control when the field has content", () => {
+    // Arrange / Act
+    renderWithProviders(
+      <DescribeStep {...baseProps()} description="A large pothole." />,
+    );
+
+    // Assert
+    expect(
+      screen.getByRole("button", { name: "Clear description" }),
+    ).toBeInTheDocument();
+  });
+
+  it("calls onClearDescription when the clear control is clicked", async () => {
+    // Arrange
+    const props = baseProps();
+    const { user } = renderWithProviders(
+      <DescribeStep
+        {...props}
+        descriptionIsAiSuggestion
+        description="A large pothole in the roadway."
+      />,
+    );
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "Clear description" }));
+
+    // Assert: one-tap clear delegates to the parent; description state is owned
+    // there, so the component only forwards the intent.
+    expect(props.onClearDescription).toHaveBeenCalledTimes(1);
+    expect(props.onDescriptionChange).not.toHaveBeenCalled();
   });
 
   it("starts dictation through the mic toggle when supported", async () => {
