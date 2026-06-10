@@ -27,6 +27,9 @@ export type AgencyResolution = {
   candidates: string[];
 };
 
+/** No confident agency match (no input, no jurisdiction, no coverage, or ambiguous). */
+const UNRESOLVED: AgencyResolution = { agencyId: null, candidates: [] };
+
 /**
  * Resolves the Agency a report should be filed with, based on its location and
  * issue type. This is the link between the polygon routing engine
@@ -49,11 +52,11 @@ export async function resolveAgencyId(args: {
     typeof longitude !== "number" ||
     !issueType
   ) {
-    return { agencyId: null, candidates: [] };
+    return UNRESOLVED;
   }
 
   const match = resolveJurisdiction(latitude, longitude, issueType);
-  if (!match) return { agencyId: null, candidates: [] };
+  if (!match) return UNRESOLVED;
 
   // Try the matched jurisdiction first, then any fallback jurisdictions. We use
   // the first jurisdiction tier that yields any agency so that a fallback only
@@ -81,5 +84,5 @@ export async function resolveAgencyId(args: {
     };
   }
 
-  return { agencyId: null, candidates: [] };
+  return UNRESOLVED;
 }
