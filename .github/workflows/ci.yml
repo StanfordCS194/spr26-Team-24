@@ -83,3 +83,11 @@ jobs:
       # API keys / network and would break PRs from forks.
       - name: Routing eval (accuracy gate)
         run: npm run eval:routing
+
+      # Offline boundary-data gate: parses boundaries.json as GeoJSON, asserts
+      # every feature's jurisdictionId/priority is consistent with the
+      # JURISDICTIONS registry, and runs golden point-in-polygon assertions via
+      # the real resolveJurisdiction. Exits non-zero on malformed or desynced
+      # boundary data, failing this job.
+      - name: Validate jurisdiction boundary GeoJSON
+        run: npm run eval:validate-boundaries
