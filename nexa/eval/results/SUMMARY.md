@@ -231,3 +231,76 @@ npm ci
 npx prisma generate   # readiness imports the generated Prisma client
 npm run eval:readiness # exits 0 at >=90%, non-zero below
 ```
+
+---
+
+## Continuous-verification strategy for the classification eval (K1) — issue #209
+
+K1 is _"eval-set pass rate, weekly, ≥70%"_. The classification eval that serves
+K1 (`npm run eval` → `eval/run.ts`) is **intentionally not run in CI**, so this
+section documents how it is verified on a cadence instead.
+
+### Why classification is out of CI
+
+`eval/run.ts` calls `classifyWithConsensus`, which makes live calls to three
+paid VLM providers (OpenAI `gpt-4o-mini`, Anthropic `claude-haiku-4-5`, Google
+`gemini-2.5-flash`). Running it in CI would (a) require committing/secret-loading
+paid API keys, and (b) break pull requests from forks, which never get repo
+secrets. The CI `eval` job therefore gates only the **offline** evals — routing
+(`eval:routing`, O2.KR1 ≥85%), boundary validation (`eval:validate-boundaries`),
+and submission-readiness (`eval:readiness`, K3 ≥90%) — none of which touch an LLM
+or the network. See `.github/workflows/ci.yml` (the `eval` job comments make the
+exclusion explicit).
+
+These offline evals **complement** the classification eval rather than replace
+it: routing/readiness verify that _once an issue is classified_ the report is
+routed to a real agency and every required intake field is populated, while the
+classification eval verifies the upstream step — that the VLM consensus actually
+assigns the correct `IssueType` to a real photo. K1 specifically covers the
+classification step, which only the LLM eval can measure.
+
+### Cadence, owner, threshold, results location
+
+| Aspect              | Value                                                                 |
+| ------------------- | --------------------------------------------------------------------- |
+| Cadence             | Weekly (out of CI; manual run or a scheduled/gated job with secrets)  |
+| Owner               | Eval maintainer (`@sarahhashash`) — reassign as the team rotates       |
+| Threshold (K1)      | Weekly eval pass rate **≥70%**; classification accuracy floor **≥80%** (O1.KR1) |
+| Results location    | This file — append a dated row to the table below each run            |
+| Baseline of record  | **92.1%** overall accuracy (70/76), 2026-05-22 (see Headline, top)    |
+
+### How / when to run it
+
+Run weekly from a machine that has the three API keys (a maintainer's laptop or a
+scheduled out-of-CI job, e.g. a scheduled cloud agent, that injects the keys as
+secrets — keys must never enter the public CI workflow):
+
+```bash
+cd nexa
+cp .env.example .env.local   # fill in OPENAI_API_KEY / ANTHROPIC_API_KEY / GOOGLE_API_KEY
+npm run eval:fetch:download  # refresh/pre-cache the dataset (offline-friendly)
+npm run eval                 # both modes over the full dataset; ~$0.70/run
+```
+
+`eval/run.ts` prints overall accuracy, per-class accuracy, the confusion matrix,
+and the baseline-vs-two-stage flip diff, and writes
+`eval/results/{baseline,two-stage}.json` (gitignored). Read the overall accuracy
+off stdout, then record it in the table below.
+
+> Note: unlike `eval:routing` / `eval:readiness`, `eval/run.ts` does **not** yet
+> exit non-zero below a threshold — it is a reporter, not a gate. The weekly
+> check is therefore a human read of the printed accuracy against the ≥70% /
+> ≥80% thresholds. If/when the eval is wired into a scheduled job with secrets,
+> add an accuracy gate there (mirroring the `TARGET_ACCURACY` pattern in
+> `eval/routing.ts`) so the run fails the cadence below target.
+
+### Weekly K1 log
+
+> Append one row per weekly run. Do not fabricate — only record accuracy actually
+> printed by `npm run eval`. The 2026-05-22 baseline row is the run captured in
+> the Headline section above.
+
+| Date (UTC) | Overall accuracy | n     | Pass (≥70% / ≥80%)? | Run by | Notes              |
+| ---------- | ---------------- | ----- | ------------------- | ------ | ------------------ |
+| 2026-05-22 | 92.1%            | 76    | PASS                | team   | Baseline (Headline) |
+| _TODO_     | _TODO_           | _TODO_| _TODO_              | _TODO_ | _TODO_             |
