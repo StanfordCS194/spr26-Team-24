@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import exifr from "exifr";
+import { IMAGE_PROCESSING } from "@/lib/constants";
 
 export interface PreprocessedImage {
   // base64 data URL ready to be passed to VLMs as image_url
@@ -18,8 +19,8 @@ export interface PreprocessedImage {
   originalHeight: number | null;
 }
 
-const MAX_DIMENSION = 1024;
-const JPEG_QUALITY = 80;
+const MAX_DIMENSION = IMAGE_PROCESSING.SERVER_MAX_DIMENSION;
+const JPEG_QUALITY = IMAGE_PROCESSING.SERVER_JPEG_QUALITY;
 
 /**
  * Strip a `data:image/...;base64,` prefix if present and return the raw base64

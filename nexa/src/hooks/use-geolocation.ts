@@ -2,6 +2,10 @@
 
 import { useState, useCallback, useRef } from "react";
 import { reverseGeocode } from "@/lib/reverse-geocode";
+import {
+  GEOLOCATION_TIMEOUT_MS,
+  GEOLOCATION_CACHE_AGE_MS,
+} from "@/lib/constants";
 
 export function useGeolocation() {
   const [address, setAddress] = useState("");
@@ -66,8 +70,8 @@ export function useGeolocation() {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000,
+        timeout: GEOLOCATION_TIMEOUT_MS,
+        maximumAge: GEOLOCATION_CACHE_AGE_MS,
       },
     );
   }, [setCoordinates, refreshAddress]);

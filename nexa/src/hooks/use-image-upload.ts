@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { IMAGE_PROCESSING } from "@/lib/constants";
 
 // Server enforces a ~4.5MB request body limit (Vercel default). Modern phone
 // photos are 5–10MB after base64, so we resize before sending.
-const MAX_DIMENSION = 1280;
-const JPEG_QUALITY = 0.82;
+const MAX_DIMENSION = IMAGE_PROCESSING.CLIENT_MAX_DIMENSION;
+const JPEG_QUALITY = IMAGE_PROCESSING.CLIENT_JPEG_QUALITY;
 
 function readAsDataUrl(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
