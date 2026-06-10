@@ -64,8 +64,30 @@ export const JURISDICTIONS: Record<JurisdictionId, Jurisdiction> = {
   "city-east-palo-alto": {
     id: "city-east-palo-alto",
     displayName: "East Palo Alto",
+    // Issue-type-specific intake (issues #195/#198): East Palo Alto splits its
+    // intake by program, so we route per issue type rather than via a single
+    // `default`. These mirror the seeded agencies in prisma/agencies.ts.
     endpoints: {
-      // URL not yet verified — let the LLM lookup handle it for now.
+      // EPA Public Works handles road damage via the city contact web form
+      // (verified per issue #23 agency-research comment, 2026-06-09).
+      ROAD_DAMAGE: {
+        url: "https://www.cityofepa.org/contact",
+        reason:
+          "East Palo Alto Public Works handles road maintenance; the city contact form is the verified intake (maintenance@cityofepa.org is the staff fallback).",
+        confidence: "medium",
+      },
+      // EPA Clean City handles illegal dumping; its verified channel is email
+      // (cleancity@cityofepa.org) plus the city line (650) 853-3100. There is no
+      // verified web form, so we surface the general city contact page as the
+      // best web entry point and keep confidence medium.
+      ILLEGAL_DUMPING: {
+        url: "https://www.cityofepa.org/contact",
+        reason:
+          "East Palo Alto Clean City handles illegal dumping via cleancity@cityofepa.org / (650) 853-3100; the city contact page is the web entry point.",
+        confidence: "medium",
+      },
+      // Other issue types (e.g. streetlights) have no verified EPA intake yet —
+      // leave the default null so callers fall through to the LLM lookup.
       default: null,
     },
   },
