@@ -27,8 +27,21 @@ export default defineConfig({
   },
   projects: [
     {
+      // Default project: every spec EXCEPT the dedicated video walkthrough.
+      // Leaves the existing CI e2e behaviour untouched (video only retained on
+      // failure, per `use.video` above).
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: /full-workflow\.spec\.ts/,
+    },
+    {
+      // Dedicated project for the end-to-end walkthrough (#220). `video: "on"`
+      // ALWAYS records a webm for this spec — pass or fail — and that recording
+      // is the deliverable. Scoped to this single file so the rest of the suite
+      // (and its CI expectations) keep the default `retain-on-failure`.
+      name: "full-workflow-video",
+      testMatch: /full-workflow\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"], video: "on" },
     },
   ],
   webServer: {
