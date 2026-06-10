@@ -152,6 +152,18 @@ jobs:
       - name: End-to-end agency-accuracy eval (O1.KR1 >=80% gate)
         run: npm run eval:end-to-end
 
+      # Submission-filing gate. Where the readiness eval stops short of
+      # submitting, this harness actually RUNS the submission AGENT — it FILES
+      # each report — for every auto-fileable channel, with the network transport
+      # stubbed (no real POST/email, no DB). It calls the real submitToOpen311 /
+      # submitViaEmail with injected fetch / Resend stubs and asserts the agent
+      # returns a tracking id. Un-fileable API agencies and WEB_FORM/PHONE intake
+      # are classified as honest manual-assist handoffs (not failures). It exits
+      # non-zero if any auto-fileable case fails to file, or if zero cases are
+      # auto-fileable (the pipeline must actually exercise filing).
+      - name: Submission-filing eval (agent files; 100% of auto-fileable gate)
+        run: npm run eval:submission
+
   # Production-build verification (#196). Runs the real `npm run build` so
   # build-time failures (server/client boundary errors, dynamic-import issues,
   # Prisma generate, page-data collection that touches the Prisma singleton) are

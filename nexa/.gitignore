@@ -57,3 +57,6 @@ next-env.d.ts
 # Exception: the O1.KR1 end-to-end agency-accuracy baseline is committed (issue
 # #247) so CI has a checked-in reference point for the >=80% gate.
 !/eval/results/end-to-end.json
+# Exception: the submission-filing baseline is committed so CI has a checked-in
+# reference point for the "100% of auto-fileable cases file" gate.
+!/eval/results/submission.json

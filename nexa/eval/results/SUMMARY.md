@@ -234,6 +234,55 @@ npm run eval:readiness # exits 0 at >=90%, non-zero below
 
 ---
 
+## Submission-filing baseline (agent actually files)
+
+`npm run eval:submission` runs the offline submission-filing harness
+(`eval/submission.ts`): where the readiness eval stops short of submitting, this
+one actually runs the submission **agent** and FILES each report for every
+auto-fileable channel, with the network transport stubbed. It reuses the same
+in-memory Prisma stub + `resolveAgencyId` as the readiness eval, then calls the
+real `submitToOpen311` / `submitViaEmail` with injected `fetchImpl` / `resendClient`
+stubs — **no real POST, no real email, no DB, no LLM**.
+
+**Primary metric — filing success among auto-fileable cases** = `filed / (filed +
+failed)`, with `manual_assist` excluded from the denominator. It must be **100%**,
+and there must be ≥1 auto-fileable case; the harness exits non-zero otherwise, so
+the CI `eval` job fails on a regression. A committed baseline lives at
+`eval/results/submission.json` (un-ignored via `nexa/.gitignore`).
+
+### Baseline
+
+| Metric                              | Value                          |
+| ----------------------------------- | ------------------------------ |
+| Filing success (auto-fileable)      | **100.0%** (1/1) — PASS         |
+| Outcomes                            | 1 filed · 19 manual-assist · 0 failed (n=20) |
+
+| Intake method | filed | manual_assist | failed |
+| ------------- | ----- | ------------- | ------ |
+| API           | 0     | 8             | 0      |
+| EMAIL         | 1     | 0             | 0      |
+| PHONE         | 0     | 3             | 0      |
+| WEB_FORM      | 0     | 8             | 0      |
+
+Honest channel breakdown: **EMAIL is the only channel that auto-files today** —
+East Palo Alto Clean City files via Resend (`dump-epa-14`). Every seeded
+SeeClickFix API agency degrades to manual-assist because none carries the internal
+SeeClickFix organization id needed as `jurisdiction_id` (issue #239); adding that
+id to a seed row flips that city's API cases to `filed`. WEB_FORM and PHONE intake
+always hand off to manual-assist (no automated agent). These manual-assist
+outcomes are correct handoffs, not failures, so they are excluded from the metric.
+
+### How to reproduce
+
+```bash
+cd nexa
+npm ci
+npx prisma generate   # submission imports the generated Prisma client
+npm run eval:submission # exits 0 at 100% of auto-fileable, non-zero on any failure
+```
+
+---
+
 ## Continuous-verification strategy for the classification eval (K1) — issue #209
 
 K1 is _"eval-set pass rate, weekly, ≥70%"_. The classification eval that serves

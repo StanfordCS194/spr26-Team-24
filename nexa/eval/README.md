@@ -127,6 +127,75 @@ Estimated cost on the full ~60-image dataset:
 The runner also prints a human-readable report and a baseline-vs-two-stage
 delta to stdout. Capture that into the contributions doc / PR description.
 
+## Submission-filing eval (`eval:submission`)
+
+```bash
+npm run eval:submission        # writes eval/results/submission.json
+```
+
+The classification evals above answer "did we reach the right agency / can we
+populate its fields?". `eval/submission.ts` answers the next question: **does the
+submission AGENT actually FILE the report?** It runs the real filing path the
+production orchestrator (`src/lib/submission/orchestrate.ts`) takes for every
+auto-fileable channel, with the network transport stubbed — no real POST, no real
+email, no DB, no LLM.
+
+**Fully offline, same stub as the other submission evals.** It installs the same
+in-memory Prisma stub on `globalThis.prisma` (backed by the seeded `AGENCIES`
+array) before importing anything, so the production `resolveAgencyId` routes
+identically with no `DATABASE_URL`. It reuses the synthetic-report dataset
+`dataset/readiness-cases.json` (lat/lng + issueType + report field values).
+
+**Per case** it resolves the agency, then dispatches by `intakeMethod` and runs
+the real agent:
+
+- **API** — if `canAutoFileOpen311` says the agency's Open311 config can
+  auto-file, it calls the real `submitToOpen311` with an **injected `fetchImpl`**
+  that returns a realistic GeoReport v2 success (a `service_request_id`) and
+  asserts the agent returns `submitted` with a non-empty tracking id (`filed`).
+  When `canAutoFileOpen311` is false — most seeded SeeClickFix agencies omit the
+  internal `jurisdiction_id` their multi-tenant write path needs (issues
+  #239/#250) — the orchestrator degrades to manual-assist _before_ any POST, so
+  the case is classified `manual_assist` (the correct, honest outcome — not a
+  failure).
+- **EMAIL** — sets `RESEND_API_KEY` + `SUBMISSION_FROM_EMAIL` for the run so the
+  agent is "configured", then calls the real `submitViaEmail` with an **injected
+  `resendClient`** stub whose `emails.send` returns a message id, asserting
+  `submitted` with that id as the tracking id (`filed`).
+- **WEB_FORM / PHONE** — no automated agent exists, so the report is handed off to
+  manual-assist (`manual_assist`, a correct handoff).
+
+**Primary metric — filing success rate among auto-fileable cases:**
+
+```
+filed / (filed + failed)        # manual_assist EXCLUDED from the denominator
+```
+
+With a healthy transport the agent must file **every** case it routes to an
+auto-fileable channel, so this must be **100%**. The runner exits non-zero if any
+auto-fileable case `failed`, or if there are **zero** auto-fileable cases (the
+pipeline must actually exercise filing). The dataset's East Palo Alto
+illegal-dumping case (`dump-epa-14`) routes to an EMAIL-intake agency, so there is
+always at least one real `filed` case. The runner also prints a per-intake-method
+breakdown so the report is honest about what auto-files today vs degrades to
+manual-assist.
+
+`results/submission.json` records every case (agency, intakeMethod, outcome ∈
+{`filed`, `manual_assist`, `failed`}, trackingId, reason) plus the aggregate
+metrics, matching how the other evals write their results. (The `eval/results`
+directory is prettier-ignored — it is machine-written, not hand-formatted.)
+
+**Honest channel breakdown (current seed).** EMAIL is the only channel that
+auto-files today: East Palo Alto Clean City (EMAIL) files via Resend. Every seeded
+SeeClickFix API agency degrades to manual-assist because none carries the internal
+SeeClickFix organization id required as `jurisdiction_id` (issue #239); add that id
+to a seed row and that city's API cases flip to `filed`. WEB_FORM and PHONE intake
+always hand off to manual-assist (no automated agent). This is the truthful
+picture, not a number inflated by pretending un-fileable channels file.
+
+This eval gates every push (CI `eval` job, alongside `eval:routing`,
+`eval:readiness`, and `eval:end-to-end`).
+
 ## Limitations
 
 - Wikimedia Commons photos are biased toward "good" examples of each
