@@ -163,27 +163,11 @@ jobs:
       run:
         working-directory: nexa
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: nexa
-          POSTGRES_PASSWORD: nexa
-          POSTGRES_DB: nexa_ci
-        ports:
-          - 5432:5432
-        # Wait until Postgres is accepting connections before the build runs.
-        options: >-
-          --health-cmd "pg_isready -U nexa"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
-      # Dummy-but-reachable URL: lets `prisma migrate deploy` succeed and lets
-      # next build's page-data collection resolve DATABASE_URL without throwing.
-      DATABASE_URL: postgresql://nexa:nexa@localhost:5432/nexa_ci
-      # Dummy JWT secret so auth-module init during build doesn't throw.
+      # Dummy values: `next build` only needs these env vars PRESENT for config /
+      # page-data validation — it does not connect to the DB to compile. The
+      # migrate-on-deploy path is verified separately by the Vercel deployment.
+      DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
       JWT_SECRET: ci-build-dummy-secret
 
     steps:
@@ -197,10 +181,14 @@ jobs:
 
       - run: npm ci
 
-      # Real production build. `npm run build` itself runs prisma generate and
-      # migrate deploy; this step fails the pipeline on any compile/build error.
-      - name: Build (next build)
-        run: npm run build
+      # Compile-only production build: `prisma generate` + `next build` directly,
+      # deliberately skipping `npm run build`'s `migrate deploy` step (that's a
+      # deploy-time concern, verified by the Vercel deployment, and would need a
+      # live DB here). A dummy DATABASE_URL is present so config/page-data
+      # validation passes; `next build` does not connect to it to compile. This
+      # catches server/client-boundary, dynamic-import, and type errors pre-merge.
+      - name: Build (next build, compile-only)
+        run: npx prisma generate && npx next build
 
   # Playwright e2e specs in CI (#202). The specs are deterministic and offline:
   # every client network call is stubbed via page.route, and the Playwright
