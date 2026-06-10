@@ -83,6 +83,26 @@ export const getJwtSecret = cached(() => requireEnv("JWT_SECRET"));
  */
 export const getCronSecret = cached(() => optionalEnv("CRON_SECRET"));
 
+/**
+ * Allowlist of admin email addresses, parsed from the comma-separated
+ * `ADMIN_EMAILS` env var (e.g. `a@x.org, b@y.org`). Returns a `Set` of
+ * lower-cased, trimmed addresses so membership checks are case-insensitive and
+ * O(1). Empty/whitespace entries are dropped; an unset var yields an empty set
+ * (no admins), so the `/admin` dashboard is locked down by default rather than
+ * open. This gate is enforced SERVER-SIDE (proxy + the page) — never trust the
+ * client to decide who is an admin.
+ */
+export const getAdminEmails = cached(() => {
+  const raw = optionalEnv("ADMIN_EMAILS");
+  if (!raw) return new Set<string>();
+  return new Set(
+    raw
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter((email) => email.length > 0),
+  );
+});
+
 /** OpenAI API key (GPT classification + stage-1 observation). */
 export const getOpenAiKey = cached(() => optionalEnv("OPENAI_API_KEY"));
 
