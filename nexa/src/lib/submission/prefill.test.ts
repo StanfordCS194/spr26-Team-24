@@ -68,4 +68,251 @@ describe("buildPrefillFields — embedded field values (issue #193)", () => {
     const loc = fields.find((f) => f.key === "observation_location");
     expect(loc?.value).toBe("1 Main St");
   });
+
+  it("ignores a non-string embedded value (number) and derives instead", () => {
+    const fields = buildPrefillFields(
+      makeBareReport({ address: "2 Oak Ave" }),
+      {
+        // Only string `.value` is authoritative; a number must be ignored.
+        service_address: { type: "string", value: 42 },
+      },
+    );
+
+    const addr = fields.find((f) => f.key === "service_address");
+    expect(addr?.value).toBe("2 Oak Ave");
+  });
+});
+
+// A populated report so each derivation branch has something to surface.
+function makeFullReport(overrides: Partial<PrefillReport> = {}): PrefillReport {
+  return {
+    description: "Pothole on Main St",
+    aiDescription: "AI: deep pothole",
+    address: "100 Main St, Palo Alto, CA",
+    latitude: 37.4419,
+    longitude: -122.143,
+    imageUrl: "https://example.com/photo.jpg",
+    createdAt: new Date("2026-06-09T12:00:00Z"),
+    contactEmail: "reporter@example.com",
+    ...overrides,
+  };
+}
+
+// Convenience: derive a single field from a one-key schema.
+function fieldFor(
+  key: string,
+  spec: Record<string, unknown>,
+  report: PrefillReport,
+) {
+  return buildPrefillFields(report, { [key]: spec }).find((f) => f.key === key);
+}
+
+describe("buildPrefillFields — valueForKey derivation branches", () => {
+  it("derives the description from report.description", () => {
+    const f = fieldFor("description", { type: "string" }, makeFullReport());
+    expect(f?.value).toBe("Pothole on Main St");
+  });
+
+  it("matches the details/comment/problem/issue synonyms for description", () => {
+    for (const key of ["details", "comment", "problem_description", "issue"]) {
+      const f = fieldFor(key, { type: "string" }, makeFullReport());
+      expect(f?.value).toBe("Pothole on Main St");
+    }
+  });
+
+  it("falls back to aiDescription when description is blank/whitespace", () => {
+    const f = fieldFor(
+      "description",
+      { type: "string" },
+      makeFullReport({ description: "   " }),
+    );
+    expect(f?.value).toBe("AI: deep pothole");
+  });
+
+  it("yields a null description when neither description is present", () => {
+    const f = fieldFor("description", { type: "string" }, makeBareReport());
+    expect(f?.value).toBeNull();
+  });
+
+  it("derives the address from report.address (and its synonyms)", () => {
+    for (const key of ["address", "location", "intersection", "cross_street"]) {
+      const f = fieldFor(key, { type: "string" }, makeFullReport());
+      expect(f?.value).toBe("100 Main St, Palo Alto, CA");
+    }
+  });
+
+  it("yields a null address when the report has none", () => {
+    const f = fieldFor("address", { type: "string" }, makeBareReport());
+    expect(f?.value).toBeNull();
+  });
+
+  it("stringifies the latitude for a lat field", () => {
+    const f = fieldFor("latitude", { type: "number" }, makeFullReport());
+    expect(f?.value).toBe("37.4419");
+  });
+
+  it("yields null latitude when the report has none", () => {
+    const f = fieldFor("latitude", { type: "number" }, makeBareReport());
+    expect(f?.value).toBeNull();
+  });
+
+  it("treats latitude 0 as present, not missing", () => {
+    const f = fieldFor(
+      "latitude",
+      { type: "number" },
+      makeBareReport({ latitude: 0 }),
+    );
+    expect(f?.value).toBe("0");
+  });
+
+  it("stringifies the longitude for both lon and lng spellings", () => {
+    for (const key of ["longitude", "lng"]) {
+      const f = fieldFor(key, { type: "number" }, makeFullReport());
+      expect(f?.value).toBe("-122.143");
+    }
+  });
+
+  it("yields null longitude when the report has none", () => {
+    const f = fieldFor("longitude", { type: "number" }, makeBareReport());
+    expect(f?.value).toBeNull();
+  });
+
+  it("treats longitude 0 as present, not missing", () => {
+    const f = fieldFor(
+      "lng",
+      { type: "number" },
+      makeBareReport({ longitude: 0 }),
+    );
+    expect(f?.value).toBe("0");
+  });
+
+  it("derives the contact email from report.contactEmail", () => {
+    const f = fieldFor("contact_email", { type: "string" }, makeFullReport());
+    expect(f?.value).toBe("reporter@example.com");
+  });
+
+  it("yields null email when the report has none", () => {
+    const f = fieldFor("email", { type: "string" }, makeBareReport());
+    expect(f?.value).toBeNull();
+  });
+
+  it("formats the createdAt for a datetime field (date/time synonyms)", () => {
+    const createdAt = new Date("2026-06-09T12:00:00Z");
+    const expected = createdAt.toLocaleString();
+    for (const key of ["datetime", "date", "observation_date", "observed_at"]) {
+      const f = fieldFor(
+        "incident_" + key,
+        { type: "string" },
+        makeFullReport({ createdAt }),
+      );
+      expect(f?.value).toBe(expected);
+    }
+  });
+
+  it("accepts an ISO string createdAt and formats it", () => {
+    const f = fieldFor(
+      "observation_date",
+      { type: "string" },
+      makeFullReport({ createdAt: "2026-06-09T12:00:00Z" }),
+    );
+    expect(f?.value).toBe(new Date("2026-06-09T12:00:00Z").toLocaleString());
+  });
+});
+
+describe("buildPrefillFields — file/photo branch", () => {
+  it("never prefills a value for a file-typed field but hints to attach", () => {
+    const f = fieldFor("evidence", { type: "file" }, makeFullReport());
+    expect(f?.value).toBeNull();
+    expect(f?.hint).toBe("Attach the photo you uploaded to Nexa.");
+  });
+
+  it("matches photo/image/attachment keys regardless of declared type", () => {
+    for (const key of ["photo", "image_url", "attachment"]) {
+      const f = fieldFor(key, { type: "string" }, makeFullReport());
+      expect(f?.value).toBeNull();
+      expect(f?.hint).toBe("Attach the photo you uploaded to Nexa.");
+    }
+  });
+
+  it("hints that no photo is attached when the report has no imageUrl", () => {
+    const f = fieldFor("photo", { type: "file" }, makeBareReport());
+    expect(f?.hint).toBe("No photo attached.");
+  });
+});
+
+describe("buildPrefillFields — unknown / underivable field branch", () => {
+  it("returns a null value and a fill-it-in hint for unknown keys", () => {
+    const f = fieldFor("vehicle_make", { type: "string" }, makeFullReport());
+    expect(f?.value).toBeNull();
+    expect(f?.hint).toBe("You'll need to fill this in.");
+  });
+
+  it("matches the lat branch for any key containing 'lat' (e.g. license_plate)", () => {
+    // Documents a real substring quirk: license_pLATe contains "lat", so it
+    // resolves to the report latitude rather than falling through to unknown.
+    const f = fieldFor("license_plate", { type: "string" }, makeFullReport());
+    expect(f?.value).toBe("37.4419");
+  });
+});
+
+describe("buildPrefillFields — schema parsing, labels, ordering", () => {
+  it("returns an empty list for a null/non-object schema", () => {
+    expect(buildPrefillFields(makeFullReport(), null)).toEqual([]);
+    expect(buildPrefillFields(makeFullReport(), undefined)).toEqual([]);
+    expect(buildPrefillFields(makeFullReport(), "not-an-object")).toEqual([]);
+    expect(buildPrefillFields(makeFullReport(), 7)).toEqual([]);
+  });
+
+  it("defaults the type to 'string' when the spec omits or mistypes it", () => {
+    const fields = buildPrefillFields(makeFullReport(), {
+      foo: {},
+      bar: { type: 99 },
+    });
+    expect(fields.every((f) => f.type === "string")).toBe(true);
+  });
+
+  it("tolerates a null/non-object field spec", () => {
+    const fields = buildPrefillFields(makeFullReport(), {
+      description: null,
+    });
+    const f = fields.find((field) => field.key === "description");
+    // null spec → defaults (type string, not required) → derives description.
+    expect(f?.required).toBe(false);
+    expect(f?.value).toBe("Pothole on Main St");
+  });
+
+  it("humanizes keys: underscores/dashes to spaces, first letter capitalized", () => {
+    const fields = buildPrefillFields(makeFullReport(), {
+      location_address: { type: "string" },
+      "cross-street": { type: "string" },
+    });
+    expect(fields.find((f) => f.key === "location_address")?.label).toBe(
+      "Location address",
+    );
+    expect(fields.find((f) => f.key === "cross-street")?.label).toBe(
+      "Cross street",
+    );
+  });
+
+  it("marks required only when the spec sets required === true", () => {
+    const fields = buildPrefillFields(makeFullReport(), {
+      a: { type: "string", required: true },
+      b: { type: "string", required: false },
+      c: { type: "string", required: "yes" },
+    });
+    expect(fields.find((f) => f.key === "a")?.required).toBe(true);
+    expect(fields.find((f) => f.key === "b")?.required).toBe(false);
+    // Only a strict boolean true counts as required.
+    expect(fields.find((f) => f.key === "c")?.required).toBe(false);
+  });
+
+  it("sorts required fields ahead of optional ones", () => {
+    const fields = buildPrefillFields(makeFullReport(), {
+      optional_one: { type: "string" },
+      required_one: { type: "string", required: true },
+      optional_two: { type: "string" },
+      required_two: { type: "string", required: true },
+    });
+    expect(fields.map((f) => f.required)).toEqual([true, true, false, false]);
+  });
 });
