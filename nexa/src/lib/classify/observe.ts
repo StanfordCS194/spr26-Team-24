@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { extractJsonObject } from "./json";
 
 export interface Observation {
   objects: string[];
@@ -28,17 +29,7 @@ function getClient() {
 }
 
 function parseObservation(raw: string): Omit<Observation, "latencyMs"> {
-  const text = raw
-    .trim()
-    .replace(/```(?:json)?\s*/gi, "")
-    .replace(/```/g, "")
-    .trim();
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    throw new SyntaxError("No JSON object in observation response");
-  }
-  const parsed = JSON.parse(text.slice(start, end + 1));
+  const parsed = extractJsonObject<Record<string, unknown>>(raw, "observation");
   return {
     objects: Array.isArray(parsed.objects) ? parsed.objects.map(String) : [],
     conditions: Array.isArray(parsed.conditions)

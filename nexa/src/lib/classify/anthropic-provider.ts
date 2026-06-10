@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getAnthropicKey } from "@/lib/config";
+import { stripDataUrlPrefix } from "./image-utils";
 import {
   CLASSIFICATION_PROMPT,
   parseClassificationResponse,
@@ -17,11 +18,6 @@ function extractMediaType(
   if (base64.startsWith("data:image/gif")) return "image/gif";
   if (base64.startsWith("data:image/webp")) return "image/webp";
   return "image/jpeg";
-}
-
-function stripPrefix(base64: string): string {
-  const idx = base64.indexOf(",");
-  return idx >= 0 ? base64.slice(idx + 1) : base64;
 }
 
 /**
@@ -54,7 +50,7 @@ export async function classifyWithAnthropic(
       source: {
         type: "base64",
         media_type: extractMediaType(imageBase64),
-        data: stripPrefix(imageBase64),
+        data: stripDataUrlPrefix(imageBase64),
       },
     });
   }

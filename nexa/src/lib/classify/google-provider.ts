@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { getGoogleApiKey } from "@/lib/config";
+import { stripDataUrlPrefix } from "./image-utils";
 import {
   CLASSIFICATION_PROMPT,
   parseClassificationResponse,
@@ -8,11 +9,6 @@ import {
 
 function getClient() {
   return new GoogleGenAI({ apiKey: getGoogleApiKey() });
-}
-
-function stripPrefix(base64: string): string {
-  const idx = base64.indexOf(",");
-  return idx >= 0 ? base64.slice(idx + 1) : base64;
 }
 
 function extractMimeType(base64: string): string {
@@ -55,7 +51,7 @@ export async function classifyWithGoogle(
     parts.push({
       inlineData: {
         mimeType: extractMimeType(imageBase64),
-        data: stripPrefix(imageBase64),
+        data: stripDataUrlPrefix(imageBase64),
       },
     });
   }
