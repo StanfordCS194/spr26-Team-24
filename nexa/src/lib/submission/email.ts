@@ -235,7 +235,14 @@ export async function submitViaEmail(
       reason: "SUBMISSION_FROM_EMAIL is not set; email submission is disabled.",
     };
   }
-  const to = options.intakeEmail?.trim();
+  // Optional test/demo safety valve: when SUBMISSION_OVERRIDE_EMAIL is set,
+  // every submission email is redirected to that single inbox instead of the
+  // agency's real address. This lets you verify real end-to-end sending against
+  // your own inbox without emailing a live city. Leave it unset in production
+  // to file with the actual agency.
+  const overrideTo = process.env.SUBMISSION_OVERRIDE_EMAIL?.trim();
+  const agencyTo = options.intakeEmail?.trim();
+  const to = overrideTo || agencyTo;
   if (!to) {
     return {
       status: "not_configured",
@@ -246,6 +253,12 @@ export async function submitViaEmail(
   const composed = composeSubmissionEmail(report, {
     agencyName: options.agencyName,
   });
+
+  // When redirected, tag the subject so the test inbox makes clear where this
+  // would have gone in production.
+  if (overrideTo && agencyTo && overrideTo !== agencyTo) {
+    composed.subject = `[Nexa test → ${agencyTo}] ${composed.subject}`;
+  }
 
   // A custom fetchImpl (tests) is used verbatim; otherwise fetchWithTimeout
   // bounds the photo download so a hung asset host can't stall the submission.

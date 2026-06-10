@@ -54,6 +54,7 @@ function fakePhotoFetch(): typeof fetch {
 afterEach(() => {
   delete process.env.RESEND_API_KEY;
   delete process.env.SUBMISSION_FROM_EMAIL;
+  delete process.env.SUBMISSION_OVERRIDE_EMAIL;
   vi.restoreAllMocks();
 });
 
@@ -176,6 +177,28 @@ describe("submitViaEmail — sending", () => {
     expect(payload.subject).toContain("Road Damage");
     expect(payload.attachments).toHaveLength(1);
     expect(payload.attachments?.[0].filename).toBe("abc123.png");
+  });
+
+  it("redirects to SUBMISSION_OVERRIDE_EMAIL and tags the subject when set", async () => {
+    // Arrange: a test/demo inbox override is configured.
+    process.env.SUBMISSION_FROM_EMAIL = "reports@nexa.app";
+    process.env.SUBMISSION_OVERRIDE_EMAIL = "me@example.com";
+    const send = vi.fn(async () => ({ data: { id: "msg-ovr" }, error: null }));
+
+    // Act
+    const result = await submitViaEmail(makeEmailReport(), {
+      agencyName: "Palo Alto Public Works",
+      intakeEmail: "311@paloalto.gov",
+      resendClient: fakeResend(send),
+      fetchImpl: fakePhotoFetch(),
+    });
+
+    // Assert: delivered to the override inbox, not the agency, with a clear tag
+    // naming the real destination so the test inbox isn't misleading.
+    expect(result).toEqual({ status: "submitted", messageId: "msg-ovr" });
+    const payload = firstSendPayload(send) as { to: string; subject: string };
+    expect(payload.to).toBe("me@example.com");
+    expect(payload.subject).toContain("[Nexa test → 311@paloalto.gov]");
   });
 
   it("still sends (no attachment) when the photo download fails", async () => {
