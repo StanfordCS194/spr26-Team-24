@@ -41,6 +41,7 @@ describe("GET /api/health", () => {
       aiClassification: expect.any(Boolean),
       addressAutocomplete: expect.any(Boolean),
       statusPollingCron: expect.any(Boolean),
+      googleSignIn: expect.any(Boolean),
     });
     expect(JSON.stringify(body.data.features)).not.toMatch(/sk-|key|secret/i);
   });
