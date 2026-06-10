@@ -19,7 +19,10 @@ vi.mock("posthog-js/react", () => ({
   usePostHog: () => ({ capture }),
 }));
 
-function submitResponse(submitted: boolean, extra: Record<string, unknown> = {}) {
+function submitResponse(
+  submitted: boolean,
+  extra: Record<string, unknown> = {},
+) {
   return {
     success: true,
     data: {
@@ -39,9 +42,12 @@ describe("SubmissionAssistant K2 emit (#240)", () => {
   it("emits report_submitted with time_to_submit_ms on a real agency submission", async () => {
     // Arrange: the orchestrator reports a real API/EMAIL submission.
     server.use(
-      jsonPost("*/api/reports/:id/submit", submitResponse(true, {
-        externalTrackingId: "TRK-1",
-      })),
+      jsonPost(
+        "*/api/reports/:id/submit",
+        submitResponse(true, {
+          externalTrackingId: "TRK-1",
+        }),
+      ),
     );
     const captureStart = Date.now() - 5_000;
 
@@ -57,7 +63,9 @@ describe("SubmissionAssistant K2 emit (#240)", () => {
     );
 
     // Assert: success state + a single timed report_submitted event.
-    expect(await screen.findByText("Filed with the agency")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Filed with the agency"),
+    ).toBeInTheDocument();
     await waitFor(() => expect(capture).toHaveBeenCalledTimes(1));
     const [event, props] = capture.mock.calls[0];
     expect(event).toBe("report_submitted");
