@@ -18,6 +18,8 @@ describe("POST /api/reports", () => {
     // Routing/dedupe helpers query prisma too — stub them so the route runs.
     prismaMock.agency.findMany.mockResolvedValue([]);
     prismaMock.issueGroup.findMany.mockResolvedValue([]);
+    // No prior report -> not a duplicate, so creation proceeds.
+    prismaMock.report.findMany.mockResolvedValue([]);
     // findOrCreateIssueGroup selects only { id }, so a narrowed shape is correct.
     prismaMock.issueGroup.create.mockResolvedValue({
       id: "group_1",
@@ -45,10 +47,45 @@ describe("POST /api/reports", () => {
     expect(prismaMock.report.create).toHaveBeenCalledOnce();
   });
 
+  it("returns 409 with the existing report id on a likely duplicate", async () => {
+    // Arrange: an existing same-type report at the exact same location, recent.
+    const existing = makeReport({
+      id: "report_existing",
+      issueType: "ROAD_DAMAGE",
+      latitude: 37.4419,
+      longitude: -122.143,
+      createdAt: new Date(),
+    });
+    prismaMock.report.findMany.mockResolvedValue([existing]);
+
+    const request = new NextRequest("http://localhost/api/reports", {
+      method: "POST",
+      body: JSON.stringify({
+        description: "Pothole on University Ave",
+        issueType: "ROAD_DAMAGE",
+        latitude: 37.4419,
+        longitude: -122.143,
+      }),
+    });
+
+    // Act
+    const response = await POST(request);
+    const body = await response.json();
+
+    // Assert: the second report is rejected, not persisted, and points at the
+    // original report so the client can surface it.
+    expect(response.status).toBe(409);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("DUPLICATE_REPORT");
+    expect(body.details.duplicateOf).toBe("report_existing");
+    expect(prismaMock.report.create).not.toHaveBeenCalled();
+  });
+
   it("returns 500 when the database write throws", async () => {
     // Arrange
     prismaMock.agency.findMany.mockResolvedValue([]);
     prismaMock.issueGroup.findMany.mockResolvedValue([]);
+    prismaMock.report.findMany.mockResolvedValue([]);
     prismaMock.report.create.mockRejectedValue(new Error("db down"));
 
     const request = new NextRequest("http://localhost/api/reports", {

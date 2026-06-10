@@ -44,6 +44,10 @@ model Report {
   issueGroup         IssueGroup?  @relation(fields: [issueGroupId], references: [id])
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
+
+  // Speeds the duplicate-report lookup (src/lib/reports/dedup.ts), which filters
+  // recent same-type reports by reporter before the lat/long bounding box.
+  @@index([userId, issueType, createdAt])
 }
 
 // A shared "case" that groups duplicate reports — multiple people reporting the

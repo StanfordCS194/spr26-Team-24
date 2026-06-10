@@ -38,6 +38,19 @@ function optionalEnv(name: string): string | undefined {
 }
 
 /**
+ * Read an optional numeric env var, falling back to `fallback` when the var is
+ * unset, empty, non-numeric, or non-positive. Keeps tuning knobs configurable
+ * without letting a typo silently disable a feature (a `0`/`NaN` radius would).
+ */
+function optionalPositiveNumberEnv(name: string, fallback: number): number {
+  const raw = optionalEnv(name);
+  if (raw === undefined) return fallback;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
+/**
  * Wrap a getter so its result is computed once and cached. The first call
  * resolves the value (and may throw for required vars); later calls return the
  * memoized result.
@@ -88,4 +101,35 @@ export const getGoogleApiKey = cached(() => optionalEnv("GOOGLE_API_KEY"));
  */
 export const getGoogleMapsApiKey = cached(() =>
   optionalEnv("GOOGLE_MAPS_API_KEY"),
+);
+
+// --- Duplicate-report detection (see src/lib/reports/dedup.ts) ---
+
+/** Default radius (metres) within which a same-type report counts as a dup. */
+export const DEFAULT_DUPLICATE_RADIUS_METERS = 50;
+/** Default look-back window (hours) for the duplicate search. */
+export const DEFAULT_DUPLICATE_WINDOW_HOURS = 24;
+
+/**
+ * Radius (metres) within which a new report with the same reporter + issue type
+ * is treated as a likely duplicate. Configurable via `DUPLICATE_RADIUS_METERS`;
+ * defaults to {@link DEFAULT_DUPLICATE_RADIUS_METERS}.
+ */
+export const getDuplicateRadiusMeters = cached(() =>
+  optionalPositiveNumberEnv(
+    "DUPLICATE_RADIUS_METERS",
+    DEFAULT_DUPLICATE_RADIUS_METERS,
+  ),
+);
+
+/**
+ * Look-back window (hours) for the duplicate search — only reports created
+ * within this window are considered. Configurable via `DUPLICATE_WINDOW_HOURS`;
+ * defaults to {@link DEFAULT_DUPLICATE_WINDOW_HOURS}.
+ */
+export const getDuplicateWindowHours = cached(() =>
+  optionalPositiveNumberEnv(
+    "DUPLICATE_WINDOW_HOURS",
+    DEFAULT_DUPLICATE_WINDOW_HOURS,
+  ),
 );

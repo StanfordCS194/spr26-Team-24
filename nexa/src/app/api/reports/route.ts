@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { resolveAgencyId } from "@/lib/jurisdictions/agency";
 import { findOrCreateIssueGroup } from "@/lib/issues/dedupe";
+import { findDuplicateReport } from "@/lib/reports/dedup";
 import { CreateReportSchema } from "@/lib/api/schemas";
 import {
   parseJsonRequest,
@@ -25,6 +26,25 @@ export async function POST(request: NextRequest) {
     } = await parseJsonRequest(request, CreateReportSchema);
 
     const validIssueType = issueType ?? null;
+
+    // Guard against the same reporter (or, for guests, the same nearby spot)
+    // filing an identical issue twice in quick succession. On a likely match we
+    // return 409 with the existing report's id rather than persisting a second
+    // copy — distinct reports (different type/location/window) are unaffected.
+    const duplicate = await findDuplicateReport({
+      userId: session?.userId ?? null,
+      issueType: validIssueType,
+      latitude,
+      longitude,
+    });
+    if (duplicate) {
+      return errorResponse(
+        "A matching report was filed recently nearby.",
+        409,
+        "DUPLICATE_REPORT",
+        { duplicateOf: duplicate.reportId },
+      );
+    }
 
     // Route the report to the responsible agency from its location + issue
     // type so the submission pipeline has somewhere to file it. When routing is
