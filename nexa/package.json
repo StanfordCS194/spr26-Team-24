@@ -21,7 +21,8 @@
     "eval": "tsx eval/run.ts",
     "eval:baseline": "tsx eval/run.ts --mode=baseline",
     "eval:two-stage": "tsx eval/run.ts --mode=two-stage",
-    "eval:routing": "tsx eval/routing.ts"
+    "eval:routing": "tsx eval/routing.ts",
+    "eval:validate-boundaries": "tsx eval/validate-boundaries.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
