@@ -47,7 +47,11 @@ export default defineConfig({
       // The CI e2e job: exclude the video walkthrough AND the K2 measurement
       // spec so this default project stays fast and stable (k2-measure drives
       // the flow K2_RUNS times — too slow/noisy for CI).
-      testIgnore: [/full-workflow\.spec\.ts/, /k2-measure\.spec\.ts/],
+      testIgnore: [
+        /full-workflow\.spec\.ts/,
+        /k2-measure\.spec\.ts/,
+        /demo-human\.spec\.ts/,
+      ],
     },
     {
       // Dedicated project for the end-to-end walkthrough (#220). `video: "on"`
