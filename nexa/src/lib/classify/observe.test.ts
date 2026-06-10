@@ -79,47 +79,46 @@ describe("observeImage (parseObservation behavior)", () => {
     expect(obs.scene).toBe("s");
   });
 
-  it("coerces non-array fields to empty arrays", async () => {
-    // Arrange: objects is a string, hazards is a number.
+  it("throws on a wrong-shaped field instead of coercing it to empty", async () => {
+    // Arrange: objects is a string, hazards a number — previously these were
+    // silently coerced to [], masking an upstream model failure. They must now
+    // fail traceably at the boundary.
     createMock.mockResolvedValue(
       reply(JSON.stringify({ objects: "nope", hazards: 3, scene: "s" })),
     );
 
-    // Act
-    const obs = await observeImage("data:image/jpeg;base64,xxx");
-
-    // Assert
-    expect(obs.objects).toEqual([]);
-    expect(obs.conditions).toEqual([]);
-    expect(obs.hazards).toEqual([]);
+    // Act / Assert
+    await expect(observeImage("data:image/jpeg;base64,xxx")).rejects.toThrow(
+      /invalid observation response/i,
+    );
   });
 
-  it("coerces non-string array elements to strings", async () => {
-    // Arrange
+  it("throws on non-string array elements instead of stringifying them", async () => {
+    // Arrange: the array must contain strings — no String() coercion now.
     createMock.mockResolvedValue(
       reply(JSON.stringify({ objects: [1, true, null], scene: "s" })),
     );
 
-    // Act
-    const obs = await observeImage("data:image/jpeg;base64,xxx");
-
-    // Assert
-    expect(obs.objects).toEqual(["1", "true", "null"]);
+    // Act / Assert
+    await expect(observeImage("data:image/jpeg;base64,xxx")).rejects.toThrow(
+      /invalid observation response/i,
+    );
   });
 
-  it("defaults scene to empty string when missing or non-string", async () => {
-    // Arrange
+  it("throws when scene is present but not a string", async () => {
+    // Arrange: a non-string scene is malformed, not an empty scene.
     createMock.mockResolvedValue(reply(JSON.stringify({ scene: 99 })));
 
-    // Act
-    const obs = await observeImage("data:image/jpeg;base64,xxx");
-
-    // Assert
-    expect(obs.scene).toBe("");
+    // Act / Assert
+    await expect(observeImage("data:image/jpeg;base64,xxx")).rejects.toThrow(
+      /invalid observation response/i,
+    );
   });
 
-  it("falls back to {} when the model returns null content (empty observation)", async () => {
-    // Arrange: content null → source defaults raw to "{}".
+  it("treats missing keys as a legitimate empty observation (blurry/empty image)", async () => {
+    // Arrange: the prompt permits empty arrays / scene for an empty image, and
+    // null content defaults raw to "{}" — every key missing is valid, so the
+    // schema fills defaults rather than throwing.
     createMock.mockResolvedValue(reply(null));
 
     // Act

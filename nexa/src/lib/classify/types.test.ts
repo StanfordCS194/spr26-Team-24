@@ -74,33 +74,69 @@ describe("parseClassificationResponse", () => {
     expect(() => parseClassificationResponse("{ not: valid, json }")).toThrow();
   });
 
-  it("returns missing required fields as undefined (no schema enforcement)", () => {
-    // Arrange: the parser does not validate the schema — callers do.
+  it("throws when required fields are missing (schema enforced)", () => {
+    // Arrange: only issueType is present — the schema now rejects the rest.
     const raw = JSON.stringify({ issueType: "OTHER" });
 
-    // Act
-    const result = parseClassificationResponse(raw);
-
-    // Assert
-    expect(result.issueType).toBe("OTHER");
-    expect(result.aiDescription).toBeUndefined();
-    expect(result.severity).toBeUndefined();
-    expect(result.confidence).toBeUndefined();
+    // Act / Assert: a traceable validation error, not a half-typed object.
+    expect(() => parseClassificationResponse(raw)).toThrow(
+      /invalid classification response/i,
+    );
   });
 
-  it("passes through non-string string fields unchanged (no coercion)", () => {
-    // Arrange: aiDescription is a number — the parser does not coerce it.
+  it("throws when issueType is not in the IssueType enum", () => {
+    // Arrange: a value outside the allowed enum must fail rather than cast.
+    const raw = JSON.stringify({ ...valid, issueType: "NOT_A_TYPE" });
+
+    // Act / Assert
+    expect(() => parseClassificationResponse(raw)).toThrow(
+      /invalid classification response/i,
+    );
+  });
+
+  it("throws when issueType is a number (the documented crash case)", () => {
+    // Arrange: `{ issueType: 123 }` previously passed the cast and crashed
+    // downstream — it must now fail at the boundary.
+    const raw = JSON.stringify({ ...valid, issueType: 123 });
+
+    // Act / Assert
+    expect(() => parseClassificationResponse(raw)).toThrow(
+      /invalid classification response/i,
+    );
+  });
+
+  it("throws when severity is not in the Severity enum", () => {
+    // Arrange
+    const raw = JSON.stringify({ ...valid, severity: "critical" });
+
+    // Act / Assert
+    expect(() => parseClassificationResponse(raw)).toThrow(
+      /invalid classification response/i,
+    );
+  });
+
+  it("throws when a string field is the wrong type (no coercion)", () => {
+    // Arrange: aiDescription is a number — validation rejects rather than coerce.
     const raw = JSON.stringify({ ...valid, aiDescription: 42 });
 
-    // Act
-    const result = parseClassificationResponse(raw);
-
-    // Assert
-    expect(result.aiDescription as unknown).toBe(42);
+    // Act / Assert
+    expect(() => parseClassificationResponse(raw)).toThrow(
+      /invalid classification response/i,
+    );
   });
 
-  it("passes through confidence values outside 0-1 (no clamping)", () => {
+  it("throws when confidence is not a number", () => {
     // Arrange
+    const raw = JSON.stringify({ ...valid, confidence: "high" });
+
+    // Act / Assert
+    expect(() => parseClassificationResponse(raw)).toThrow(
+      /invalid classification response/i,
+    );
+  });
+
+  it("accepts confidence values outside 0-1 (bounds are out of scope, #106)", () => {
+    // Arrange: the schema validates the type, not the numeric range.
     const raw = JSON.stringify({ ...valid, confidence: 5 });
 
     // Act / Assert
