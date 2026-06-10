@@ -1,0 +1,242 @@
+[
+  {
+    "id": "road-pa-01",
+    "issueType": "ROAD_DAMAGE",
+    "note": "Palo Alto pothole -> Palo Alto 311 (WEB_FORM, unambiguous).",
+    "report": {
+      "description": "Deep pothole in the right lane near the crosswalk, ~40cm wide.",
+      "aiDescription": "Pothole in roadway lane creating a vehicle hazard.",
+      "latitude": 37.36378,
+      "longitude": -122.19389,
+      "address": "Page Mill Rd & El Camino Real, Palo Alto, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-pa-01.jpg",
+      "contactEmail": "reporter1@example.com",
+      "contactName": "Jordan Lee",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "road-mv-02",
+    "issueType": "ROAD_DAMAGE",
+    "note": "Mountain View road damage -> Mountain View Public Works (WEB_FORM).",
+    "report": {
+      "description": "Cracked asphalt with raised edge along the bike lane.",
+      "aiDescription": "Damaged road surface affecting bike lane.",
+      "latitude": 37.40154,
+      "longitude": -122.08137,
+      "address": "Castro St & Evelyn Ave, Mountain View, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-mv-02.jpg",
+      "contactEmail": "reporter2@example.com",
+      "contactName": "Priya Shah",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "road-scc-03",
+    "issueType": "ROAD_DAMAGE",
+    "note": "Unincorporated county road -> Santa Clara County Public Works (WEB_FORM).",
+    "report": {
+      "description": "Washed-out shoulder on the rural road after the storm.",
+      "aiDescription": "Eroded road shoulder on county road.",
+      "latitude": 37.24497,
+      "longitude": -121.76879,
+      "address": "Mt Hamilton Rd, unincorporated Santa Clara County, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-scc-03.jpg",
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "road-mp-04-api",
+    "issueType": "ROAD_DAMAGE",
+    "note": "Menlo Park road damage -> ambiguous (ACT + SeeClickFix); harness prefers the Open311 API candidate and builds a real GeoReport v2 body.",
+    "report": {
+      "description": "Large pothole opening up at the intersection, getting worse.",
+      "aiDescription": "Pothole in intersection roadway.",
+      "latitude": 37.42467,
+      "longitude": -122.20888,
+      "address": "Willow Rd & Newbridge St, Menlo Park, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-mp-04.jpg",
+      "contactEmail": "reporter4@example.com",
+      "contactName": "Sam Rivera",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "road-pa-05-aifallback",
+    "issueType": "ROAD_DAMAGE",
+    "note": "Palo Alto road damage with NO citizen description -> exercises buildRequestParams/description fallback to aiDescription.",
+    "report": {
+      "description": null,
+      "aiDescription": "Sunken utility cover creating a roadway dip.",
+      "latitude": 37.35109,
+      "longitude": -122.19389,
+      "address": "Embarcadero Rd & Middlefield Rd, Palo Alto, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-pa-05.jpg",
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "dump-pa-06",
+    "issueType": "ILLEGAL_DUMPING",
+    "note": "Palo Alto illegal dumping -> Palo Alto 311 (WEB_FORM, unambiguous).",
+    "report": {
+      "description": "Mattress and bags of trash dumped on the sidewalk overnight.",
+      "aiDescription": "Illegally dumped furniture and refuse on sidewalk.",
+      "latitude": 37.35109,
+      "longitude": -122.19389,
+      "address": "Alma St & Oregon Expy, Palo Alto, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/dump-pa-06.jpg",
+      "contactEmail": "reporter6@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "dump-mv-07",
+    "issueType": "ILLEGAL_DUMPING",
+    "note": "Mountain View illegal dumping -> Mountain View Public Works (WEB_FORM).",
+    "report": {
+      "description": "Pile of construction debris left at the trailhead parking lot.",
+      "aiDescription": "Construction debris dumped at trailhead.",
+      "latitude": 37.40096,
+      "longitude": -122.10788,
+      "address": "Shoreline Blvd trailhead, Mountain View, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/dump-mv-07.jpg",
+      "contactEmail": "reporter7@example.com",
+      "contactName": "Dana Wu",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "dump-mp-08-api",
+    "issueType": "ILLEGAL_DUMPING",
+    "note": "Menlo Park dumping -> ambiguous; harness prefers the Open311 API candidate (service_code 94210) and builds the GeoReport v2 body.",
+    "report": {
+      "description": "Old tires and paint cans dumped along the creek path.",
+      "aiDescription": "Tires and hazardous containers dumped near creek.",
+      "latitude": 37.42467,
+      "longitude": -122.21866,
+      "address": "Bay Rd near Marsh Rd, Menlo Park, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/dump-mp-08.jpg",
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "dump-pa-09-nophoto",
+    "issueType": "ILLEGAL_DUMPING",
+    "note": "Palo Alto dumping, no photo -> still ready (photo is optional in Palo Alto 311 requiredFields).",
+    "report": {
+      "description": "Bags of yard waste dumped against the fence.",
+      "aiDescription": "Yard-waste dumping against fence.",
+      "latitude": 37.36378,
+      "longitude": -122.19389,
+      "address": "Greer Rd & Loma Verde Ave, Palo Alto, CA",
+      "photoUrl": null,
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "emit-pa-10",
+    "issueType": "VEHICLE_EMISSIONS",
+    "note": "Palo Alto smoking vehicle -> CARB Smoking Vehicle Complaint (phone hotline). All operator-fillable required fields present.",
+    "report": {
+      "description": "Sedan emitting heavy blue/black smoke while idling at the light.",
+      "aiDescription": "Vehicle emitting visible smoke indicating emissions fault.",
+      "latitude": 37.36378,
+      "longitude": -122.19389,
+      "address": "University Ave & Middlefield Rd, Palo Alto, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/emit-pa-10.jpg",
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": "7ABC123",
+      "vehicleMake": "Toyota",
+      "vehicleModel": "Camry",
+      "vehicleColor": "silver",
+      "observationDatetime": "2026-06-08T14:32:00-07:00"
+    }
+  },
+  {
+    "id": "emit-pa-11",
+    "issueType": "VEHICLE_EMISSIONS",
+    "note": "Second smoking-vehicle case with full plate/make/observation fields.",
+    "report": {
+      "description": "Diesel pickup belching black smoke on acceleration.",
+      "aiDescription": "Diesel vehicle producing excessive black exhaust.",
+      "latitude": 37.35109,
+      "longitude": -122.19389,
+      "address": "Oregon Expy onramp, Palo Alto, CA",
+      "photoUrl": null,
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": "9XYZ876",
+      "vehicleMake": "Ford",
+      "vehicleModel": "F-250",
+      "vehicleColor": "white",
+      "observationDatetime": "2026-06-07T08:10:00-07:00"
+    }
+  },
+  {
+    "id": "emit-pa-12-incomplete",
+    "issueType": "VEHICLE_EMISSIONS",
+    "note": "NEGATIVE CONTROL: smoking-vehicle report with no license plate captured -> CARB requires license_plate, so this is correctly NOT submission-ready. Proves the field-validation gate actually fails when a required value is missing.",
+    "report": {
+      "description": "A car was smoking badly but I could not read the plate.",
+      "aiDescription": "Vehicle emitting smoke; identifying details incomplete.",
+      "latitude": 37.36378,
+      "longitude": -122.19389,
+      "address": "El Camino Real & Cambridge Ave, Palo Alto, CA",
+      "photoUrl": null,
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": "unknown",
+      "vehicleModel": null,
+      "vehicleColor": "dark",
+      "observationDatetime": "2026-06-09T17:45:00-07:00"
+    }
+  }
+]
