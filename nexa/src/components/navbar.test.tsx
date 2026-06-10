@@ -9,6 +9,7 @@ import {
   server,
   waitFor,
 } from "@/test";
+import { LOCALE_STORAGE_KEY } from "@/i18n/messages";
 
 import { Navbar } from "./navbar";
 
@@ -37,6 +38,7 @@ describe("Navbar", () => {
     push.mockClear();
     refresh.mockClear();
     pathname = "/";
+    window.localStorage.clear();
   });
 
   it("renders the logo and primary nav links", async () => {
@@ -107,6 +109,22 @@ describe("Navbar", () => {
     expect(
       screen.getAllByRole("link", { name: "Dashboard" }).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("translates the signed-in map nav link", async () => {
+    // Arrange
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "es");
+    pathname = "/map";
+    stubMe(makeUser({ name: "Ada Lovelace", email: "ada@example.com" }));
+
+    // Act
+    renderWithProviders(<Navbar />);
+
+    // Assert: the desktop tab keeps its /map route and active styling while
+    // using the locale-specific nav label.
+    const mapLink = await screen.findByRole("link", { name: "Mapa" });
+    expect(mapLink).toHaveAttribute("href", "/map");
+    expect(mapLink).toHaveClass("text-foreground");
   });
 
   it("derives initials from the user's name", async () => {
@@ -186,5 +204,28 @@ describe("Navbar", () => {
       name: /Dashboard/,
     });
     expect(dashboardItem).toHaveAttribute("aria-current", "page");
+  });
+
+  it("layers the account menu above Leaflet content on the map page", async () => {
+    // Arrange
+    pathname = "/map";
+    stubMe(makeUser({ name: "Ada", email: "ada@example.com" }));
+    const { user } = renderWithProviders(<Navbar />);
+
+    // Act: open the portaled menu while the map route is active.
+    const trigger = await screen.findByRole("button", {
+      name: "Open account menu",
+    });
+    await user.click(trigger);
+
+    // Assert: both the sticky nav and portaled menu positioner sit above
+    // Leaflet panes/controls, which can reach z-index 1000.
+    expect(screen.getByRole("navigation")).toHaveClass("z-[1100]");
+    expect(
+      await screen.findByRole("menuitem", { name: /Community Map/ }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(document.querySelectorAll(".z-\\[1100\\]").length).toBeGreaterThan(
+      1,
+    );
   });
 });

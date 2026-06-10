@@ -43,10 +43,12 @@ export async function getIssueMapPoints(
     id: group.id,
     latitude: group.latitude,
     longitude: group.longitude,
+    issueType: group.issueType,
     issueLabel:
       ISSUE_TYPE_LABELS[group.issueType] || group.issueType || "Uncategorized",
     status: group.status,
     reportCount: group.reportCount,
+    createdAt: group.createdAt.toISOString(),
     relativeTime: formatRelativeTime(group.createdAt),
     order: orderByGroupId.get(group.id) ?? 1,
     myReportId: group.reports[0]?.id ?? null,

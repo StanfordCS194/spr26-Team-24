@@ -65,8 +65,10 @@ describe("GET /api/issues/map", () => {
       id: "group_1",
       latitude: 37.4419,
       longitude: -122.143,
+      issueType: IssueType.ROAD_DAMAGE,
       status: ReportStatus.CONFIRMED,
       reportCount: 3,
+      createdAt: "2025-01-01T00:00:00.000Z",
       myReportId: "my_report",
     });
     // The point carries a human label and a relative-time string.
