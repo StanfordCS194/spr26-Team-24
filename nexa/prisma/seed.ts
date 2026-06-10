@@ -41,14 +41,22 @@ const AGENCIES: AgencySeed[] = [
     },
   },
   {
-    name: "California BAR Smoking Vehicle Hotline",
+    // CORRECTION (verified per issue #23 agency-research comment, 2026-06-09):
+    // the smoking-vehicle complaint authority is the California Air Resources
+    // Board (CARB), NOT the Bureau of Automotive Repair (BAR). The live program
+    // is the CARB "Smoking Vehicle Complaint", phone (800) 242-4450.
+    // The source comment did not provide an exact CARB web-form URL, so we keep
+    // intakeUrl null (unverified) rather than invent one; the verified phone
+    // number is recorded below as the authoritative contact channel.
+    name: "CARB Smoking Vehicle Complaint",
     jurisdiction: "city-palo-alto",
     issueTypes: ["VEHICLE_EMISSIONS"],
     intakeMethod: "WEB_FORM",
-    intakeUrl:
-      "https://www.bar.ca.gov/Consumer/Smoking_Vehicles/Report_Smoking_Vehicle",
+    intakeUrl: null,
     intakeEmail: null,
     requiredFields: {
+      // Verified CARB Smoking Vehicle Complaint hotline (issue #23).
+      contact_phone: { type: "string", value: "(800) 242-4450" },
       license_plate: { type: "string", required: true },
       vehicle_make: { type: "string", required: true },
       vehicle_model: { type: "string", required: false },
@@ -69,6 +77,49 @@ const AGENCIES: AgencySeed[] = [
       location_address: { type: "string", required: true },
       photo: { type: "file", required: false },
       contact_email: { type: "string", required: false },
+    },
+  },
+  {
+    // Verified Menlo Park SeeClickFix Open311 endpoint (issue #98 comment
+    // "Verified Open311 API options", source-verified 2026-06-09). Distinct
+    // `name` from the existing "Menlo Park ACT" WEB_FORM row so the
+    // @@unique([jurisdiction, name]) key does not collide.
+    //
+    // Verified facts (all confirmed via services.json HTTP 200, org "Menlo Park"):
+    //   - base endpoint     https://seeclickfix.com/open311/v2
+    //   - sandbox endpoint  https://int.seeclickfix.com/open311/v2
+    //   - no auth required  (a valid User-Agent is required for public POST)
+    //   - service_code ROAD_DAMAGE    = 94213 (Potholes)
+    //   - service_code ILLEGAL_DUMPING = 94210 (Dumping)
+    //
+    // CAVEAT (UNVERIFIED): the exact `jurisdiction_id` token required by
+    // POST /requests.json was NOT confirmed — numeric 76196 and the slug both
+    // 404 on per-jurisdiction GET, and no live POST was performed. We therefore
+    // do NOT seed a jurisdictionId (omitting it is correct for single-tenant
+    // posting; confirm with SeeClickFix support and test against the sandbox
+    // before relying on the production write path).
+    //
+    // The `open311` block below matches the shape consumed by
+    // parseOpen311Config()/Open311Config in src/lib/submission/open311.ts:
+    // { endpoint, serviceCodes: Partial<Record<IssueType, string>> }. The base
+    // endpoint is also mirrored in `intakeUrl` (the client falls back to it).
+    name: "Menlo Park SeeClickFix (Open311)",
+    jurisdiction: "city-menlo-park",
+    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING"],
+    intakeMethod: "API",
+    intakeUrl: "https://seeclickfix.com/open311/v2",
+    intakeEmail: null,
+    requiredFields: {
+      open311: {
+        endpoint: "https://seeclickfix.com/open311/v2",
+        // Sandbox endpoint for safe testing (not consumed by the client yet;
+        // kept here as verified provenance per the #98 caveat).
+        sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        serviceCodes: {
+          ROAD_DAMAGE: "94213",
+          ILLEGAL_DUMPING: "94210",
+        },
+      },
     },
   },
   {
