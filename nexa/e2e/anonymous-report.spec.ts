@@ -71,7 +71,10 @@ const ADDRESS_SUGGESTIONS = {
 async function stubReportRoutes(page: Page) {
   // Guest session check — the report page calls this on mount.
   await page.route("**/api/auth/me", (route) =>
-    route.fulfill({ status: 401, json: { success: false, error: "Not authenticated" } }),
+    route.fulfill({
+      status: 401,
+      json: { success: false, error: "Not authenticated" },
+    }),
   );
 
   // LLM classification consensus — stubbed winner + single provider result.

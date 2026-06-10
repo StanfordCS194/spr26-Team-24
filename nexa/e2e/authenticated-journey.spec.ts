@@ -66,7 +66,10 @@ test("registration submits and navigates away from the register form", async ({
   // Stub the account-creation endpoint so no real user is written.
   await page.route("**/api/auth/register", (route) =>
     route.fulfill({
-      json: { success: true, data: { id: "user_new", email: "new@example.com" } },
+      json: {
+        success: true,
+        data: { id: "user_new", email: "new@example.com" },
+      },
     }),
   );
 
@@ -78,9 +81,7 @@ test("registration submits and navigates away from the register form", async ({
   await page.getByLabel(/email/i).fill("new@example.com");
   // Password >= 8 chars per the issue's registration constraint.
   await page.getByLabel(/password/i).fill("supersecret123");
-  await page
-    .getByRole("button", { name: /create account/i })
-    .click();
+  await page.getByRole("button", { name: /create account/i }).click();
 
   // On success the form routes to the home page; assert we left /register.
   await expect(page).toHaveURL((url) => !url.pathname.startsWith("/register"));
