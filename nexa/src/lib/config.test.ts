@@ -92,6 +92,8 @@ const SOFT_REQUIRED_VARS = [
   "GOOGLE_API_KEY",
   "GOOGLE_MAPS_API_KEY",
   "CRON_SECRET",
+  "GOOGLE_OAUTH_CLIENT_ID",
+  "GOOGLE_OAUTH_CLIENT_SECRET",
 ] as const;
 
 describe("soft-required env audit", () => {
@@ -115,12 +117,13 @@ describe("soft-required env audit", () => {
   it("warns about every soft-required feature when all vars are unset", async () => {
     const { getSoftRequiredEnvWarnings } = await import("./config");
     const warnings = getSoftRequiredEnvWarnings();
-    expect(warnings).toHaveLength(5);
+    expect(warnings).toHaveLength(6);
     expect(warnings.join("\n")).toContain("NEXT_PUBLIC_POSTHOG_KEY");
     expect(warnings.join("\n")).toContain("RESEND_API_KEY");
     expect(warnings.join("\n")).toContain("AI classification unavailable");
     expect(warnings.join("\n")).toContain("GOOGLE_MAPS_API_KEY");
     expect(warnings.join("\n")).toContain("CRON_SECRET");
+    expect(warnings.join("\n")).toContain("GOOGLE_OAUTH_CLIENT_ID");
   });
 
   it("emits no warnings once every soft-required var is configured", async () => {
@@ -130,6 +133,8 @@ describe("soft-required env audit", () => {
     process.env.OPENAI_API_KEY = "sk-x";
     process.env.GOOGLE_MAPS_API_KEY = "maps-x";
     process.env.CRON_SECRET = "cron-x";
+    process.env.GOOGLE_OAUTH_CLIENT_ID = "gcid-x";
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET = "gcsecret-x";
     const { getSoftRequiredEnvWarnings } = await import("./config");
     expect(getSoftRequiredEnvWarnings()).toEqual([]);
   });
@@ -170,6 +175,7 @@ describe("soft-required env audit", () => {
       aiClassification: false,
       addressAutocomplete: false,
       statusPollingCron: false,
+      googleSignIn: false,
     });
     expect(JSON.stringify(features)).not.toContain("phc_supersecret");
   });

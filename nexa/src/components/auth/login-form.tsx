@@ -6,13 +6,22 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { useI18n } from "@/i18n/provider";
 import { safeRedirect } from "@/lib/utils";
 
-export function LoginForm() {
+export function LoginForm({
+  googleEnabled = false,
+}: {
+  googleEnabled?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useI18n();
+
+  // A failed Google round-trip comes back as ?error=google_… — surface one
+  // friendly message rather than leaking the specific failure code.
+  const oauthFailed = (searchParams.get("error") ?? "").startsWith("google_");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,6 +66,25 @@ export function LoginForm() {
             {t("auth.signInSubtitle")}
           </p>
         </div>
+
+        {oauthFailed && (
+          <p className="mb-4 text-sm text-destructive" role="alert">
+            {t("auth.googleSignInFailed")}
+          </p>
+        )}
+
+        {googleEnabled && (
+          <div className="mb-6">
+            <GoogleSignInButton redirect={searchParams.get("redirect")} />
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                {t("auth.or")}
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">

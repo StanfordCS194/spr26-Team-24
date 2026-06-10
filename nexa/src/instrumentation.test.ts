@@ -93,10 +93,11 @@ describe("register: soft-required env warnings", () => {
     const lines = warn.mock.calls.map((c) => String(c[0]));
     // One line per unset feature gate (telemetry, email, AI, maps, cron).
     const configLines = lines.filter((l) => l.startsWith("[config] WARNING:"));
-    expect(configLines).toHaveLength(5);
+    expect(configLines).toHaveLength(6);
     expect(configLines.join("\n")).toContain("NEXT_PUBLIC_POSTHOG_KEY");
     expect(configLines.join("\n")).toContain("AI classification unavailable");
     expect(configLines.join("\n")).toContain("CRON_SECRET");
+    expect(configLines.join("\n")).toContain("GOOGLE_OAUTH_CLIENT_ID");
   });
 
   it("does NOT warn outside production even when vars are unset", async () => {
@@ -121,6 +122,8 @@ describe("register: soft-required env warnings", () => {
     process.env.OPENAI_API_KEY = "sk-x";
     process.env.GOOGLE_MAPS_API_KEY = "maps-x";
     process.env.CRON_SECRET = "cron-x";
+    process.env.GOOGLE_OAUTH_CLIENT_ID = "gcid-x";
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET = "gcsecret-x";
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const { register } = await loadInstrumentation();

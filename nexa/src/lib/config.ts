@@ -132,6 +132,28 @@ export const getGoogleMapsApiKey = cached(() =>
   optionalEnv("GOOGLE_MAPS_API_KEY"),
 );
 
+// --- Google OAuth ("Continue with Google" sign-in, see src/lib/google-oauth.ts) ---
+//
+// Optional: when both are unset the "Continue with Google" button is hidden and
+// the OAuth routes redirect to /login. Email + password sign-in is unaffected.
+// Create an OAuth 2.0 Client (type: Web application) in the Google Cloud
+// Console and add `<origin>/api/auth/google/callback` as an authorized redirect
+// URI.
+export const getGoogleOAuthClientId = cached(() =>
+  optionalEnv("GOOGLE_OAUTH_CLIENT_ID"),
+);
+export const getGoogleOAuthClientSecret = cached(() =>
+  optionalEnv("GOOGLE_OAUTH_CLIENT_SECRET"),
+);
+
+/** True only when both Google OAuth credentials are present. */
+export function isGoogleOAuthConfigured(): boolean {
+  return (
+    anyEnvSet("GOOGLE_OAUTH_CLIENT_ID") &&
+    anyEnvSet("GOOGLE_OAUTH_CLIENT_SECRET")
+  );
+}
+
 // --- Object storage (S3 / Cloudflare R2) for image uploads (see src/lib/storage.ts) ---
 //
 // All optional: when unset the upload pipeline degrades gracefully to the
@@ -280,6 +302,14 @@ export function getSoftRequiredFeatures(): SoftRequiredFeature[] {
       configured: anyEnvSet("CRON_SECRET"),
       impact:
         "CRON_SECRET is unset — status-polling cron disabled / fails closed.",
+    },
+    {
+      feature: "googleSignIn",
+      configured:
+        anyEnvSet("GOOGLE_OAUTH_CLIENT_ID") &&
+        anyEnvSet("GOOGLE_OAUTH_CLIENT_SECRET"),
+      impact:
+        "GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET unset — 'Continue with Google' sign-in disabled (email + password still works).",
     },
   ];
 }
