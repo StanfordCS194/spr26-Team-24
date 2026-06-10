@@ -148,3 +148,112 @@ export function diffReport(
   );
   return lines.join("\n");
 }
+
+/** A single case whose correctness flipped between two eval modes. */
+export interface FlipCase {
+  caseId: string;
+  expected: IssueType;
+  baselinePredicted: IssueType;
+  candidatePredicted: IssueType;
+}
+
+export interface FlipReport {
+  /** baseline wrong → candidate right (the candidate's wins) */
+  gained: FlipCase[];
+  /** baseline right → candidate wrong (the candidate's regressions) */
+  regressed: FlipCase[];
+  /** per-expected-class net accuracy delta the candidate introduced */
+  perClassDelta: Record<
+    string,
+    { support: number; gained: number; regressed: number; netCases: number }
+  >;
+}
+
+/**
+ * Diff two modes' per-case predictions to surface the exact cases that flipped
+ * and the per-category contribution of those flips. This is what makes the
+ * two-stage regression in issue #96 measurable and inspectable: the headline
+ * accuracy delta alone hides which categories the observation stage helped vs
+ * hurt. Acceptance criterion: an ablation/diff documenting the observation's
+ * per-category accuracy delta.
+ *
+ * Both prediction arrays must come from the same dataset; cases present in only
+ * one are ignored (a mode may SKIP a case on a transient API error).
+ */
+export function flipReport(
+  baseline: CasePrediction[],
+  candidate: CasePrediction[],
+): FlipReport {
+  const candById = new Map(candidate.map((p) => [p.caseId, p]));
+  const gained: FlipCase[] = [];
+  const regressed: FlipCase[] = [];
+  const perClassDelta: FlipReport["perClassDelta"] = {};
+
+  for (const b of baseline) {
+    const c = candById.get(b.caseId);
+    if (!c) continue;
+    const cls = (perClassDelta[b.expected] ??= {
+      support: 0,
+      gained: 0,
+      regressed: 0,
+      netCases: 0,
+    });
+    cls.support++;
+    if (!b.ok && c.ok) {
+      gained.push({
+        caseId: b.caseId,
+        expected: b.expected,
+        baselinePredicted: b.predicted,
+        candidatePredicted: c.predicted,
+      });
+      cls.gained++;
+      cls.netCases++;
+    } else if (b.ok && !c.ok) {
+      regressed.push({
+        caseId: b.caseId,
+        expected: b.expected,
+        baselinePredicted: b.predicted,
+        candidatePredicted: c.predicted,
+      });
+      cls.regressed++;
+      cls.netCases--;
+    }
+  }
+
+  return { gained, regressed, perClassDelta };
+}
+
+export function renderFlipReport(
+  candidateLabel: string,
+  report: FlipReport,
+): string {
+  const lines: string[] = [];
+  lines.push(`\n=== ${candidateLabel}: per-case flips vs baseline ===`);
+  lines.push(
+    `Gained (baseline wrong → ${candidateLabel} right): ${report.gained.length}`,
+  );
+  for (const f of report.gained) {
+    lines.push(
+      `  + ${f.caseId.slice(0, 50).padEnd(50)} ${f.baselinePredicted} → ${f.candidatePredicted}  (expected ${f.expected})`,
+    );
+  }
+  lines.push(
+    `Regressed (baseline right → ${candidateLabel} wrong): ${report.regressed.length}`,
+  );
+  for (const f of report.regressed) {
+    lines.push(
+      `  - ${f.caseId.slice(0, 50).padEnd(50)} ${f.baselinePredicted} → ${f.candidatePredicted}  (expected ${f.expected})`,
+    );
+  }
+
+  lines.push("\nPer-class net contribution of the candidate stage:");
+  const classes = Object.keys(report.perClassDelta).sort();
+  for (const cls of classes) {
+    const d = report.perClassDelta[cls];
+    const sign = d.netCases > 0 ? "+" : "";
+    lines.push(
+      `  ${cls.padEnd(22)} support=${String(d.support).padStart(3)}  +${d.gained} −${d.regressed}  net=${sign}${d.netCases} case(s)`,
+    );
+  }
+  return lines.join("\n");
+}

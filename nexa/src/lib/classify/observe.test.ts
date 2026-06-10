@@ -199,8 +199,8 @@ describe("renderObservation", () => {
     expect(out).toContain("  Hazards: trip hazard");
   });
 
-  it("excludes empty arrays and empty scene", () => {
-    // Arrange
+  it("drops a fully-empty observation entirely (no header) so stage 2 falls back to baseline", () => {
+    // Arrange: no objects/conditions/hazards and no scene — zero signal.
     const sparse: Observation = {
       objects: [],
       conditions: [],
@@ -212,9 +212,43 @@ describe("renderObservation", () => {
     // Act
     const out = renderObservation(sparse);
 
-    // Assert: only the header line remains.
-    expect(out).toBe("\nStage-1 visual observations:");
-    expect(out).not.toContain("Scene:");
-    expect(out).not.toContain("Objects:");
+    // Assert (issue #96 quality gate): a zero-signal observation is dropped to
+    // "" rather than emitting a content-free "Stage-1 visual observations:"
+    // header that could bias the classifier toward OTHER.
+    expect(out).toBe("");
+  });
+
+  it("drops a scene-only observation (scene is not a usable signal)", () => {
+    // Arrange: a vague scene with no concrete objects/conditions/hazards. The
+    // stage-1 prompt fills `scene` even for blurry/empty images, so scene alone
+    // is not evidence of usable grounding.
+    const sceneOnly: Observation = {
+      objects: [],
+      conditions: [],
+      hazards: [],
+      scene: "A blurry outdoor photo.",
+      latencyMs: 5,
+    };
+
+    // Act / Assert
+    expect(renderObservation(sceneOnly)).toBe("");
+  });
+
+  it("keeps an observation with at least one concrete signal", () => {
+    // Arrange: one object is enough to clear MIN_OBSERVATION_SIGNALS.
+    const oneSignal: Observation = {
+      objects: ["pothole"],
+      conditions: [],
+      hazards: [],
+      scene: "",
+      latencyMs: 5,
+    };
+
+    // Act
+    const out = renderObservation(oneSignal);
+
+    // Assert
+    expect(out).toContain("\nStage-1 visual observations:");
+    expect(out).toContain("  Objects: pothole");
   });
 });

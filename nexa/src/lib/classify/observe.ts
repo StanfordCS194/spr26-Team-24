@@ -11,6 +11,39 @@ export interface Observation {
   latencyMs: number;
 }
 
+/**
+ * Minimum number of concrete signal items (objects + conditions + hazards) an
+ * observation must carry before its block is allowed into the stage-2 prompt.
+ *
+ * Rationale (see issue #96): a near-empty observation — e.g. only a vague
+ * `scene` line and no objects/conditions/hazards — adds no grounding but still
+ * occupies prompt space under a "Stage-1 visual observations:" header. That
+ * header alone can nudge a classifier toward hedging (OTHER) on an image it
+ * would otherwise have classified confidently. Gating it out lets stage 2 fall
+ * back to its own vision, identical to the baseline single-stage prompt.
+ *
+ * This threshold is intentionally conservative: 1 means "drop only the
+ * genuinely empty observation." Raising it trades grounding for safety and
+ * MUST be validated empirically against the eval set before changing (see the
+ * empirical-validation note in the PR / SUMMARY.md). Do not raise it blindly.
+ */
+export const MIN_OBSERVATION_SIGNALS = 1;
+
+/**
+ * Count the concrete, classifier-useful signals in an observation. The `scene`
+ * sentence is deliberately excluded: it is free-form prose that the stage-1
+ * prompt asks the model to fill in even for a blurry/empty image ("say so in
+ * scene and return empty arrays"), so a non-empty scene is NOT evidence that
+ * the observation carries usable grounding.
+ */
+export function observationSignalCount(observation: Observation): number {
+  return (
+    observation.objects.length +
+    observation.conditions.length +
+    observation.hazards.length
+  );
+}
+
 // Runtime contract for the stage-1 observation JSON. The prompt explicitly
 // permits empty arrays / an empty scene for a blurry-or-empty image, so missing
 // keys default to empty — that is a legitimate observation, not a failure. What
@@ -109,9 +142,17 @@ export async function observeImage(
  * Render an observation into a compact text block that can be appended to the
  * stage-2 classification prompt. Centralised so all three providers see the
  * same grounding text.
+ *
+ * Returns "" — i.e. the prompt collapses to the baseline single-stage prompt —
+ * when the observation is null OR carries fewer than `MIN_OBSERVATION_SIGNALS`
+ * concrete signals. A low-signal observation is dropped rather than allowed to
+ * poison stage 2 with a content-free "Stage-1 visual observations:" header
+ * (issue #96). This is a behavior-safe guard: dropping a low-signal block can
+ * only move two-stage closer to baseline, never further from it.
  */
 export function renderObservation(observation: Observation | null): string {
   if (!observation) return "";
+  if (observationSignalCount(observation) < MIN_OBSERVATION_SIGNALS) return "";
   const lines: string[] = ["\nStage-1 visual observations:"];
   if (observation.scene) lines.push(`  Scene: ${observation.scene}`);
   if (observation.objects.length > 0)

@@ -143,6 +143,73 @@ describe("classifyWithConsensus — voting (pickWinner)", () => {
     },
   );
 
+  it("breaks an exact confidence tie deterministically by provider name, not call order", async () => {
+    // Arrange: a three-way disagreement where every provider reports the SAME
+    // confidence. The old reduce kept the first array element (openai, by
+    // Promise.all order) — an undocumented, order-dependent tiebreaker. The new
+    // rule prefers the lexicographically smallest provider name on a tie:
+    // anthropic < google < openai, so anthropic must win regardless of order.
+    openaiMock.mockResolvedValue(
+      makeProvider({
+        provider: "openai",
+        issueType: "ROAD_DAMAGE",
+        confidence: 0.8,
+      }),
+    );
+    anthropicMock.mockResolvedValue(
+      makeProvider({
+        provider: "anthropic",
+        issueType: "OTHER",
+        confidence: 0.8,
+      }),
+    );
+    googleMock.mockResolvedValue(
+      makeProvider({
+        provider: "google",
+        issueType: "ILLEGAL_DUMPING",
+        confidence: 0.8,
+      }),
+    );
+
+    // Act
+    const result = await classifyWithConsensus("desc", null);
+
+    // Assert: anthropic (smallest provider name) wins the tie, not openai.
+    expect(result.method).toBe("highest-confidence");
+    expect(result.winner.issueType).toBe("OTHER");
+  });
+
+  it("majority block's peak confidence wins, not the array-order first vote", async () => {
+    // Arrange: ROAD_DAMAGE has the 2-vote plurality. Verify the winner is the
+    // ROAD_DAMAGE result with the higher confidence (peak), selected
+    // deterministically rather than by call order within the group.
+    openaiMock.mockResolvedValue(
+      makeProvider({ provider: "openai", issueType: "OTHER", confidence: 0.6 }),
+    );
+    anthropicMock.mockResolvedValue(
+      makeProvider({
+        provider: "anthropic",
+        issueType: "ROAD_DAMAGE",
+        confidence: 0.7,
+      }),
+    );
+    googleMock.mockResolvedValue(
+      makeProvider({
+        provider: "google",
+        issueType: "ROAD_DAMAGE",
+        confidence: 0.55,
+      }),
+    );
+
+    // Act
+    const result = await classifyWithConsensus("desc", null);
+
+    // Assert: ROAD_DAMAGE has the 2-vote majority; its peak (0.7) wins.
+    expect(result.method).toBe("majority");
+    expect(result.winner.issueType).toBe("ROAD_DAMAGE");
+    expect(result.winner.confidence).toBe(0.7);
+  });
+
   it("strips provider/latencyMs from the winner (toClassification)", async () => {
     // Arrange
     const winning = makeProvider({ confidence: 0.99 });

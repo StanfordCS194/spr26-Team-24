@@ -53,6 +53,35 @@ function toClassification(r: ProviderResult): ClassificationResult {
   };
 }
 
+/**
+ * Pick the highest-confidence result, breaking exact confidence ties
+ * deterministically.
+ *
+ * The previous `reduce((a, b) => a.confidence >= b.confidence ? a : b)` had two
+ * subtle problems (issue #96):
+ *   1. On an exact confidence tie it kept whichever element appeared first in
+ *      `results`, so the outcome depended on the provider call order — a hidden,
+ *      undocumented tiebreaker.
+ *   2. That order is the array order from `Promise.all` (openai, anthropic,
+ *      google), which is stable today but is an implementation detail, not an
+ *      intended policy.
+ *
+ * We make the tiebreaker explicit and stable: on equal confidence, prefer the
+ * lexicographically smaller `provider` name. This is a deterministic,
+ * documented rule that does not depend on call ordering, so identical inputs
+ * always yield the identical winner regardless of which provider responded
+ * first. It is behavior-preserving for the common case (a clear confidence
+ * max) and only changes the previously-arbitrary tie case.
+ */
+function bestByConfidence(results: ProviderResult[]): ProviderResult {
+  return results.reduce((best, r) => {
+    if (r.confidence > best.confidence) return r;
+    if (r.confidence === best.confidence && r.provider < best.provider)
+      return r;
+    return best;
+  });
+}
+
 function pickWinner(valid: ProviderResult[]): {
   winner: ClassificationResult;
   method: ComparisonResult["method"];
@@ -60,8 +89,10 @@ function pickWinner(valid: ProviderResult[]): {
   const issueTypes = valid.map((r) => r.issueType);
   const allSame = issueTypes.every((t) => t === issueTypes[0]);
   if (allSame) {
-    const best = valid.reduce((a, b) => (a.confidence >= b.confidence ? a : b));
-    return { winner: toClassification(best), method: "unanimous" };
+    return {
+      winner: toClassification(bestByConfidence(valid)),
+      method: "unanimous",
+    };
   }
   const counts = new Map<string, ProviderResult[]>();
   for (const r of valid) {
@@ -69,16 +100,35 @@ function pickWinner(valid: ProviderResult[]): {
     arr.push(r);
     counts.set(r.issueType, arr);
   }
-  for (const [, group] of counts) {
-    if (group.length >= 2) {
-      const best = group.reduce((a, b) =>
-        a.confidence >= b.confidence ? a : b,
-      );
-      return { winner: toClassification(best), method: "majority" };
+  // Pick the strongest majority block deterministically: among issue types with
+  // >= 2 votes, prefer more votes, then higher peak confidence, then
+  // lexicographic issue type. Previously the first >=2 group encountered in
+  // Map-iteration (i.e. provider-call) order won, which was order-dependent
+  // whenever two distinct types each drew two votes.
+  let bestMajority: { group: ProviderResult[]; peak: ProviderResult } | null =
+    null;
+  for (const group of counts.values()) {
+    if (group.length < 2) continue;
+    const peak = bestByConfidence(group);
+    if (
+      bestMajority === null ||
+      group.length > bestMajority.group.length ||
+      (group.length === bestMajority.group.length &&
+        peak.confidence > bestMajority.peak.confidence) ||
+      (group.length === bestMajority.group.length &&
+        peak.confidence === bestMajority.peak.confidence &&
+        peak.issueType < bestMajority.peak.issueType)
+    ) {
+      bestMajority = { group, peak };
     }
   }
-  const best = valid.reduce((a, b) => (a.confidence >= b.confidence ? a : b));
-  return { winner: toClassification(best), method: "highest-confidence" };
+  if (bestMajority) {
+    return { winner: toClassification(bestMajority.peak), method: "majority" };
+  }
+  return {
+    winner: toClassification(bestByConfidence(valid)),
+    method: "highest-confidence",
+  };
 }
 
 function mergeLocation(
