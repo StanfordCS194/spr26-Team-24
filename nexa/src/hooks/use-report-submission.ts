@@ -47,6 +47,15 @@ export interface SubmitInput {
    * validates it against the resolved candidate set before honoring it.
    */
   selectedAgencyId?: string | null;
+  /**
+   * The report page's first-capture timestamp (`flowStartedAt`). When the
+   * submit falls back to the offline queue, this is persisted with the queued
+   * item so the replayed `report_submitted` event can compute the same K2
+   * `time_to_submit_ms` (first capture -> successful replay) as the online
+   * path — see flushQueue / #237. 0 means "no capture started"; the queue
+   * tolerates that and falls back to its own queued-at time.
+   */
+  captureStartedAt?: number;
 }
 
 export interface ClassifyCallbacks {
@@ -200,7 +209,7 @@ export function useReportSubmission() {
         // No connectivity: park the report locally and confirm optimistically.
         // PwaSetup replays the queue once the browser is back online.
         if (typeof navigator !== "undefined" && !navigator.onLine) {
-          queueReport(queuePayload);
+          queueReport(queuePayload, input.captureStartedAt);
           const queued: CreatedReport = {
             id: "Pending sync",
             issueType: input.classification.issueType,

@@ -164,6 +164,10 @@ export default function ReportPage() {
         address: geo.address,
         imageBase64: image.imageBase64,
         selectedAgencyId,
+        // Persisted with the queued item when offline so a successful replay can
+        // emit the K2 metric from first capture -> replay (#237). 0 until the
+        // first capture; the queue tolerates that.
+        captureStartedAt: flowStartedAt.current,
       },
       {
         onSuccess: (report) => {
