@@ -226,7 +226,7 @@ export function DescribeStep({
       </div>
 
       <div className="ep-card p-6">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <Label
               htmlFor="description"
@@ -248,50 +248,34 @@ export function DescribeStep({
               )
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            {/*
-              One-tap Clear (#263): wipes the whole description — handy for
-              dropping an AI suggestion the user does not want. Shown only when
-              the field has content, reusing the same X icon as the image-clear
-              control. The parent marks the cleared field so the on-upload
-              auto-suggest does not immediately re-populate it from the same
-              photo.
-            */}
-            {description.trim() !== "" && (
-              <button
-                type="button"
-                onClick={onClearDescription}
-                aria-label={t("report.clearDescription")}
-                title={t("report.clearDescription")}
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <X className="size-3.5" />
-                {t("report.clear")}
-              </button>
-            )}
-            {speech.supported && (
-              <button
-                type="button"
-                onClick={handleMicToggle}
-                aria-label={
-                  speech.listening
-                    ? t("report.stopDictation")
-                    : t("report.dictateDescription")
-                }
-                aria-pressed={speech.listening}
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
-                  speech.listening
-                    ? "bg-red-50 text-red-600 hover:bg-red-100"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <Mic
-                  className={`size-3.5 ${speech.listening ? "animate-pulse" : ""}`}
-                />
-                {speech.listening ? t("report.dictating") : t("report.dictate")}
-              </button>
-            )}
-          </div>
+          {/*
+            Only the dictate toggle lives in the header now. Clear was moved to
+            the bottom of the card (below) so that when dictation flips the
+            toggle to its wider "Listening…" label, the header still fits on a
+            narrow phone instead of spilling out of the card.
+          */}
+          {speech.supported && (
+            <button
+              type="button"
+              onClick={handleMicToggle}
+              aria-label={
+                speech.listening
+                  ? t("report.stopDictation")
+                  : t("report.dictateDescription")
+              }
+              aria-pressed={speech.listening}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
+                speech.listening
+                  ? "bg-red-50 text-red-600 hover:bg-red-100"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <Mic
+                className={`size-3.5 ${speech.listening ? "animate-pulse" : ""}`}
+              />
+              {speech.listening ? t("report.dictating") : t("report.dictate")}
+            </button>
+          )}
         </div>
         <Textarea
           id="description"
@@ -315,6 +299,26 @@ export function DescribeStep({
           <p className="mt-2 text-xs text-muted-foreground">
             {t("report.aiSuggestionHint")}
           </p>
+        )}
+        {/*
+          One-tap Clear (#263): wipes the whole description — handy for dropping
+          an AI suggestion the user does not want. Lives at the bottom of the
+          card (not the header) so it never competes for width with the dictate
+          toggle on a narrow phone. Shown only when the field has content. The
+          parent marks the cleared field so the on-upload auto-suggest does not
+          immediately re-populate it from the same photo.
+        */}
+        {description.trim() !== "" && (
+          <button
+            type="button"
+            onClick={onClearDescription}
+            aria-label={t("report.clearDescription")}
+            title={t("report.clearDescription")}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-3.5" />
+            {t("report.clear")}
+          </button>
         )}
       </div>
 
