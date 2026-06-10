@@ -51,7 +51,11 @@ export async function POST(request: NextRequest) {
     // a guest to the account they just claimed. Only orphan reports (userId=null)
     // matching the supplied ids are re-associated, so this can never steal a
     // report that already belongs to someone else.
-    if (Array.isArray(reportIds) && reportIds.length > 0) {
+    if (
+      Array.isArray(reportIds) &&
+      reportIds.length > 0 &&
+      reportIds.every((id): id is string => typeof id === "string")
+    ) {
       await prisma.report.updateMany({
         where: { id: { in: reportIds }, userId: null },
         data: { userId: user.id },
