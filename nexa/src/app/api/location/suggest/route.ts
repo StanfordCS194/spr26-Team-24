@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getGoogleMapsApiKey } from "@/lib/config";
 
 type NominatimSearchResult = {
   display_name?: string;
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ suggestions: [] });
     }
 
-    const googleApiKey = process.env.GOOGLE_MAPS_API_KEY;
+    const googleApiKey = getGoogleMapsApiKey();
     let suggestions: LocationSuggestion[] = [];
 
     if (googleApiKey) {

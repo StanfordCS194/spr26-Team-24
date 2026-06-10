@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getOpenAiKey } from "@/lib/config";
 import {
   CLASSIFICATION_PROMPT,
   parseClassificationResponse,
@@ -6,7 +7,7 @@ import {
 } from "./types";
 
 function getClient() {
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return new OpenAI({ apiKey: getOpenAiKey() });
 }
 
 /**

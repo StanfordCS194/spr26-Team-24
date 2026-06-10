@@ -132,8 +132,9 @@ export default function ReportPage() {
         if (requestId !== addressLookupRequestRef.current) return;
 
         setAddressSuggestions(data.suggestions ?? []);
-      } catch {
+      } catch (e) {
         if (requestId !== addressLookupRequestRef.current) return;
+        console.error("Address suggestion lookup failed:", e);
         setAddressSuggestions([]);
       } finally {
         if (requestId !== addressLookupRequestRef.current) return;
@@ -173,6 +174,7 @@ export default function ReportPage() {
       const result: OfficialFormLookupResult = await res.json();
       setOfficialForm(result);
     } catch (err) {
+      console.error("Official form lookup failed:", err);
       setOfficialForm({
         status: "not_found",
         cityName: null,
@@ -253,6 +255,7 @@ export default function ReportPage() {
         has_location: !!geo.latitude,
       });
     } catch (e) {
+      console.error("Report classification failed:", e);
       setClassifyError(
         e instanceof Error ? e.message : t("common.somethingWrong"),
       );
@@ -300,6 +303,7 @@ export default function ReportPage() {
         has_location: !!geo.latitude,
       });
     } catch (e) {
+      console.error("Report submission failed:", e);
       // No connectivity: park the report locally and confirm optimistically.
       // PwaSetup replays the queue once the browser is back online.
       if (typeof navigator !== "undefined" && !navigator.onLine) {
