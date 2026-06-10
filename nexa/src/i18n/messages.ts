@@ -133,6 +133,9 @@ const enMessages = {
   "report.addressSuggestions": "Address suggestions",
   "report.gpsAccuracy": "Location accuracy: {meters} meters",
   "report.dragPin": "Drag the pin to correct",
+  "report.locationFromPhoto": "From photo",
+  "report.locationFromPhotoHint":
+    "Location set from the photo's GPS data. Detect your location or edit the address to change it.",
   "report.mapAdjustLabel":
     "Map showing detected location. Drag the pin or use the keyboard control to adjust.",
   "report.mapPinKeyboardLabel": "Adjust location pin",
@@ -393,6 +396,9 @@ export const messages = {
     "report.addressSuggestions": "Sugerencias de direcciones",
     "report.gpsAccuracy": "Precisión de ubicación: {meters} metros",
     "report.dragPin": "Arrastra el pin para corregir",
+    "report.locationFromPhoto": "De la foto",
+    "report.locationFromPhotoHint":
+      "Ubicación tomada de los datos GPS de la foto. Detecta tu ubicación o edita la dirección para cambiarla.",
     "report.mapAdjustLabel":
       "Mapa que muestra la ubicación detectada. Arrastra el pin o usa el control de teclado para ajustar.",
     "report.mapPinKeyboardLabel": "Ajustar el pin de ubicación",
@@ -638,6 +644,9 @@ export const messages = {
     "report.addressSuggestions": "地址建议",
     "report.gpsAccuracy": "位置精度：{meters} 米",
     "report.dragPin": "拖动图钉以校正",
+    "report.locationFromPhoto": "来自照片",
+    "report.locationFromPhotoHint":
+      "位置取自照片的 GPS 数据。检测您的位置或编辑地址即可更改。",
     "report.mapAdjustLabel":
       "地图显示检测到的位置。拖动图钉或使用键盘控件进行调整。",
     "report.mapPinKeyboardLabel": "调整位置图钉",
@@ -890,6 +899,9 @@ export const messages = {
     "report.addressSuggestions": "Suggestions d'adresses",
     "report.gpsAccuracy": "Précision de localisation : {meters} mètres",
     "report.dragPin": "Déplacez l'épingle pour corriger",
+    "report.locationFromPhoto": "Depuis la photo",
+    "report.locationFromPhotoHint":
+      "Position définie à partir des données GPS de la photo. Détectez votre position ou modifiez l'adresse pour la changer.",
     "report.mapAdjustLabel":
       "Carte montrant la position détectée. Déplacez l'épingle ou utilisez la commande clavier pour ajuster.",
     "report.mapPinKeyboardLabel": "Ajuster l'épingle de position",

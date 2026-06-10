@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "@/components/error-banner";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import type { LocationSource } from "@/hooks/use-geolocation";
 import { useI18n } from "@/i18n/provider";
 
 // Leaflet touches `window` at module load, so render the map only on the client.
@@ -26,6 +27,7 @@ interface DescribeStepProps {
   latitude: number | null;
   longitude: number | null;
   accuracy: number | null;
+  locationSource: LocationSource;
   locationLoading: boolean;
   locationSuggesting: boolean;
   addressSuggestions: string[];
@@ -50,6 +52,7 @@ export function DescribeStep({
   latitude,
   longitude,
   accuracy,
+  locationSource,
   locationLoading,
   locationSuggesting,
   addressSuggestions,
@@ -346,10 +349,20 @@ export function DescribeStep({
                   ±{Math.round(accuracy)}m
                 </span>
               )}
+              {locationSource === "exif" && (
+                <span className="rounded-full bg-ep-green-light px-2 py-0.5 text-ep-green dark:bg-green-950 dark:text-green-300">
+                  {t("report.locationFromPhoto")}
+                </span>
+              )}
               <span className="text-muted-foreground/70">
                 {t("report.dragPin")}
               </span>
             </div>
+            {locationSource === "exif" && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {t("report.locationFromPhotoHint")}
+              </p>
+            )}
             <LocationMap
               latitude={latitude}
               longitude={longitude}

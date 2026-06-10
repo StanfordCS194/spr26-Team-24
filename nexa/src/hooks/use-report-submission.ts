@@ -4,19 +4,19 @@ import { useCallback, useState } from "react";
 import { queueReport } from "@/lib/offline-queue";
 import { uploadImageViaPresign } from "@/lib/upload-image";
 import type { ApiResponse } from "@/lib/api/response";
-import type {
-  ClassificationResult,
-  ComparisonResult,
-} from "@/lib/classify/types";
+import type { ClassificationResult } from "@/lib/classify/types";
+import type { ExtendedComparisonResult } from "@/lib/classify/consensus";
 
-// The classify route returns the canonical `ComparisonResult` (extended on the
-// server with diagnostic fields this hook does not read). Re-export under the
-// existing names so consumers of this hook keep their import paths.
+// The classify route returns `ExtendedComparisonResult` — the base comparison
+// plus diagnostics. Two of those extra fields drive the EXIF-location fallback:
+// `locationUsed` carries the coordinates folded into the prompt (which may be
+// the photo's EXIF GPS), and `preprocess.exifGpsUsed` flags when that happened.
+// Re-export under the existing names so consumers keep their import paths.
 export type {
   ClassificationResult,
   ProviderResult,
 } from "@/lib/classify/types";
-export type ComparisonResponse = ComparisonResult;
+export type ComparisonResponse = ExtendedComparisonResult;
 
 export interface CreatedReport {
   id: string;

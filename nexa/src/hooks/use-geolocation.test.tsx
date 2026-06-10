@@ -195,6 +195,116 @@ describe("useGeolocation", () => {
     expect(result.current.longitude).toBe(20);
   });
 
+  it("starts with a null location source", () => {
+    // Arrange / Act
+    const { result } = renderHook(() => useGeolocation());
+
+    // Assert
+    expect(result.current.source).toBeNull();
+  });
+
+  it("detect() marks the source as user", async () => {
+    // Arrange
+    const getCurrentPosition = installGeolocation();
+    getCurrentPosition.mockImplementation((success) => {
+      success(makePosition(37.44, -122.16, 12));
+    });
+    const { result } = renderHook(() => useGeolocation());
+
+    // Act
+    act(() => {
+      result.current.detect();
+    });
+
+    // Assert
+    await waitFor(() => expect(result.current.source).toBe("user"));
+  });
+
+  it("setCoordinates() marks the source as user and clears it on null coords", () => {
+    // Arrange
+    const { result } = renderHook(() => useGeolocation());
+
+    // Act: an explicit pick (e.g. address suggestion) sets user provenance.
+    act(() => {
+      result.current.setCoordinates(10, 20);
+    });
+    // Assert
+    expect(result.current.source).toBe("user");
+
+    // Act: clearing coords (free-text address with no resolved point) resets it.
+    act(() => {
+      result.current.setCoordinates(null, null);
+    });
+    // Assert
+    expect(result.current.source).toBeNull();
+  });
+
+  it("applyExifFallback() populates coords + address and tags the source as exif", async () => {
+    // Arrange
+    mockReverseGeocode.mockResolvedValue("EXIF Address");
+    const { result } = renderHook(() => useGeolocation());
+
+    // Act: no prior location, so the photo's EXIF GPS fills in.
+    let applied: boolean | undefined;
+    act(() => {
+      applied = result.current.applyExifFallback(40.5, -74.2);
+    });
+
+    // Assert
+    expect(applied).toBe(true);
+    expect(result.current.latitude).toBe(40.5);
+    expect(result.current.longitude).toBe(-74.2);
+    expect(result.current.source).toBe("exif");
+    expect(mockReverseGeocode).toHaveBeenCalledWith(40.5, -74.2);
+    await waitFor(() => expect(result.current.address).toBe("EXIF Address"));
+  });
+
+  it("applyExifFallback() does NOT override an existing user location (precedence)", () => {
+    // Arrange: user has already shared a location.
+    const { result } = renderHook(() => useGeolocation());
+    act(() => {
+      result.current.setCoordinates(1, 2);
+    });
+    mockReverseGeocode.mockClear();
+
+    // Act: EXIF arrives afterward — must defer to the explicit user pick.
+    let applied: boolean | undefined;
+    act(() => {
+      applied = result.current.applyExifFallback(40.5, -74.2);
+    });
+
+    // Assert: coords + source unchanged, no reverse-geocode triggered.
+    expect(applied).toBe(false);
+    expect(result.current.latitude).toBe(1);
+    expect(result.current.longitude).toBe(2);
+    expect(result.current.source).toBe("user");
+    expect(mockReverseGeocode).not.toHaveBeenCalled();
+  });
+
+  it("a user pin drag after an EXIF fallback overrides the source back to user", async () => {
+    // Arrange: EXIF fallback populated the location first.
+    mockReverseGeocode.mockResolvedValue("EXIF Address");
+    const { result } = renderHook(() => useGeolocation());
+    act(() => {
+      result.current.applyExifFallback(40.5, -74.2);
+    });
+    expect(result.current.source).toBe("exif");
+
+    // Act: the user corrects it by dragging the pin (still overridable).
+    mockReverseGeocode.mockResolvedValue("Corrected Address");
+    act(() => {
+      result.current.movePin(5, 6);
+    });
+
+    // Assert
+    expect(result.current.latitude).toBe(5);
+    expect(result.current.longitude).toBe(6);
+    expect(result.current.source).toBe("user");
+    await waitFor(() =>
+      expect(result.current.address).toBe("Corrected Address"),
+    );
+  });
+
   it("movePin() sets coords and refreshes the address", async () => {
     // Arrange
     mockReverseGeocode.mockResolvedValue("Pinned Address");
@@ -231,6 +341,7 @@ describe("useGeolocation", () => {
     expect(result.current.longitude).toBeNull();
     expect(result.current.accuracy).toBeNull();
     expect(result.current.address).toBe("");
+    expect(result.current.source).toBeNull();
     expect(result.current.error).toBeNull();
   });
 
