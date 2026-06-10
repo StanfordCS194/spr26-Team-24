@@ -1,14 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { IssueType, ReportStatus } from "@/generated/prisma/enums";
-import { open311Config } from "@/test/fixtures/open311";
+import { open311Config, open311Responses } from "@/test/fixtures/open311";
+import { TimeoutError } from "@/lib/http";
 
 import {
   buildRequestParams,
+  fetchOpen311Status,
   mapOpen311Status,
   parseOpen311Config,
   resolveServiceCode,
   STATUS_RANK,
+  submitToOpen311,
   type Open311Config,
   type SubmittableReport,
 } from "./open311";
@@ -361,5 +364,485 @@ describe("STATUS_RANK", () => {
 
     // Assert: no two states share a rank.
     expect(new Set(ranks).size).toBe(ranks.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Network functions — exercised with an injected `fetchImpl` so there is no
+// real network. These cover the resilience/idempotency contract from #102/#164:
+// a POST must not be retried after a timeout (could file a duplicate ticket) but
+// IS retried once when the connection never reached the server; a status GET
+// retries transient 5xx and surfaces the failure after exhaustion.
+// ---------------------------------------------------------------------------
+
+const NETWORK_REPORT: SubmittableReport = {
+  issueType: IssueType.ROAD_DAMAGE,
+  description: "Big pothole on Main St",
+  aiDescription: null,
+  latitude: 37.44,
+  longitude: -122.14,
+  address: "123 Main St",
+};
+
+/** A JSON Response stub, as the global `fetch` would return. */
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+/** A Node/undici-style connection error carrying a retryable `code`. */
+function connectionError(code: string): Error {
+  return Object.assign(new Error(`connect ${code}`), { code });
+}
+
+describe("submitToOpen311 (network)", () => {
+  it("returns an error when no endpoint is configured", async () => {
+    // Arrange
+    const fetchImpl = vi.fn();
+
+    // Act
+    const result = await submitToOpen311(NETWORK_REPORT, {
+      config: {},
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert: it never even attempts a request.
+    expect(result).toEqual({
+      status: "error",
+      httpStatus: null,
+      message: "No Open311 endpoint configured for this agency.",
+    });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when no service code maps to the issue type", async () => {
+    // Arrange
+    const fetchImpl = vi.fn();
+
+    // Act
+    const result = await submitToOpen311(
+      { ...NETWORK_REPORT, issueType: null },
+      {
+        config: open311Config,
+        intakeUrl: null,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      },
+    );
+
+    // Assert
+    expect(result.status).toBe("error");
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("POSTs form-urlencoded to /requests.json and returns the service_request_id", async () => {
+    // Arrange
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(open311Responses.createSuccess));
+
+    // Act
+    const result = await submitToOpen311(NETWORK_REPORT, {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert: result shape + the exact request the agent made.
+    expect(result).toEqual({
+      status: "submitted",
+      serviceRequestId: "REQ-12345",
+      token: null,
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe("https://sandbox.open311.org/v2/requests.json");
+    expect(init.method).toBe("POST");
+    expect(init.headers).toMatchObject({
+      "Content-Type": "application/x-www-form-urlencoded",
+    });
+    expect(init.body).toContain("service_code=POTHOLES");
+  });
+
+  it("returns the token for a token-based async acknowledgement", async () => {
+    // Arrange
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(open311Responses.createWithToken));
+
+    // Act
+    const result = await submitToOpen311(NETWORK_REPORT, {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toEqual({
+      status: "submitted",
+      serviceRequestId: null,
+      token: "tok_abc123",
+    });
+  });
+
+  it("reads the GeoReport error description on a non-2xx response", async () => {
+    // Arrange
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse([{ code: 400, description: "Bad service_code." }], 400),
+      );
+
+    // Act
+    const result = await submitToOpen311(NETWORK_REPORT, {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toEqual({
+      status: "error",
+      httpStatus: 400,
+      message: "Bad service_code.",
+    });
+  });
+
+  it("returns an error with httpStatus null on a network throw", async () => {
+    // Arrange
+    const fetchImpl = vi.fn().mockRejectedValue(new Error("socket hang up"));
+
+    // Act
+    const result = await submitToOpen311(NETWORK_REPORT, {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toEqual({
+      status: "error",
+      httpStatus: null,
+      message: "socket hang up",
+    });
+  });
+
+  it("returns an error when the success body is not valid JSON", async () => {
+    // Arrange
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response("<html>not json</html>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      }),
+    );
+
+    // Act
+    const result = await submitToOpen311(NETWORK_REPORT, {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toMatchObject({
+      status: "error",
+      httpStatus: 200,
+      message: "Open311 response was not valid JSON.",
+    });
+  });
+
+  it("returns an error when the response carries neither id nor token", async () => {
+    // Arrange
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse([{}]));
+
+    // Act
+    const result = await submitToOpen311(NETWORK_REPORT, {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toMatchObject({
+      status: "error",
+      httpStatus: 200,
+      message: "Open311 response contained no service_request_id or token.",
+    });
+  });
+
+  it("accepts a bare object response (not wrapped in an array)", async () => {
+    // Arrange
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ service_request_id: "OBJ-1" }));
+
+    // Act
+    const result = await submitToOpen311(NETWORK_REPORT, {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toEqual({
+      status: "submitted",
+      serviceRequestId: "OBJ-1",
+      token: null,
+    });
+  });
+
+  // --- Idempotency: the gap #164 flagged ----------------------------------
+
+  it("does NOT retry on a TimeoutError — no duplicate POST", async () => {
+    // Arrange: a timeout could mean the ticket was already filed, so retrying
+    // risks a duplicate. The agent must give up after exactly one attempt.
+    const fetchImpl = vi.fn().mockRejectedValue(new TimeoutError(12_000));
+
+    // Act
+    const result = await submitToOpen311(NETWORK_REPORT, {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert: exactly one POST, terminal timeout error.
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      status: "error",
+      httpStatus: null,
+      message: "Open311 endpoint timed out.",
+    });
+  });
+
+  it("retries once on a pre-request connection error (ECONNREFUSED), then succeeds", async () => {
+    // Arrange: the connection was refused before any bytes were sent, so the
+    // request provably never reached the server — safe to retry exactly once.
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi
+        .fn()
+        .mockRejectedValueOnce(connectionError("ECONNREFUSED"))
+        .mockResolvedValueOnce(jsonResponse(open311Responses.createSuccess));
+
+      // Act: drive the withRetry backoff sleep to completion under fake timers.
+      const pending = submitToOpen311(NETWORK_REPORT, {
+        config: open311Config,
+        intakeUrl: null,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      });
+      await vi.runAllTimersAsync();
+      const result = await pending;
+
+      // Assert: two attempts (1 fail + 1 success), one ticket filed.
+      expect(fetchImpl).toHaveBeenCalledTimes(2);
+      expect(result).toEqual({
+        status: "submitted",
+        serviceRequestId: "REQ-12345",
+        token: null,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("fetchOpen311Status (network)", () => {
+  it("returns an error when no endpoint is configured", async () => {
+    // Arrange
+    const fetchImpl = vi.fn();
+
+    // Act
+    const result = await fetchOpen311Status("REQ-1", {
+      config: {},
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toMatchObject({ status: "error", httpStatus: null });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("GETs with api_key and jurisdiction_id query params and maps open -> ACKNOWLEDGED", async () => {
+    // Arrange
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(open311Responses.statusOpen));
+
+    // Act
+    const result = await fetchOpen311Status("REQ-12345", {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert: status mapping + the exact request URL/query.
+    expect(result).toEqual({
+      status: "ok",
+      open311Status: "open",
+      reportStatus: ReportStatus.ACKNOWLEDGED,
+      statusNotes: "Received and queued for inspection.",
+    });
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toContain(
+      "https://sandbox.open311.org/v2/requests/REQ-12345.json",
+    );
+    expect(url).toContain("api_key=test-api-key");
+    expect(url).toContain("jurisdiction_id=city-palo-alto");
+    expect(init.method).toBe("GET");
+  });
+
+  it("maps closed -> RESOLVED and preserves status_notes", async () => {
+    // Arrange
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(open311Responses.statusClosed));
+
+    // Act
+    const result = await fetchOpen311Status("REQ-12345", {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toEqual({
+      status: "ok",
+      open311Status: "closed",
+      reportStatus: ReportStatus.RESOLVED,
+      statusNotes: "Pothole filled.",
+    });
+  });
+
+  it("maps an unrecognized status to a null reportStatus", async () => {
+    // Arrange
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse([{ status: "pending" }]));
+
+    // Act
+    const result = await fetchOpen311Status("REQ-1", {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toMatchObject({
+      status: "ok",
+      open311Status: "pending",
+      reportStatus: null,
+    });
+  });
+
+  it("returns not_found on a 404", async () => {
+    // Arrange
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse([], 404));
+
+    // Act
+    const result = await fetchOpen311Status("missing", {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toEqual({ status: "not_found" });
+  });
+
+  it("returns an error when the body has no status field", async () => {
+    // Arrange
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue(jsonResponse([{ service_request_id: "REQ-1" }]));
+
+    // Act
+    const result = await fetchOpen311Status("REQ-1", {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toMatchObject({
+      status: "error",
+      message: "Open311 response had no status field.",
+    });
+  });
+
+  it("returns an error on a network throw with httpStatus null", async () => {
+    // Arrange: a non-transient throw is not retried, surfaces immediately.
+    const fetchImpl = vi.fn().mockRejectedValue(new Error("boom"));
+
+    // Act
+    const result = await fetchOpen311Status("REQ-1", {
+      config: open311Config,
+      intakeUrl: null,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    // Assert
+    expect(result).toEqual({
+      status: "error",
+      httpStatus: null,
+      message: "boom",
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a transient 5xx then succeeds once the endpoint recovers", async () => {
+    // Arrange: a 500 is retryable for an idempotent GET; the second attempt OK.
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse([{ code: 500 }], 500))
+        .mockResolvedValueOnce(jsonResponse(open311Responses.statusOpen));
+
+      // Act
+      const pending = fetchOpen311Status("REQ-12345", {
+        config: open311Config,
+        intakeUrl: null,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      });
+      await vi.runAllTimersAsync();
+      const result = await pending;
+
+      // Assert: two attempts, success surfaced.
+      expect(fetchImpl).toHaveBeenCalledTimes(2);
+      expect(result).toMatchObject({
+        status: "ok",
+        reportStatus: ReportStatus.ACKNOWLEDGED,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("surfaces the 5xx error after exhausting all retry attempts", async () => {
+    // Arrange: the endpoint stays down for every attempt (3 total).
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValue(jsonResponse([{ code: 503 }], 503));
+
+      // Act
+      const pending = fetchOpen311Status("REQ-12345", {
+        config: open311Config,
+        intakeUrl: null,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      });
+      await vi.runAllTimersAsync();
+      const result = await pending;
+
+      // Assert: retried up to the attempt cap, then the 5xx is surfaced.
+      expect(fetchImpl).toHaveBeenCalledTimes(3);
+      expect(result).toMatchObject({ status: "error", httpStatus: 503 });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
