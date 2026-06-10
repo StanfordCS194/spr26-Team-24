@@ -133,6 +133,11 @@ const enMessages = {
   "report.addressSuggestions": "Address suggestions",
   "report.gpsAccuracy": "Location accuracy: {meters} meters",
   "report.dragPin": "Drag the pin to correct",
+  "report.mapAdjustLabel":
+    "Map showing detected location. Drag the pin or use the keyboard control to adjust.",
+  "report.mapPinKeyboardLabel": "Adjust location pin",
+  "report.mapPinKeyboardInstructions":
+    "Press the arrow keys to nudge the location pin: up and down change latitude, left and right change longitude.",
   "report.analyze": "Analyze Issue",
   "report.analyzing": "Analyzing with AI...",
   "report.reviewLabel": "/ Review Classification",
@@ -381,6 +386,11 @@ export const messages = {
     "report.addressSuggestions": "Sugerencias de direcciones",
     "report.gpsAccuracy": "Precisión de ubicación: {meters} metros",
     "report.dragPin": "Arrastra el pin para corregir",
+    "report.mapAdjustLabel":
+      "Mapa que muestra la ubicación detectada. Arrastra el pin o usa el control de teclado para ajustar.",
+    "report.mapPinKeyboardLabel": "Ajustar el pin de ubicación",
+    "report.mapPinKeyboardInstructions":
+      "Pulsa las teclas de flecha para mover el pin de ubicación: arriba y abajo cambian la latitud, izquierda y derecha cambian la longitud.",
     "report.analyze": "Analizar problema",
     "report.analyzing": "Analizando con IA...",
     "report.reviewLabel": "/ Revisar clasificación",
@@ -614,6 +624,11 @@ export const messages = {
     "report.addressSuggestions": "地址建议",
     "report.gpsAccuracy": "位置精度：{meters} 米",
     "report.dragPin": "拖动图钉以校正",
+    "report.mapAdjustLabel":
+      "地图显示检测到的位置。拖动图钉或使用键盘控件进行调整。",
+    "report.mapPinKeyboardLabel": "调整位置图钉",
+    "report.mapPinKeyboardInstructions":
+      "按方向键移动位置图钉：上下键调整纬度，左右键调整经度。",
     "report.analyze": "分析问题",
     "report.analyzing": "正在用 AI 分析...",
     "report.reviewLabel": "/ 检查分类",
@@ -854,6 +869,11 @@ export const messages = {
     "report.addressSuggestions": "Suggestions d'adresses",
     "report.gpsAccuracy": "Précision de localisation : {meters} mètres",
     "report.dragPin": "Déplacez l'épingle pour corriger",
+    "report.mapAdjustLabel":
+      "Carte montrant la position détectée. Déplacez l'épingle ou utilisez la commande clavier pour ajuster.",
+    "report.mapPinKeyboardLabel": "Ajuster l'épingle de position",
+    "report.mapPinKeyboardInstructions":
+      "Appuyez sur les touches fléchées pour déplacer l'épingle : haut et bas modifient la latitude, gauche et droite modifient la longitude.",
     "report.analyze": "Analyser le problème",
     "report.analyzing": "Analyse par IA...",
     "report.reviewLabel": "/ Vérifier la classification",

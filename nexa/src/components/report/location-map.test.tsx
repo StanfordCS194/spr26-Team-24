@@ -83,6 +83,50 @@ describe("LocationMap", () => {
     expect(onMove).toHaveBeenCalledWith(markerLatLng.lat, markerLatLng.lng);
   });
 
+  it("nudges the coordinates from the keyboard control via onMove", async () => {
+    // Arrange: keyboard parity for the draggable pin (a11y, issue #203).
+    const onMove = vi.fn();
+    const { user } = renderWithProviders(
+      <LocationMap latitude={37.4} longitude={-122.1} onMove={onMove} />,
+    );
+    // The keyboard control nudges relative to the marker, so wait for setup.
+    await waitFor(() => expect(L.marker).toHaveBeenCalled());
+
+    const control = screen.getByRole("button", {
+      name: /adjust location pin/i,
+    });
+    control.focus();
+
+    // Act: arrow keys move the pin off the marker's current position.
+    await user.keyboard("{ArrowUp}");
+    expect(onMove).toHaveBeenLastCalledWith(
+      markerLatLng.lat + 0.00005,
+      markerLatLng.lng,
+    );
+
+    await user.keyboard("{ArrowRight}");
+    expect(onMove).toHaveBeenLastCalledWith(
+      markerLatLng.lat,
+      markerLatLng.lng + 0.00005,
+    );
+
+    expect(onMove).toHaveBeenCalledTimes(2);
+  });
+
+  it("exposes screen-reader instructions for the keyboard control", () => {
+    // Arrange / Act
+    renderWithProviders(
+      <LocationMap latitude={37.4} longitude={-122.1} onMove={vi.fn()} />,
+    );
+
+    // Assert: the focusable control is described by arrow-key instructions.
+    const control = screen.getByRole("button", {
+      name: /adjust location pin/i,
+    });
+    expect(control).toHaveAttribute("aria-describedby");
+    expect(screen.getByText(/press the arrow keys/i)).toBeInTheDocument();
+  });
+
   it("repositions the marker when coordinates change", async () => {
     // Arrange
     const { rerender } = renderWithProviders(
