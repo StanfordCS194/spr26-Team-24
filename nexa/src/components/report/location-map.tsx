@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef, type KeyboardEvent } from "react";
 import type { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
 import "leaflet/dist/leaflet.css";
+
+import { useI18n } from "@/i18n/provider";
 
 interface LocationMapProps {
   latitude: number;
@@ -18,11 +20,15 @@ const MARKER_ICON_2X_URL =
 const MARKER_SHADOW_URL =
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
 
+/** Degrees nudged per arrow-key press (~5.5m of latitude). */
+const KEYBOARD_STEP = 0.00005;
+
 export default function LocationMap({
   latitude,
   longitude,
   onMove,
 }: LocationMapProps) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<LeafletMarker | null>(null);
@@ -30,6 +36,14 @@ export default function LocationMap({
   useEffect(() => {
     onMoveRef.current = onMove;
   }, [onMove]);
+
+  // Latest coordinates, so keyboard nudges work before the first drag too.
+  const positionRef = useRef({ latitude, longitude });
+  useEffect(() => {
+    positionRef.current = { latitude, longitude };
+  }, [latitude, longitude]);
+
+  const instructionsId = useId();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -102,12 +116,67 @@ export default function LocationMap({
     map.setView([latitude, longitude], map.getZoom(), { animate: true });
   }, [latitude, longitude]);
 
+  // Keyboard parity with mouse drag: arrow keys nudge the pin and feed the same
+  // onMove handler. Falls back to props so it works even before Leaflet loads.
+  const nudge = (deltaLat: number, deltaLng: number) => {
+    const marker = markerRef.current;
+    const current = marker
+      ? marker.getLatLng()
+      : {
+          lat: positionRef.current.latitude,
+          lng: positionRef.current.longitude,
+        };
+    const nextLat = current.lat + deltaLat;
+    const nextLng = current.lng + deltaLng;
+    onMoveRef.current(nextLat, nextLng);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    switch (event.key) {
+      case "ArrowUp":
+        event.preventDefault();
+        nudge(KEYBOARD_STEP, 0);
+        break;
+      case "ArrowDown":
+        event.preventDefault();
+        nudge(-KEYBOARD_STEP, 0);
+        break;
+      case "ArrowLeft":
+        event.preventDefault();
+        nudge(0, -KEYBOARD_STEP);
+        break;
+      case "ArrowRight":
+        event.preventDefault();
+        nudge(0, KEYBOARD_STEP);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
-    <div
-      ref={containerRef}
-      className="mt-3 h-48 w-full overflow-hidden rounded-lg border border-border"
-      role="application"
-      aria-label="Map showing detected location. Drag the pin to adjust."
-    />
+    <div className="relative mt-3">
+      <div
+        ref={containerRef}
+        className="h-48 w-full overflow-hidden rounded-lg border border-border"
+        role="application"
+        aria-label={t("report.mapAdjustLabel")}
+      />
+      {/* Keyboard parity for the draggable pin: a focusable control that nudges
+          the marker via the same onMove handler. Sibling (not a Leaflet-owned
+          child) so Leaflet's DOM ownership of the container is never disturbed. */}
+      <button
+        type="button"
+        aria-label={t("report.mapPinKeyboardLabel")}
+        aria-describedby={instructionsId}
+        onKeyDown={handleKeyDown}
+        className="absolute left-2 top-2 z-[1000] rounded-md border border-border bg-background/90 px-2 py-1 text-xs text-muted-foreground shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {t("report.mapPinKeyboardLabel")}
+      </button>
+      <p id={instructionsId} className="sr-only">
+        {t("report.mapPinKeyboardInstructions")}
+      </p>
+    </div>
   );
 }
