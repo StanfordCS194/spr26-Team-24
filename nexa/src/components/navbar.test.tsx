@@ -27,7 +27,7 @@ function stubMe(user: unknown, status = 200) {
     http.get("*/api/auth/me", () =>
       user === null
         ? new HttpResponse(null, { status: status === 200 ? 401 : status })
-        : HttpResponse.json(user),
+        : HttpResponse.json({ success: true, data: user }),
     ),
   );
 }
