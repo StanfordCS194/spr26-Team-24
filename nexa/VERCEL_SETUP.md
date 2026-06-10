@@ -39,6 +39,7 @@ environment (and **Preview** if you want PR deploys to work end-to-end).
 | -------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `DATABASE_URL`             | _(auto-set by Neon — verify it's there)_  | Pooled connection string.                                                                 |
 | `JWT_SECRET`               | output of `openssl rand -base64 32`       | Must be **different** from the local-dev secret in `.env.local`.                          |
+| `CRON_SECRET`              | output of `openssl rand -base64 32`       | Required in Production. Authenticates the `poll-status` cron — see §2a below.             |
 | `OPENAI_API_KEY`           | `sk-…` from platform.openai.com           | Required. Used by classification + civic form lookup.                                     |
 | `ANTHROPIC_API_KEY`        | `sk-ant-…` from console.anthropic.com     | Required. Used by multi-LLM classification consensus engine.                              |
 | `GOOGLE_API_KEY`           | from aistudio.google.com                  | Required. Used by multi-LLM classification consensus engine.                              |
@@ -51,6 +52,38 @@ environment (and **Preview** if you want PR deploys to work end-to-end).
 > initialization, so the build will succeed even if their API keys are not
 > set in a Preview environment — the endpoints will just return errors at
 > runtime when called without keys.
+
+---
+
+## 2a. CRON_SECRET and the status-polling cron
+
+`CRON_SECRET` authenticates `GET /api/cron/poll-status`, the Open311
+status-polling job that advances submitted reports through their lifecycle.
+
+The cron is wired up in `vercel.json`:
+
+```json
+{
+  "crons": [{ "path": "/api/cron/poll-status", "schedule": "0 8 * * *" }]
+}
+```
+
+That schedule (`0 8 * * *`) runs the job once daily at 08:00 UTC.
+
+How the auth works:
+
+- **Vercel Cron** automatically attaches `Authorization: Bearer <CRON_SECRET>`
+  to its scheduled requests whenever `CRON_SECRET` is set on the project, so no
+  manual wiring is needed — set the variable and the cron is authenticated.
+- The route **fails closed**: if `CRON_SECRET` is unset or empty it returns
+  `503` and does **not** poll, so the endpoint can never run unauthenticated.
+  This means you **must** set `CRON_SECRET` in Production or the cron will do
+  nothing.
+- When the secret is set, requests whose `Authorization` header does not exactly
+  match `Bearer <CRON_SECRET>` are rejected with `401`.
+
+Generate the value with `openssl rand -base64 32` (same as `JWT_SECRET`), and
+add it for the **Production** environment.
 
 ---
 
