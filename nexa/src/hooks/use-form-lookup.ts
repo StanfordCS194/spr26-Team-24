@@ -3,21 +3,9 @@
 import { useCallback, useState } from "react";
 import { useI18n } from "@/i18n/provider";
 import type { ApiResponse } from "@/lib/api/response";
+import type { OfficialFormLookupResult } from "@/lib/api/types";
 
-export type OfficialFormLookupResult =
-  | {
-      status: "found";
-      cityName: string;
-      formUrl: string;
-      reason: string;
-      confidence: "low" | "medium" | "high";
-    }
-  | {
-      status: "not_found";
-      cityName: string | null;
-      message: string;
-      reason?: string;
-    };
+export type { OfficialFormLookupResult };
 
 export interface FormLookupLocation {
   address: string;

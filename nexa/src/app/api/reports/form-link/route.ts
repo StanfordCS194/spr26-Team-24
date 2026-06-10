@@ -11,30 +11,17 @@ import {
   parseErrorResponse,
 } from "@/lib/api/request-parser";
 import { successResponse, errorResponse } from "@/lib/api/response";
-
-type Confidence = "low" | "medium" | "high";
-
-type FormLinkResult =
-  | {
-      status: "found";
-      cityName: string;
-      formUrl: string;
-      reason: string;
-      confidence: Confidence;
-    }
-  | {
-      status: "not_found";
-      cityName: string | null;
-      message: string;
-      reason?: string;
-    };
+import type {
+  FormLookupConfidence,
+  OfficialFormLookupResult,
+} from "@/lib/api/types";
 
 type LookupResult =
   | {
       status: "found";
       formUrl: string;
       reason: string;
-      confidence: Confidence;
+      confidence: FormLookupConfidence;
     }
   | {
       status: "not_found";
@@ -405,7 +392,7 @@ Do not say "not_found" just because there is no "${issueLabel}"-specific form â€
     status?: string;
     formUrl?: string | null;
     reason?: string;
-    confidence?: Confidence;
+    confidence?: FormLookupConfidence;
   };
 
   try {
@@ -464,7 +451,7 @@ export async function POST(request: NextRequest) {
         issueType,
       );
       if (match?.portal) {
-        const result: FormLinkResult = {
+        const result: OfficialFormLookupResult = {
           status: "found",
           cityName: match.jurisdiction.displayName,
           formUrl: match.portal.url,
@@ -482,7 +469,7 @@ export async function POST(request: NextRequest) {
 
     // 2. LLM fallback for anywhere we don't have polygon coverage.
     if (!location.cityName) {
-      const result: FormLinkResult = {
+      const result: OfficialFormLookupResult = {
         status: "not_found",
         cityName: null,
         message: "No official city form found.",
@@ -499,7 +486,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (lookup.status === "found") {
-      const result: FormLinkResult = {
+      const result: OfficialFormLookupResult = {
         status: "found",
         cityName: location.cityName,
         formUrl: lookup.formUrl,
@@ -509,7 +496,7 @@ export async function POST(request: NextRequest) {
       return successResponse(result);
     }
 
-    const result: FormLinkResult = {
+    const result: OfficialFormLookupResult = {
       status: "not_found",
       cityName: location.cityName,
       message: "No official city form found.",

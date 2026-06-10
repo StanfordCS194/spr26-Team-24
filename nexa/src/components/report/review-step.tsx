@@ -12,27 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ErrorBanner } from "@/components/error-banner";
 import { useI18n } from "@/i18n/provider";
-
-interface ClassificationResult {
-  issueType: string;
-  aiDescription: string;
-  severity: "low" | "medium" | "high";
-}
-
-type OfficialFormLookupResult =
-  | {
-      status: "found";
-      cityName: string;
-      formUrl: string;
-      reason: string;
-      confidence: "low" | "medium" | "high";
-    }
-  | {
-      status: "not_found";
-      cityName: string | null;
-      message: string;
-      reason?: string;
-    };
+import type { ClassificationResult } from "@/lib/classify/types";
+import type { OfficialFormLookupResult } from "@/lib/api/types";
 
 interface ReviewStepProps {
   classification: ClassificationResult;
