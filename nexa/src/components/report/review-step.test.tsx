@@ -28,6 +28,8 @@ function baseProps() {
     onRetryAgencyCandidates: vi.fn(),
     selectedAgencyId: null as string | null,
     onSelectAgency: vi.fn(),
+    customAgencyUrl: "",
+    onCustomAgencyUrlChange: vi.fn(),
     onDescriptionChange: vi.fn(),
     onAddressChange: vi.fn(),
     onBack: vi.fn(),
@@ -380,6 +382,37 @@ describe("ReviewStep", () => {
     // Assert
     const retrying = screen.getByText("Retrying...");
     expect(retrying.closest("button")).toBeDisabled();
+  });
+
+  it("renders the wrong-agency override field with its label and helper text", () => {
+    // Arrange / Act
+    renderWithProviders(<ReviewStep {...baseProps()} />);
+
+    // Assert: the override section is present at the bottom of the form.
+    expect(screen.getByText("Filing somewhere else?")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "If we routed to the wrong agency, paste the correct agency's link here.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("https://city.gov/report"),
+    ).toBeInTheDocument();
+  });
+
+  it("forwards edits to the custom agency URL field", async () => {
+    // Arrange
+    const props = baseProps();
+    const { user } = renderWithProviders(<ReviewStep {...props} />);
+
+    // Act
+    await user.type(
+      screen.getByPlaceholderText("https://city.gov/report"),
+      "x",
+    );
+
+    // Assert
+    expect(props.onCustomAgencyUrlChange).toHaveBeenCalledWith("x");
   });
 
   it("shows an informative message when the candidate list is empty", () => {

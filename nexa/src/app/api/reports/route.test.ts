@@ -155,6 +155,69 @@ describe("POST /api/reports", () => {
     expect(prismaMock.report.create).not.toHaveBeenCalled();
   });
 
+  it("persists a user-supplied custom agency URL override as-is", async () => {
+    // Arrange: the app routed somewhere (or nowhere) but the user pasted the
+    // correct agency's link in the review step. It's stored verbatim — NOT
+    // validated against the routed candidates, since the routing was wrong.
+    prismaMock.agency.findMany.mockResolvedValue([]);
+    prismaMock.issueGroup.findMany.mockResolvedValue([]);
+    prismaMock.report.findMany.mockResolvedValue([]);
+    prismaMock.issueGroup.create.mockResolvedValue({
+      id: "group_1",
+    } as Awaited<ReturnType<typeof prismaMock.issueGroup.create>>);
+    prismaMock.report.create.mockResolvedValue(
+      makeReport({ id: "report_created" }),
+    );
+
+    const request = new NextRequest("http://localhost/api/reports", {
+      method: "POST",
+      body: JSON.stringify({
+        description: "Pothole on University Ave",
+        issueType: "ROAD_DAMAGE",
+        latitude: 37.4419,
+        longitude: -122.143,
+        customAgencyUrl: "https://example.gov/report",
+      }),
+    });
+
+    // Act
+    const response = await POST(request);
+    const body = await response.json();
+
+    // Assert: the override is passed straight through to the create call.
+    expect(response.status).toBe(201);
+    expect(body.success).toBe(true);
+    expect(prismaMock.report.create).toHaveBeenCalledOnce();
+    expect(prismaMock.report.create.mock.calls[0][0].data.customAgencyUrl).toBe(
+      "https://example.gov/report",
+    );
+  });
+
+  it("rejects an invalid custom agency URL with a 400", async () => {
+    // Arrange: routing/dedupe stubs in case parsing ever got that far (it won't).
+    prismaMock.agency.findMany.mockResolvedValue([]);
+    prismaMock.issueGroup.findMany.mockResolvedValue([]);
+    prismaMock.report.findMany.mockResolvedValue([]);
+
+    const request = new NextRequest("http://localhost/api/reports", {
+      method: "POST",
+      body: JSON.stringify({
+        description: "Pothole",
+        issueType: "ROAD_DAMAGE",
+        customAgencyUrl: "not a url",
+      }),
+    });
+
+    // Act
+    const response = await POST(request);
+    const body = await response.json();
+
+    // Assert: the schema rejects it before any report is created.
+    expect(response.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(prismaMock.report.create).not.toHaveBeenCalled();
+  });
+
   it("returns 500 when the database write throws", async () => {
     // Arrange
     prismaMock.agency.findMany.mockResolvedValue([]);

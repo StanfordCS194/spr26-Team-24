@@ -24,6 +24,7 @@ export function makeReport(overrides: Partial<Report> = {}): Report {
     agencyId: null,
     externalTrackingId: null,
     submittedAt: null,
+    customAgencyUrl: null,
     userResolved: null,
     userResolvedAt: null,
     issueGroupId: null,

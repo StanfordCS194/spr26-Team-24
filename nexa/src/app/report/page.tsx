@@ -71,6 +71,12 @@ export default function ReportPage() {
   // pass it to the create route, which validates it server-side.
   const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
 
+  // Wrong-agency override (review step): if the app routed to the wrong office,
+  // the user can paste the correct agency's link here. Sent to the create route
+  // and persisted as-is — it's deliberately not validated against the routed
+  // candidate set, since the premise is that the auto-routing was wrong.
+  const [customAgencyUrl, setCustomAgencyUrl] = useState("");
+
   // Anonymous reporting: a guest can complete the whole flow without an account.
   // We check session state only to decide whether to offer the post-submit
   // "create an account to track this report" upgrade prompt. `undefined` means
@@ -285,6 +291,7 @@ export default function ReportPage() {
         address: geo.address,
         imageBase64: image.imageBase64,
         selectedAgencyId,
+        customAgencyUrl,
         // Persisted with the queued item when offline so a successful replay can
         // emit the K2 metric from first capture -> replay (#237). 0 until the
         // first capture; the queue tolerates that.
@@ -408,6 +415,7 @@ export default function ReportPage() {
     formLookup.reset();
     agencyCandidates.reset();
     setSelectedAgencyId(null);
+    setCustomAgencyUrl("");
   };
 
   return (
@@ -469,6 +477,8 @@ export default function ReportPage() {
               onRetryAgencyCandidates={agencyCandidates.retry}
               selectedAgencyId={selectedAgencyId}
               onSelectAgency={setSelectedAgencyId}
+              customAgencyUrl={customAgencyUrl}
+              onCustomAgencyUrlChange={setCustomAgencyUrl}
               onDescriptionChange={handleDescriptionChange}
               onAddressChange={geo.setAddress}
               onBack={() => setStep("describe")}

@@ -63,6 +63,8 @@ model Report {
   // makes time-to-submit (submittedAt - createdAt) recoverable from the DB
   // rather than only from the client PostHog event. Null until submitted.
   submittedAt        DateTime?
+  // User-supplied link to the correct agency when the auto-routed one is wrong (review-step override).
+  customAgencyUrl    String?
   userResolved       Boolean?
   userResolvedAt     DateTime?
   issueGroupId       String?
