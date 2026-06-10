@@ -1,26 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Camera, Zap, ArrowRight, Shield, MapPin } from "lucide-react";
+import { Zap, ArrowRight } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
-
-const HIGHLIGHTS = [
-  {
-    icon: Camera,
-    titleKey: "home.snapTitle",
-    descriptionKey: "home.snapDescription",
-  },
-  {
-    icon: Shield,
-    titleKey: "home.verifyTitle",
-    descriptionKey: "home.verifyDescription",
-  },
-  {
-    icon: MapPin,
-    titleKey: "home.routeTitle",
-    descriptionKey: "home.routeDescription",
-  },
-] as const;
 
 export function HeroSection() {
   const { t } = useI18n();
@@ -56,22 +38,6 @@ export function HeroSection() {
             <a href="#how-it-works" className="btn-cta btn-cta-outline">
               {t("home.seeHow")}
             </a>
-          </div>
-        </div>
-
-        <div className="border-t border-border px-4 py-16 lg:px-0 lg:py-20">
-          <div className="grid gap-12 md:grid-cols-3 md:gap-8">
-            {HIGHLIGHTS.map((item) => (
-              <div key={item.titleKey} className="flex flex-col gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-ep-green-light">
-                  <item.icon className="size-5 text-ep-green" />
-                </div>
-                <h3 className="text-base font-semibold">{t(item.titleKey)}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {t(item.descriptionKey)}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </div>

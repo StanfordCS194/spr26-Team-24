@@ -39,12 +39,12 @@ const enMessages = {
     "Auto-detect your location and route to the right city agency.",
   "home.howItWorksLabel": "/ How It Works",
   "home.processTitle": "Three steps from problem to report.",
-  "home.step1Title": "Describe the problem",
+  "home.step1Title": "Snap and describe",
   "home.step1Description":
     "Upload a photo, type a description, or both. Whatever is easiest.",
   "home.step2Title": "AI classifies & routes",
   "home.step2Description":
-    "Identifies the issue type, severity, and the responsible city agency.",
+    "Auto-detects your location, identifies the issue type and severity, and routes it to the right city agency.",
   "home.step3Title": "Report filed",
   "home.step3Description":
     "Review, confirm, done. The whole process takes under 30 seconds.",
@@ -52,7 +52,7 @@ const enMessages = {
   "home.statsLabel": "/ By The Numbers",
   "home.statsTitle": "Reporting made radically simpler.",
   "home.statAverage": "Average report time",
-  "home.statAccuracy": "Routing accuracy target",
+  "home.statAccuracy": "Routing accuracy",
   "home.statIssueTypes": "Issue types supported",
   "home.challenge": "/ Challenge",
   "home.challengeText":
@@ -359,12 +359,12 @@ export const messages = {
       "Detecta tu ubicación y envía el reporte a la agencia municipal correcta.",
     "home.howItWorksLabel": "/ Cómo funciona",
     "home.processTitle": "Tres pasos del problema al reporte.",
-    "home.step1Title": "Describe el problema",
+    "home.step1Title": "Toma una foto y describe",
     "home.step1Description":
       "Sube una foto, escribe una descripción o ambas cosas. Lo que sea más fácil.",
     "home.step2Title": "La IA clasifica y enruta",
     "home.step2Description":
-      "Identifica el tipo de problema, la gravedad y la agencia responsable.",
+      "Detecta tu ubicación, identifica el tipo de problema y la gravedad, y lo enruta a la agencia municipal correcta.",
     "home.step3Title": "Reporte enviado",
     "home.step3Description":
       "Revisa, confirma y listo. Todo toma menos de 30 segundos.",
@@ -372,7 +372,7 @@ export const messages = {
     "home.statsLabel": "/ En números",
     "home.statsTitle": "Reportar es radicalmente más simple.",
     "home.statAverage": "Tiempo promedio de reporte",
-    "home.statAccuracy": "Meta de precisión de enrutamiento",
+    "home.statAccuracy": "Precisión de enrutamiento",
     "home.statIssueTypes": "Tipos de problemas soportados",
     "home.challenge": "/ Reto",
     "home.challengeText":
@@ -672,18 +672,19 @@ export const messages = {
     "home.routeDescription": "自动检测位置并路由到正确的市政机构。",
     "home.howItWorksLabel": "/ 工作原理",
     "home.processTitle": "三步从问题到报告。",
-    "home.step1Title": "描述问题",
+    "home.step1Title": "拍照并描述",
     "home.step1Description":
       "上传照片、输入描述，或两者都做。选择最方便的方式。",
     "home.step2Title": "AI 分类并路由",
-    "home.step2Description": "识别问题类型、严重程度和负责的市政机构。",
+    "home.step2Description":
+      "自动检测你的位置，识别问题类型和严重程度，并将其路由到正确的市政机构。",
     "home.step3Title": "报告已提交",
     "home.step3Description": "检查、确认、完成。整个流程不到 30 秒。",
     "home.tryNow": "立即试用",
     "home.statsLabel": "/ 数据概览",
     "home.statsTitle": "让报告变得极其简单。",
     "home.statAverage": "平均报告时间",
-    "home.statAccuracy": "路由准确率目标",
+    "home.statAccuracy": "路由准确率",
     "home.statIssueTypes": "支持的问题类型",
     "home.challenge": "/ 挑战",
     "home.challengeText":
@@ -977,12 +978,12 @@ export const messages = {
       "Détectez votre position et routez le signalement vers le bon service municipal.",
     "home.howItWorksLabel": "/ Fonctionnement",
     "home.processTitle": "Trois étapes du problème au signalement.",
-    "home.step1Title": "Décrivez le problème",
+    "home.step1Title": "Photographiez et décrivez",
     "home.step1Description":
       "Ajoutez une photo, saisissez une description, ou les deux. Au plus simple.",
     "home.step2Title": "L'IA classe et route",
     "home.step2Description":
-      "Identifie le type de problème, la gravité et le service municipal responsable.",
+      "Détecte votre position, identifie le type de problème et la gravité, et l'achemine vers le bon service municipal.",
     "home.step3Title": "Signalement envoyé",
     "home.step3Description":
       "Relisez, confirmez, terminé. Le tout prend moins de 30 secondes.",
@@ -990,7 +991,7 @@ export const messages = {
     "home.statsLabel": "/ En chiffres",
     "home.statsTitle": "Le signalement rendu radicalement plus simple.",
     "home.statAverage": "Temps moyen de signalement",
-    "home.statAccuracy": "Objectif de précision du routage",
+    "home.statAccuracy": "Précision du routage",
     "home.statIssueTypes": "Types de problèmes pris en charge",
     "home.challenge": "/ Défi",
     "home.challengeText":

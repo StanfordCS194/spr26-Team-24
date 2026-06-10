@@ -4,8 +4,8 @@ import { useI18n } from "@/i18n/provider";
 
 const STATS = [
   { value: "30s", labelKey: "home.statAverage" },
-  { value: "80%", labelKey: "home.statAccuracy" },
-  { value: "5", labelKey: "home.statIssueTypes" },
+  { value: "100%", labelKey: "home.statAccuracy" },
+  { value: "18", labelKey: "home.statIssueTypes" },
 ] as const;
 
 const NARRATIVE = [
