@@ -4,8 +4,11 @@ import { IntakeMethod, ReportStatus } from "@/generated/prisma/enums";
 import {
   fetchOpen311Status,
   parseOpen311Config,
-  STATUS_RANK,
 } from "@/lib/submission/open311";
+import {
+  canTransition,
+  isForwardTransition,
+} from "@/lib/reports/status-machine";
 import { sendPush } from "@/lib/push";
 
 // GET /api/cron/poll-status
@@ -109,8 +112,13 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // Never regress: only advance to a status strictly later in the lifecycle.
-      if (STATUS_RANK[result.reportStatus] <= STATUS_RANK[report.status]) {
+      // Never regress: only advance to a status strictly later in the
+      // lifecycle, and only along a transition the status machine permits.
+      // (Both are centralized in src/lib/reports/status-machine.ts.)
+      if (
+        !isForwardTransition(report.status, result.reportStatus) ||
+        !canTransition(report.status, result.reportStatus)
+      ) {
         continue;
       }
 

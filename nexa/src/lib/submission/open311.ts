@@ -441,22 +441,11 @@ export function mapOpen311Status(open311Status: string): ReportStatus | null {
   }
 }
 
-/**
- * Monotonic rank of our lifecycle states, used by the poller to avoid moving a
- * report *backwards* (e.g. an endpoint that reports "open" should never demote
- * a report a human already marked IN_PROGRESS).
- */
-export const STATUS_RANK: Record<ReportStatus, number> = {
-  [ReportStatus.DRAFT]: 0,
-  [ReportStatus.CLASSIFYING]: 1,
-  [ReportStatus.CONFIRMED]: 2,
-  [ReportStatus.SUBMITTING]: 3,
-  [ReportStatus.SUBMITTED]: 4,
-  [ReportStatus.ACKNOWLEDGED]: 5,
-  [ReportStatus.IN_PROGRESS]: 6,
-  [ReportStatus.RESOLVED]: 7,
-  [ReportStatus.CLOSED]: 8,
-};
+// Monotonic rank of our lifecycle states, used by the poller to avoid moving a
+// report *backwards* (e.g. an endpoint that reports "open" should never demote
+// a report a human already marked IN_PROGRESS). The canonical definition lives
+// in the report status machine; re-exported here for existing importers.
+export { STATUS_RANK } from "@/lib/reports/status-machine";
 
 function stringOrNull(value: unknown): string | null {
   if (typeof value === "string" && value.trim()) return value.trim();
