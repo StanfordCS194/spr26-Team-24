@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import { extractJsonObject } from "./json";
+import { formatUserDescription } from "./types";
 
 export interface Observation {
   objects: string[];
@@ -117,10 +118,13 @@ export async function observeImage(
     { type: "image_url", image_url: { url: imageDataUrl, detail: "low" } },
   ];
   if (description) {
-    content.push({
-      type: "text",
-      text: `\nUser-supplied description (use only as a hint, do not parrot back): "${description}"`,
-    });
+    const descriptionBlock = formatUserDescription(description);
+    if (descriptionBlock) {
+      content.push({
+        type: "text",
+        text: `\nUse the following only as a hint; do not parrot it back.\n${descriptionBlock}`,
+      });
+    }
   }
 
   const response = await getClient().chat.completions.create(

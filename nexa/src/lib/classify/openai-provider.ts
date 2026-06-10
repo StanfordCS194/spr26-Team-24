@@ -3,6 +3,7 @@ import { getOpenAiKey } from "@/lib/config";
 import { DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import {
   CLASSIFICATION_PROMPT,
+  formatUserDescription,
   parseClassificationResponse,
   type ProviderResult,
 } from "./types";
@@ -39,10 +40,11 @@ export async function classifyWithOpenAI(
     { type: "text", text: promptText },
   ];
 
-  if (description) {
+  const descriptionBlock = formatUserDescription(description);
+  if (descriptionBlock) {
     content.push({
       type: "text",
-      text: `\n\nUser description: "${description}"`,
+      text: `\n\n${descriptionBlock}`,
     });
   }
 

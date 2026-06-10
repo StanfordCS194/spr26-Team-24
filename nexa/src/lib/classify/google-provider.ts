@@ -4,6 +4,7 @@ import { DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import { stripDataUrlPrefix } from "./image-utils";
 import {
   CLASSIFICATION_PROMPT,
+  formatUserDescription,
   parseClassificationResponse,
   type ProviderResult,
 } from "./types";
@@ -40,8 +41,9 @@ export async function classifyWithGoogle(
   const start = Date.now();
 
   let textPrompt = options.prompt ?? CLASSIFICATION_PROMPT;
-  if (description) {
-    textPrompt += `\n\nUser description: "${description}"`;
+  const descriptionBlock = formatUserDescription(description);
+  if (descriptionBlock) {
+    textPrompt += `\n\n${descriptionBlock}`;
   }
 
   const parts: Array<
