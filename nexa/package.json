@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && ([ -z \"$DATABASE_URL\" ] || prisma migrate deploy) && next build",
+    "build": "prisma generate && ([ -z \"$DATABASE_URL\" ] || (prisma migrate deploy && (prisma db seed || echo '[build] agency seed failed (non-fatal); reference data may be stale'))) && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
