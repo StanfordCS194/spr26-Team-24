@@ -77,3 +77,100 @@ describe("getSentryDsn", () => {
     expect(getSentryDsn()).toBe("https://abc@o0.ingest.sentry.io/1");
   });
 });
+
+// --- Soft-required env audit (issue #242) ----------------------------------
+//
+// These functions read process.env directly (not the cached getters), so a
+// fresh import is unnecessary — but every var must be set/cleared per case to
+// keep the audit deterministic regardless of the ambient test environment.
+const SOFT_REQUIRED_VARS = [
+  "NEXT_PUBLIC_POSTHOG_KEY",
+  "RESEND_API_KEY",
+  "SUBMISSION_FROM_EMAIL",
+  "OPENAI_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "GOOGLE_API_KEY",
+  "GOOGLE_MAPS_API_KEY",
+  "CRON_SECRET",
+] as const;
+
+describe("soft-required env audit", () => {
+  const ORIGINAL_SOFT: Record<string, string | undefined> = {};
+
+  beforeEach(() => {
+    for (const name of SOFT_REQUIRED_VARS) {
+      ORIGINAL_SOFT[name] = process.env[name];
+      delete process.env[name];
+    }
+  });
+
+  afterEach(() => {
+    for (const name of SOFT_REQUIRED_VARS) {
+      const original = ORIGINAL_SOFT[name];
+      if (original === undefined) delete process.env[name];
+      else process.env[name] = original;
+    }
+  });
+
+  it("warns about every soft-required feature when all vars are unset", async () => {
+    const { getSoftRequiredEnvWarnings } = await import("./config");
+    const warnings = getSoftRequiredEnvWarnings();
+    expect(warnings).toHaveLength(5);
+    expect(warnings.join("\n")).toContain("NEXT_PUBLIC_POSTHOG_KEY");
+    expect(warnings.join("\n")).toContain("RESEND_API_KEY");
+    expect(warnings.join("\n")).toContain("AI classification unavailable");
+    expect(warnings.join("\n")).toContain("GOOGLE_MAPS_API_KEY");
+    expect(warnings.join("\n")).toContain("CRON_SECRET");
+  });
+
+  it("emits no warnings once every soft-required var is configured", async () => {
+    process.env.NEXT_PUBLIC_POSTHOG_KEY = "phc_x";
+    process.env.RESEND_API_KEY = "re_x";
+    process.env.SUBMISSION_FROM_EMAIL = "reports@nexa.test";
+    process.env.OPENAI_API_KEY = "sk-x";
+    process.env.GOOGLE_MAPS_API_KEY = "maps-x";
+    process.env.CRON_SECRET = "cron-x";
+    const { getSoftRequiredEnvWarnings } = await import("./config");
+    expect(getSoftRequiredEnvWarnings()).toEqual([]);
+  });
+
+  it("requires BOTH RESEND_API_KEY and SUBMISSION_FROM_EMAIL for emailSubmission", async () => {
+    process.env.RESEND_API_KEY = "re_x"; // only one of the pair
+    const { getConfiguredFeatures, getSoftRequiredEnvWarnings } =
+      await import("./config");
+    expect(getConfiguredFeatures().emailSubmission).toBe(false);
+    expect(getSoftRequiredEnvWarnings().join("\n")).toContain(
+      "EMAIL-intake agencies degrade to manual-assist",
+    );
+  });
+
+  it("treats ANY one AI provider key as sufficient for classification", async () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-x";
+    const { getConfiguredFeatures, getSoftRequiredEnvWarnings } =
+      await import("./config");
+    expect(getConfiguredFeatures().aiClassification).toBe(true);
+    expect(getSoftRequiredEnvWarnings().join("\n")).not.toContain(
+      "AI classification unavailable",
+    );
+  });
+
+  it("treats whitespace-only values as unset", async () => {
+    process.env.CRON_SECRET = "   ";
+    const { getConfiguredFeatures } = await import("./config");
+    expect(getConfiguredFeatures().statusPollingCron).toBe(false);
+  });
+
+  it("exposes a secret-free boolean feature map (no values leaked)", async () => {
+    process.env.NEXT_PUBLIC_POSTHOG_KEY = "phc_supersecret";
+    const { getConfiguredFeatures } = await import("./config");
+    const features = getConfiguredFeatures();
+    expect(features).toEqual({
+      telemetry: true,
+      emailSubmission: false,
+      aiClassification: false,
+      addressAutocomplete: false,
+      statusPollingCron: false,
+    });
+    expect(JSON.stringify(features)).not.toContain("phc_supersecret");
+  });
+});

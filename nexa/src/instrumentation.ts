@@ -17,9 +17,38 @@
  */
 import type { Instrumentation } from "next";
 
-import { getSentryDsn } from "@/lib/config";
+import { getSentryDsn, getSoftRequiredEnvWarnings } from "@/lib/config";
 
 const ALERT_PREFIX = "[instrumentation][ALERT]";
+
+/**
+ * Greppable marker for the soft-required env audit (issue #242). A single,
+ * consistent prefix means ops can alert on `[config] WARNING` across logs.
+ */
+const CONFIG_WARNING_PREFIX = "[config] WARNING:";
+
+/**
+ * True only on a real production deploy. Soft-required env vars are expected to
+ * be unset in dev/test (and during the build), so warning there would be noise —
+ * we only surface them where a missing key is an actual misconfiguration.
+ * Mirrors the env resolution used for Sentry's `environment` above.
+ */
+function isProduction(): boolean {
+  return (process.env.VERCEL_ENV ?? process.env.NODE_ENV) === "production";
+}
+
+/**
+ * Log one `[config] WARNING: …` line per unset soft-required env var, naming the
+ * feature it disables. Production-only and never throws — purely informational
+ * ops visibility. Hard-required vars (DATABASE_URL, JWT_SECRET) are unaffected;
+ * they still fail fast through `requireEnv` in `config.ts`.
+ */
+function warnOnMissingSoftRequiredEnv(): void {
+  if (!isProduction()) return;
+  for (const impact of getSoftRequiredEnvWarnings()) {
+    console.warn(`${CONFIG_WARNING_PREFIX} ${impact}`);
+  }
+}
 
 /**
  * Minimal structural type for the bits of `@sentry/nextjs` we touch. Declared
@@ -72,9 +101,12 @@ async function loadSentry(): Promise<SentryModule | null> {
 }
 
 /**
- * Called once per server instance. No-op unless `SENTRY_DSN` is set.
+ * Called once per server instance. Initializes Sentry when `SENTRY_DSN` is set
+ * (a no-op otherwise) and, in production, audits the soft-required env vars,
+ * logging a `[config] WARNING: …` line for each unset one (issue #242).
  */
 export async function register(): Promise<void> {
+  warnOnMissingSoftRequiredEnv();
   await loadSentry();
 }
 

@@ -13,7 +13,7 @@ describe("GET /api/health", () => {
     vi.restoreAllMocks();
   });
 
-  it("responds 200 with status ok when the DB probe succeeds", async () => {
+  it("responds 200 with status ok plus a secret-free features map when the DB probe succeeds", async () => {
     // Arrange: SELECT 1 resolves.
     prismaMock.$queryRaw.mockResolvedValue([{ "?column?": 1 }]);
 
@@ -22,10 +22,27 @@ describe("GET /api/health", () => {
 
     // Assert
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
-      success: true,
-      data: { status: "ok", database: "ok" },
+    const body = (await response.json()) as {
+      success: boolean;
+      data: {
+        status: string;
+        database: string;
+        features: Record<string, boolean>;
+      };
+    };
+    expect(body.success).toBe(true);
+    expect(body.data.status).toBe("ok");
+    expect(body.data.database).toBe("ok");
+    // The features map reports the soft-required gates (issue #242) as booleans
+    // only — it must never leak a key value.
+    expect(body.data.features).toEqual({
+      telemetry: expect.any(Boolean),
+      emailSubmission: expect.any(Boolean),
+      aiClassification: expect.any(Boolean),
+      addressAutocomplete: expect.any(Boolean),
+      statusPollingCron: expect.any(Boolean),
     });
+    expect(JSON.stringify(body.data.features)).not.toMatch(/sk-|key|secret/i);
   });
 
   it("responds 503 when the DB probe throws", async () => {

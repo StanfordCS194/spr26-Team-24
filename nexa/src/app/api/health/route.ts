@@ -1,4 +1,5 @@
 import { errorResponse, successResponse } from "@/lib/api/response";
+import { getConfiguredFeatures } from "@/lib/config";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/health
@@ -8,9 +9,12 @@ import { prisma } from "@/lib/prisma";
 // `SELECT 1`, so an external monitor (e.g. Vercel/UptimeRobot) can distinguish a
 // healthy app from one whose DB is unreachable.
 //
-// Returns 200 `{ success: true, data: { status: "ok", database: "ok" } }` when
-// the DB responds, and 503 `{ success: false, error, code: "db_unreachable" }`
-// when it does not.
+// Returns 200 `{ success: true, data: { status: "ok", database: "ok",
+// features: { … } } }` when the DB responds, and 503 `{ success: false, error,
+// code: "db_unreachable" }` when it does not. The `features` map (issue #242)
+// reports which soft-required, feature-gating env vars are configured — booleans
+// only, never the secret values — so ops can spot a deploy that is "up" but
+// silently missing telemetry / email / maps / cron config.
 
 // Bound the probe so a hung connection can't make the health check itself hang.
 const DB_PROBE_TIMEOUT_MS = 5_000;
@@ -22,7 +26,11 @@ export async function GET() {
     return errorResponse("Database unreachable", 503, "db_unreachable");
   }
 
-  return successResponse({ status: "ok", database: "ok" });
+  return successResponse({
+    status: "ok",
+    database: "ok",
+    features: getConfiguredFeatures(),
+  });
 }
 
 /**
