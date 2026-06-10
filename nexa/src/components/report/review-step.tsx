@@ -91,10 +91,10 @@ export function ReviewStep({
           <span
             className={`inline-flex items-center rounded-full px-3 py-1 font-mono text-xs font-medium uppercase tracking-wider ${
               classification.severity === "high"
-                ? "bg-red-50 text-red-600"
+                ? "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300"
                 : classification.severity === "medium"
-                  ? "bg-yellow-50 text-yellow-600"
-                  : "bg-ep-green-light text-ep-green"
+                  ? "bg-yellow-50 text-yellow-600 dark:bg-yellow-950 dark:text-yellow-300"
+                  : "bg-ep-green-light text-ep-green dark:bg-green-950 dark:text-green-300"
             }`}
           >
             {t(`severity.${classification.severity}`)}

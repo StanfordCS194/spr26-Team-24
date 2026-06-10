@@ -341,7 +341,7 @@ export function DescribeStep({
                   aria-label={t("report.gpsAccuracy", {
                     meters: Math.round(accuracy),
                   })}
-                  className={`rounded-full px-2 py-0.5 ${accuracy <= 20 ? "bg-ep-green-light text-ep-green" : accuracy <= 100 ? "bg-yellow-50 text-yellow-600" : "bg-red-50 text-red-600"}`}
+                  className={`rounded-full px-2 py-0.5 ${accuracy <= 20 ? "bg-ep-green-light text-ep-green dark:bg-green-950 dark:text-green-300" : accuracy <= 100 ? "bg-yellow-50 text-yellow-600 dark:bg-yellow-950 dark:text-yellow-300" : "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300"}`}
                 >
                   ±{Math.round(accuracy)}m
                 </span>
