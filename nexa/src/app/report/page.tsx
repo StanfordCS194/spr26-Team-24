@@ -441,10 +441,10 @@ export default function ReportPage() {
                         <span
                           className={`rounded-full px-2 py-0.5 font-mono text-xs uppercase ${
                             r.severity === "high"
-                              ? "bg-red-50 text-red-600"
+                              ? "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300"
                               : r.severity === "medium"
-                                ? "bg-yellow-50 text-yellow-600"
-                                : "bg-ep-green-light text-ep-green"
+                                ? "bg-yellow-50 text-yellow-600 dark:bg-yellow-950 dark:text-yellow-300"
+                                : "bg-ep-green-light text-ep-green dark:bg-green-950 dark:text-green-300"
                           }`}
                         >
                           {t(`severity.${r.severity}`)}
