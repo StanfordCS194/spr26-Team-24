@@ -159,6 +159,10 @@ const enMessages = {
   "report.aiSummary": "AI Summary",
   "report.viewDashboard": "View Dashboard",
   "report.reportAnother": "Report Another Issue",
+  "report.trackTitle": "Create an account to track this report",
+  "report.trackSubtitle":
+    "Sign up to follow this report's status and see all your past reports in one place.",
+  "report.trackCta": "Create an account",
   "report.aiComparison": "/ AI Comparison",
   "report.decisionMethod": "Decision method:",
   "report.modelsAgreed": " (models agreed)",
@@ -389,6 +393,10 @@ export const messages = {
     "report.aiSummary": "Resumen de IA",
     "report.viewDashboard": "Ver panel",
     "report.reportAnother": "Reportar otro problema",
+    "report.trackTitle": "Crea una cuenta para seguir este reporte",
+    "report.trackSubtitle":
+      "Regístrate para seguir el estado de este reporte y ver todos tus reportes anteriores en un solo lugar.",
+    "report.trackCta": "Crear una cuenta",
     "report.aiComparison": "/ Comparación de IA",
     "report.decisionMethod": "Método de decisión:",
     "report.modelsAgreed": " (los modelos coincidieron)",
@@ -605,6 +613,10 @@ export const messages = {
     "report.aiSummary": "AI 摘要",
     "report.viewDashboard": "查看仪表板",
     "report.reportAnother": "报告另一个问题",
+    "report.trackTitle": "创建账户以跟踪此报告",
+    "report.trackSubtitle":
+      "注册即可跟踪此报告的状态，并在一处查看您过去的所有报告。",
+    "report.trackCta": "创建账户",
     "report.aiComparison": "/ AI 对比",
     "report.decisionMethod": "决策方法：",
     "report.modelsAgreed": "（模型一致）",
@@ -829,6 +841,10 @@ export const messages = {
     "report.aiSummary": "Résumé IA",
     "report.viewDashboard": "Voir le tableau de bord",
     "report.reportAnother": "Signaler un autre problème",
+    "report.trackTitle": "Créez un compte pour suivre ce signalement",
+    "report.trackSubtitle":
+      "Inscrivez-vous pour suivre l'état de ce signalement et retrouver tous vos signalements passés au même endroit.",
+    "report.trackCta": "Créer un compte",
     "report.aiComparison": "/ Comparaison IA",
     "report.decisionMethod": "Méthode de décision :",
     "report.modelsAgreed": " (les modèles sont d'accord)",

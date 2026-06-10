@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePostHog } from "posthog-js/react";
+import { addPendingReportId } from "@/lib/pending-reports";
 import { Stepper, type ReportStep } from "@/components/report/stepper";
 import { DescribeStep } from "@/components/report/describe-step";
 import { ReviewStep } from "@/components/report/review-step";
@@ -32,6 +33,22 @@ export default function ReportPage() {
 
   const [step, setStep] = useState<ReportStep>("describe");
   const [description, setDescription] = useState("");
+
+  // Anonymous reporting: a guest can complete the whole flow without an account.
+  // We check session state only to decide whether to offer the post-submit
+  // "create an account to track this report" upgrade prompt. `undefined` means
+  // we haven't resolved it yet, so the prompt stays hidden until we know.
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/me")
+      .then((r) => active && setIsLoggedIn(r.ok))
+      .catch(() => active && setIsLoggedIn(false));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleDescriptionChange = useCallback(
     (value: string) => {
@@ -113,6 +130,13 @@ export default function ReportPage() {
       {
         onSuccess: (report) => {
           setStep("confirmed");
+          // Guests have no userId on the server row; remember this report's id so
+          // the confirmed step's upgrade prompt can hand it to /api/auth/claim and
+          // associate it with the account they create. Logged-in reports already
+          // carry their userId, so there is nothing to claim later.
+          if (isLoggedIn === false) {
+            addPendingReportId(report.id);
+          }
           // Guard against an unstarted clock (0) so we never emit an
           // epoch-sized interval; in practice a submit always follows a
           // capture, so the fallback is defensive only.
@@ -285,6 +309,7 @@ export default function ReportPage() {
           <ConfirmedStep
             report={submission.createdReport}
             offline={submission.submittedOffline}
+            isLoggedIn={isLoggedIn}
             onReportAnother={resetForm}
           />
         )}

@@ -14,15 +14,28 @@ interface ConfirmedReport {
 interface ConfirmedStepProps {
   report: ConfirmedReport;
   offline?: boolean;
+  /**
+   * Whether the visitor is signed in. `undefined` while the session check is
+   * still resolving — we only offer the account-upgrade prompt once we know the
+   * user is a guest (`false`), never speculatively.
+   */
+  isLoggedIn?: boolean;
   onReportAnother: () => void;
 }
 
 export function ConfirmedStep({
   report,
   offline = false,
+  isLoggedIn,
   onReportAnother,
 }: ConfirmedStepProps) {
   const { t, locale } = useI18n();
+
+  // Guests who just filed a report are invited to create an account so they can
+  // track it. Hidden for logged-in users and for offline-queued reports (which
+  // have no server id to claim yet). Routes to /claim, which both creates the
+  // account and attaches the pending report ids via /api/auth/claim.
+  const showUpgradePrompt = isLoggedIn === false && !offline;
 
   return (
     <div className="flex flex-col items-center gap-10 py-12 text-center">
@@ -91,10 +104,30 @@ export function ConfirmedStep({
 
       {!offline && <SubmissionAssistant reportId={report.id} />}
 
+      {showUpgradePrompt && (
+        <div className="ep-card w-full max-w-md p-6 text-left">
+          <h3 className="text-lg font-medium tracking-tight">
+            {t("report.trackTitle")}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("report.trackSubtitle")}
+          </p>
+          <Link
+            href="/claim"
+            className="btn-cta btn-cta-purple mt-4 inline-flex"
+          >
+            {t("report.trackCta")}
+            <ArrowRight className="size-4" />
+          </Link>
+        </div>
+      )}
+
       <div className="flex flex-wrap justify-center gap-3">
-        <Link href="/dashboard" className="btn-cta btn-cta-outline">
-          {t("report.viewDashboard")}
-        </Link>
+        {isLoggedIn !== false && (
+          <Link href="/dashboard" className="btn-cta btn-cta-outline">
+            {t("report.viewDashboard")}
+          </Link>
+        )}
         <button className="btn-cta btn-cta-purple" onClick={onReportAnother}>
           {t("report.reportAnother")}
           <ArrowRight className="size-4" />

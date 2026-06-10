@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ApiResponse } from "@/lib/api/response";
+import {
+  clearPendingReportIds,
+  getPendingReportIds,
+} from "@/lib/pending-reports";
 
 export function ClaimForm() {
   const router = useRouter();
@@ -23,6 +27,11 @@ export function ClaimForm() {
     setLoading(true);
 
     try {
+      // Hand over any reports filed anonymously so they're attached to this
+      // account. Empty when the user reached /claim directly (the original
+      // passwordless-account flow), which keeps that path unchanged.
+      const reportIds = getPendingReportIds();
+
       const res = await fetch("/api/auth/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -30,6 +39,7 @@ export function ClaimForm() {
           email,
           password,
           name: name || undefined,
+          ...(reportIds.length > 0 ? { reportIds } : {}),
         }),
       });
 
@@ -40,6 +50,7 @@ export function ClaimForm() {
         return;
       }
 
+      clearPendingReportIds();
       router.push("/dashboard");
       router.refresh();
     } catch {
