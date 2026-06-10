@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { createToken, SESSION_COOKIE, cookieOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,16 +8,14 @@ import {
   RequestParseError,
   parseErrorResponse,
 } from "@/lib/api/request-parser";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await parseJsonRequest(request, LoginSchema);
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 },
-      );
+      return errorResponse("Email and password are required", 400);
     }
 
     const user = await prisma.user.findUnique({
@@ -28,25 +26,20 @@ export async function POST(request: NextRequest) {
     // Use the same generic message for "no user" and "wrong password" so the
     // login endpoint cannot be used to enumerate which emails have accounts.
     if (!user || !user.passwordHash) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      );
+      return errorResponse("Invalid email or password", 401);
     }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      );
+      return errorResponse("Invalid email or password", 401);
     }
 
     const token = await createToken({ userId: user.id, email: user.email });
-    const response = NextResponse.json(
-      { id: user.id, email: user.email, name: user.name },
-      { status: 200 },
-    );
+    const response = successResponse({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
     response.cookies.set(SESSION_COOKIE, token, cookieOptions);
     return response;
   } catch (error) {
@@ -54,9 +47,6 @@ export async function POST(request: NextRequest) {
       return parseErrorResponse(error);
     }
     console.error("Login error:", error);
-    return NextResponse.json(
-      { error: "Login failed. Please try again." },
-      { status: 500 },
-    );
+    return errorResponse("Login failed. Please try again.", 500);
   }
 }

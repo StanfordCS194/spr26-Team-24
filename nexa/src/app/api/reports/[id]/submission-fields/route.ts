@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { resolveAgencyId } from "@/lib/jurisdictions/agency";
 import { buildPrefillFields } from "@/lib/submission/prefill";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 // GET /api/reports/[id]/submission-fields
 //
@@ -24,13 +25,10 @@ export async function GET(
     });
 
     if (!report) {
-      return NextResponse.json({ error: "Report not found." }, { status: 404 });
+      return errorResponse("Report not found.", 404);
     }
     if (report.userId && report.userId !== session?.userId) {
-      return NextResponse.json(
-        { error: "You can only view your own reports." },
-        { status: 403 },
-      );
+      return errorResponse("You can only view your own reports.", 403);
     }
 
     // Resolve the agency for display without persisting (this is a read).
@@ -47,7 +45,7 @@ export async function GET(
     }
 
     if (!agency) {
-      return NextResponse.json({ agency: null, fields: [] });
+      return successResponse({ agency: null, fields: [] });
     }
 
     const fields = buildPrefillFields(
@@ -64,7 +62,7 @@ export async function GET(
       agency.requiredFields,
     );
 
-    return NextResponse.json({
+    return successResponse({
       agency: {
         name: agency.name,
         intakeUrl: agency.intakeUrl,
@@ -75,9 +73,6 @@ export async function GET(
     });
   } catch (error) {
     console.error("Submission fields error:", error);
-    return NextResponse.json(
-      { error: "Failed to build submission fields." },
-      { status: 500 },
-    );
+    return errorResponse("Failed to build submission fields.", 500);
   }
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
+import type { ApiResponse } from "@/lib/api/response";
 
 interface ResolutionPromptProps {
   reportId: string;
@@ -25,10 +26,14 @@ export function ResolutionPrompt({ reportId }: ResolutionPromptProps) {
         body: JSON.stringify({ resolved }),
       });
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        throw new Error(data?.error ?? t("common.somethingWrong"));
+        const payload = (await response
+          .json()
+          .catch(() => null)) as ApiResponse<unknown> | null;
+        throw new Error(
+          payload && !payload.success
+            ? payload.error
+            : t("common.somethingWrong"),
+        );
       }
       router.refresh();
     } catch (err) {

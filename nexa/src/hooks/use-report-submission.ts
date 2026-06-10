@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { queueReport } from "@/lib/offline-queue";
+import type { ApiResponse } from "@/lib/api/response";
 
 export interface ClassificationResult {
   issueType: string;
@@ -108,23 +109,26 @@ export function useReportSubmission() {
         // Read the raw body once so non-JSON responses surface a useful error
         // instead of Safari's cryptic "did not match the expected pattern".
         const rawBody = await res.text();
-        let payload: unknown = null;
+        let payload: ApiResponse<ComparisonResponse> | null = null;
         try {
-          payload = rawBody ? JSON.parse(rawBody) : null;
+          payload = rawBody
+            ? (JSON.parse(rawBody) as ApiResponse<ComparisonResponse>)
+            : null;
         } catch {
           throw new Error(
             `Classification failed (HTTP ${res.status}). Server returned a non-JSON response.`,
           );
         }
 
-        if (!res.ok) {
+        if (!res.ok || !payload?.success) {
           const message =
-            (payload as { error?: string } | null)?.error ??
-            `Classification failed (HTTP ${res.status}).`;
+            payload && !payload.success
+              ? payload.error
+              : `Classification failed (HTTP ${res.status}).`;
           throw new Error(message);
         }
 
-        const data = payload as ComparisonResponse;
+        const data = payload.data;
         setComparison(data);
         setClassification(data.winner);
         callbacks.onSuccess(data);
@@ -162,12 +166,14 @@ export function useReportSubmission() {
           body: JSON.stringify(payload),
         });
 
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || callbacks.okFallback);
+        const result = (await res.json()) as ApiResponse<CreatedReport>;
+
+        if (!res.ok || !result.success) {
+          const message = !result.success ? result.error : null;
+          throw new Error(message || callbacks.okFallback);
         }
 
-        const report: CreatedReport = await res.json();
+        const report = result.data;
         setCreatedReport(report);
         setSubmittedOffline(false);
         callbacks.onSuccess(report);

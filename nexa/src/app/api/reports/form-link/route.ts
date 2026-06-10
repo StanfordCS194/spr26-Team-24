@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getOpenAI } from "@/lib/openai";
 import { fetchWithTimeout, DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import { ISSUE_TYPE_LABELS, US_STATE_CODES } from "@/lib/constants";
@@ -10,6 +10,7 @@ import {
   RequestParseError,
   parseErrorResponse,
 } from "@/lib/api/request-parser";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 type Confidence = "low" | "medium" | "high";
 
@@ -446,10 +447,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!issueType) {
-      return NextResponse.json(
-        { error: "Valid issueType is required." },
-        { status: 400 },
-      );
+      return errorResponse("Valid issueType is required.", 400);
     }
 
     const location = await resolveLocation(address, latitude, longitude);
@@ -473,7 +471,7 @@ export async function POST(request: NextRequest) {
           reason: match.portal.reason,
           confidence: match.portal.confidence,
         };
-        return NextResponse.json(result);
+        return successResponse(result);
       }
       // Matched a polygon but the portal is unverified — fall through to
       // the LLM lookup using the jurisdiction display name as the hint.
@@ -490,7 +488,7 @@ export async function POST(request: NextRequest) {
         message: "No official city form found.",
         reason: "Could not determine a city from the provided location.",
       };
-      return NextResponse.json(result);
+      return successResponse(result);
     }
 
     const lookup = await lookupOfficialForm({
@@ -508,7 +506,7 @@ export async function POST(request: NextRequest) {
         reason: lookup.reason,
         confidence: lookup.confidence,
       };
-      return NextResponse.json(result);
+      return successResponse(result);
     }
 
     const result: FormLinkResult = {
@@ -517,15 +515,12 @@ export async function POST(request: NextRequest) {
       message: "No official city form found.",
       reason: lookup.reason,
     };
-    return NextResponse.json(result);
+    return successResponse(result);
   } catch (error) {
     if (error instanceof RequestParseError) {
       return parseErrorResponse(error);
     }
     console.error("Official form lookup error:", error);
-    return NextResponse.json(
-      { error: "Failed to look up official city form." },
-      { status: 500 },
-    );
+    return errorResponse("Failed to look up official city form.", 500);
   }
 }

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { createToken, SESSION_COOKIE, cookieOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 // One-shot path to set a password on accounts that never had one. This exists
 // to clean up after a prior bug in /api/auth/login that upserted users by
@@ -14,17 +15,11 @@ export async function POST(request: NextRequest) {
     const { email, password, name } = await request.json();
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 },
-      );
+      return errorResponse("Email and password are required", 400);
     }
 
     if (typeof password !== "string" || password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
-        { status: 400 },
-      );
+      return errorResponse("Password must be at least 8 characters", 400);
     }
 
     const existing = await prisma.user.findUnique({
@@ -33,12 +28,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (existing && existing.passwordHash) {
-      return NextResponse.json(
-        {
-          error:
-            "This account already has a password. Sign in instead, or reset your password.",
-        },
-        { status: 409 },
+      return errorResponse(
+        "This account already has a password. Sign in instead, or reset your password.",
+        409,
       );
     }
 
@@ -56,14 +48,11 @@ export async function POST(request: NextRequest) {
         });
 
     const token = await createToken({ userId: user.id, email: user.email });
-    const response = NextResponse.json(user, { status: 200 });
+    const response = successResponse(user);
     response.cookies.set(SESSION_COOKIE, token, cookieOptions);
     return response;
   } catch (error) {
     console.error("Account claim error:", error);
-    return NextResponse.json(
-      { error: "Failed to set password. Please try again." },
-      { status: 500 },
-    );
+    return errorResponse("Failed to set password. Please try again.", 500);
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ApiResponse } from "@/lib/api/response";
 
 export interface AddressSuggestion {
   displayName: string;
@@ -52,12 +53,12 @@ export function useAddressLookup() {
         );
         if (!response.ok) throw new Error("Location suggestion lookup failed.");
 
-        const data = (await response.json()) as {
+        const payload = (await response.json()) as ApiResponse<{
           suggestions?: AddressSuggestion[];
-        };
+        }>;
         if (requestId !== requestRef.current) return;
 
-        setSuggestions(data.suggestions ?? []);
+        setSuggestions(payload.success ? (payload.data.suggestions ?? []) : []);
       } catch (e) {
         if (requestId !== requestRef.current) return;
         console.error("Address suggestion lookup failed:", e);

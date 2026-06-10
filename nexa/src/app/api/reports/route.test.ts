@@ -40,7 +40,8 @@ describe("POST /api/reports", () => {
 
     // Assert
     expect(response.status).toBe(201);
-    expect(body.id).toBe("report_created");
+    expect(body.success).toBe(true);
+    expect(body.data.id).toBe("report_created");
     expect(prismaMock.report.create).toHaveBeenCalledOnce();
   });
 

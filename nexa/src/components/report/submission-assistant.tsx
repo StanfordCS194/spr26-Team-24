@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, Copy, ExternalLink, Loader2 } from "lucide-react";
+import type { ApiResponse } from "@/lib/api/response";
 
 interface PrefillField {
   key: string;
@@ -36,10 +37,12 @@ export function SubmissionAssistant({ reportId }: SubmissionAssistantProps) {
     async function load() {
       try {
         const res = await fetch(`/api/reports/${reportId}/submission-fields`);
-        const json = res.ok
-          ? ((await res.json()) as SubmissionFieldsResponse)
+        const payload = res.ok
+          ? ((await res.json()) as ApiResponse<SubmissionFieldsResponse>)
           : null;
-        if (!cancelled) setData(json);
+        if (!cancelled) {
+          setData(payload && payload.success ? payload.data : null);
+        }
       } catch {
         if (!cancelled) setData(null);
       } finally {

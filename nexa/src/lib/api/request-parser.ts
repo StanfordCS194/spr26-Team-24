@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
 import type { ZodType } from "zod";
+import { errorResponse } from "@/lib/api/response";
 
 /**
  * Error thrown when a request body fails schema validation. Carries the
@@ -57,5 +58,5 @@ export async function parseJsonRequest<T>(
  * Keeps the error shape identical across every route in one place.
  */
 export function parseErrorResponse(error: RequestParseError): NextResponse {
-  return NextResponse.json({ error: error.message }, { status: 400 });
+  return errorResponse(error.message, 400);
 }

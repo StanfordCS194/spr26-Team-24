@@ -8,6 +8,7 @@ import { Menu } from "@base-ui/react/menu";
 import { Logo } from "@/components/logo";
 import { LanguageSelector } from "@/components/language-selector";
 import { useI18n } from "@/i18n/provider";
+import type { ApiResponse } from "@/lib/api/response";
 
 const NAV_LINKS = [
   { href: "/#how-it-works", labelKey: "nav.howItWorks" },
@@ -39,8 +40,10 @@ export function Navbar() {
 
   useEffect(() => {
     fetch("/api/auth/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then(setUser)
+      .then((r) => (r.ok ? (r.json() as Promise<ApiResponse<AuthUser>>) : null))
+      .then((payload) =>
+        setUser(payload && payload.success ? payload.data : null),
+      )
       .catch(() => setUser(null));
   }, [pathname]);
 
