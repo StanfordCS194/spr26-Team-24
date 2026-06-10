@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { getGoogleApiKey } from "@/lib/config";
+import { DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import { stripDataUrlPrefix } from "./image-utils";
 import {
   CLASSIFICATION_PROMPT,
@@ -61,6 +62,7 @@ export async function classifyWithGoogle(
   const response = await getClient().models.generateContent({
     model: "gemini-2.5-flash",
     contents: [{ role: "user", parts }],
+    config: { httpOptions: { timeout: DEFAULT_LLM_TIMEOUT_MS } },
   });
 
   const raw = response.text ?? "{}";

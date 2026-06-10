@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAI } from "@/lib/openai";
+import { fetchWithTimeout, DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import { ISSUE_TYPE_LABELS, US_STATE_CODES } from "@/lib/constants";
 import { IssueType } from "@/generated/prisma/enums";
 import { resolveJurisdiction } from "@/lib/jurisdictions/resolve";
@@ -248,13 +249,20 @@ async function reverseLookupCity(
   latitude: number,
   longitude: number,
 ): Promise<ResolvedLocation> {
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${latitude}&lon=${longitude}`,
-    {
-      headers: { "User-Agent": "Nexa civic form lookup" },
-      cache: "no-store",
-    },
-  );
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${latitude}&lon=${longitude}`,
+      {
+        headers: { "User-Agent": "Nexa civic form lookup" },
+        cache: "no-store",
+      },
+    );
+  } catch {
+    // A slow/hung geocoder must not stall the whole form-link request; treat
+    // it as an unresolved location and let the caller fall back.
+    return { ...EMPTY_LOCATION, latitude, longitude };
+  }
 
   if (!response.ok) {
     return { ...EMPTY_LOCATION, latitude, longitude };
@@ -270,13 +278,18 @@ async function reverseLookupCity(
 }
 
 async function geocodeAddress(address: string): Promise<ResolvedLocation> {
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&q=${encodeURIComponent(address)}`,
-    {
-      headers: { "User-Agent": "Nexa civic form lookup" },
-      cache: "no-store",
-    },
-  );
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&q=${encodeURIComponent(address)}`,
+      {
+        headers: { "User-Agent": "Nexa civic form lookup" },
+        cache: "no-store",
+      },
+    );
+  } catch {
+    return EMPTY_LOCATION;
+  }
 
   if (!response.ok) return EMPTY_LOCATION;
 
@@ -351,21 +364,24 @@ Instructions:
 Do not say "not_found" just because there is no "${issueLabel}"-specific form — the general city 311 / Report-an-Issue page is the correct answer in that case.`;
 
   const client = getOpenAI();
-  const response = await client.responses.create({
-    model: "gpt-4o-mini",
-    input: [
-      {
-        role: "system",
-        content: [{ type: "input_text", text: LOOKUP_SYSTEM_PROMPT }],
-      },
-      {
-        role: "user",
-        content: [{ type: "input_text", text: prompt }],
-      },
-    ],
-    tools: [{ type: "web_search_preview" }],
-    tool_choice: { type: "web_search_preview" },
-  });
+  const response = await client.responses.create(
+    {
+      model: "gpt-4o-mini",
+      input: [
+        {
+          role: "system",
+          content: [{ type: "input_text", text: LOOKUP_SYSTEM_PROMPT }],
+        },
+        {
+          role: "user",
+          content: [{ type: "input_text", text: prompt }],
+        },
+      ],
+      tools: [{ type: "web_search_preview" }],
+      tool_choice: { type: "web_search_preview" },
+    },
+    { timeout: DEFAULT_LLM_TIMEOUT_MS },
+  );
 
   const raw = collectResponsesAssistantText(response);
   if (!raw) {

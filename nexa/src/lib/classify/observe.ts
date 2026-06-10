@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import { extractJsonObject } from "./json";
 
 export interface Observation {
@@ -68,12 +69,15 @@ export async function observeImage(
     });
   }
 
-  const response = await getClient().chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content }],
-    max_tokens: 250,
-    temperature: 0.1,
-  });
+  const response = await getClient().chat.completions.create(
+    {
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content }],
+      max_tokens: 250,
+      temperature: 0.1,
+    },
+    { timeout: DEFAULT_LLM_TIMEOUT_MS },
+  );
 
   const raw = response.choices[0]?.message?.content ?? "{}";
   const parsed = parseObservation(raw);

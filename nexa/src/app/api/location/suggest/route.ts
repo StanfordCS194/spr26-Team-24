@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGoogleMapsApiKey } from "@/lib/config";
+import { fetchWithTimeout } from "@/lib/http";
 
 type NominatimSearchResult = {
   display_name?: string;
@@ -44,10 +45,15 @@ async function fetchGoogleSuggestions(
     key: apiKey,
   });
 
-  const autocompleteResponse = await fetch(
-    `https://maps.googleapis.com/maps/api/place/autocomplete/json?${autocompleteParams.toString()}`,
-    { cache: "no-store" },
-  );
+  let autocompleteResponse: Response;
+  try {
+    autocompleteResponse = await fetchWithTimeout(
+      `https://maps.googleapis.com/maps/api/place/autocomplete/json?${autocompleteParams.toString()}`,
+      { cache: "no-store" },
+    );
+  } catch {
+    return [];
+  }
 
   if (!autocompleteResponse.ok) {
     return [];
@@ -75,10 +81,15 @@ async function fetchGoogleSuggestions(
         key: apiKey,
       });
 
-      const detailResponse = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?${detailParams.toString()}`,
-        { cache: "no-store" },
-      );
+      let detailResponse: Response;
+      try {
+        detailResponse = await fetchWithTimeout(
+          `https://maps.googleapis.com/maps/api/place/details/json?${detailParams.toString()}`,
+          { cache: "no-store" },
+        );
+      } catch {
+        return null;
+      }
 
       if (!detailResponse.ok) return null;
 
@@ -115,15 +126,20 @@ async function fetchGoogleSuggestions(
 async function fetchNominatimSuggestions(
   query: string,
 ): Promise<LocationSuggestion[]> {
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`,
-    {
-      headers: {
-        "User-Agent": "Nexa location suggestions",
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          "User-Agent": "Nexa location suggestions",
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    },
-  );
+    );
+  } catch {
+    return [];
+  }
 
   if (!response.ok) return [];
 

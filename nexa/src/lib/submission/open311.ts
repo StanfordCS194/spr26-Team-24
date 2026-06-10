@@ -1,5 +1,45 @@
 import { IssueType } from "@/generated/prisma/enums";
 import { ReportStatus } from "@/generated/prisma/enums";
+import {
+  fetchWithTimeout,
+  withRetry,
+  TimeoutError,
+  isTransientError,
+  DEFAULT_HTTP_TIMEOUT_MS,
+} from "@/lib/http";
+
+// A POST to Open311 is NOT idempotent: a request that the endpoint already
+// accepted but whose response we lost (timeout, dropped connection mid-reply)
+// could file a duplicate ticket if we blindly retried. So submit retries ONLY
+// on errors that prove the request never reached the server — connection
+// refused / DNS failure before any bytes were sent. A timeout is treated as
+// terminal precisely because the request may already have been accepted.
+const CONNECTION_ONLY_RETRY_CODES = new Set([
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "EAI_AGAIN",
+  "UND_ERR_CONNECT_TIMEOUT",
+]);
+
+function isPreRequestConnectionError(error: unknown): boolean {
+  if (error instanceof TimeoutError) return false;
+  const code =
+    (error as { code?: unknown })?.code ??
+    (error as { cause?: { code?: unknown } })?.cause?.code;
+  return typeof code === "string" && CONNECTION_ONLY_RETRY_CODES.has(code);
+}
+
+// GET status polling IS idempotent, so it retries any transient failure plus
+// 5xx responses. A sentinel error lets us funnel a retryable 5xx through the
+// same withRetry path as a thrown network error.
+class RetryableHttpError extends Error {
+  readonly httpStatus: number;
+  constructor(httpStatus: number) {
+    super(`Open311 endpoint returned HTTP ${httpStatus}.`);
+    this.name = "RetryableHttpError";
+    this.httpStatus = httpStatus;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Open311 GeoReport v2 client
@@ -173,23 +213,42 @@ export async function submitToOpen311(
   }
 
   const params = buildRequestParams(report, serviceCode, options.config);
-  const doFetch = options.fetchImpl ?? fetch;
+  // A custom fetchImpl (tests) is used verbatim; otherwise fetchWithTimeout
+  // gives the POST a bounded deadline so a hung endpoint can't stall the route.
+  const doFetch =
+    options.fetchImpl ??
+    ((input: RequestInfo | URL, init?: RequestInit) =>
+      fetchWithTimeout(input, {
+        ...init,
+        timeoutMs: DEFAULT_HTTP_TIMEOUT_MS,
+      }));
 
   let response: Response;
   try {
-    response = await doFetch(`${endpoint}/requests.json`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params.toString(),
-    });
+    response = await withRetry(
+      () =>
+        doFetch(`${endpoint}/requests.json`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params.toString(),
+        }),
+      {
+        attempts: 2,
+        // Retry ONLY when the request provably never reached the server, never
+        // after a timeout or any HTTP response — avoids duplicate filings.
+        shouldRetry: isPreRequestConnectionError,
+      },
+    );
   } catch (error) {
     return {
       status: "error",
       httpStatus: null,
       message:
-        error instanceof Error
-          ? error.message
-          : "Network error contacting Open311 endpoint.",
+        error instanceof TimeoutError
+          ? "Open311 endpoint timed out."
+          : error instanceof Error
+            ? error.message
+            : "Network error contacting Open311 endpoint.",
     };
   }
 
@@ -274,22 +333,52 @@ export async function fetchOpen311Status(
     query.set("jurisdiction_id", options.config.jurisdictionId);
   const suffix = query.toString() ? `?${query.toString()}` : "";
 
-  const doFetch = options.fetchImpl ?? fetch;
+  // A custom fetchImpl (tests) is used verbatim; otherwise fetchWithTimeout
+  // bounds each GET. Polling is idempotent, so we retry transient failures
+  // (network/timeout) and 5xx responses with capped exponential backoff.
+  const doFetch =
+    options.fetchImpl ??
+    ((input: RequestInfo | URL, init?: RequestInit) =>
+      fetchWithTimeout(input, {
+        ...init,
+        timeoutMs: DEFAULT_HTTP_TIMEOUT_MS,
+      }));
+
+  const url = `${endpoint}/requests/${encodeURIComponent(serviceRequestId)}.json${suffix}`;
 
   let response: Response;
   try {
-    response = await doFetch(
-      `${endpoint}/requests/${encodeURIComponent(serviceRequestId)}.json${suffix}`,
-      { method: "GET", cache: "no-store" },
+    response = await withRetry(
+      async () => {
+        const res = await doFetch(url, { method: "GET", cache: "no-store" });
+        // Surface 5xx as a retryable error so withRetry backs off and retries;
+        // 4xx and 404 are permanent and fall through untouched.
+        if (res.status >= 500) throw new RetryableHttpError(res.status);
+        return res;
+      },
+      {
+        attempts: 3,
+        shouldRetry: (error) =>
+          error instanceof RetryableHttpError || isTransientError(error),
+      },
     );
   } catch (error) {
+    if (error instanceof RetryableHttpError) {
+      return {
+        status: "error",
+        httpStatus: error.httpStatus,
+        message: error.message,
+      };
+    }
     return {
       status: "error",
       httpStatus: null,
       message:
-        error instanceof Error
-          ? error.message
-          : "Network error contacting Open311 endpoint.",
+        error instanceof TimeoutError
+          ? "Open311 endpoint timed out."
+          : error instanceof Error
+            ? error.message
+            : "Network error contacting Open311 endpoint.",
     };
   }
 
