@@ -237,6 +237,11 @@ async function main() {
   console.log(
     `\n${pass ? "PASS" : "BELOW TARGET"}: routing accuracy ${(metrics.accuracy * 100).toFixed(1)}% vs target ${(TARGET_ACCURACY * 100).toFixed(0)}% (O2.KR1).`,
   );
+
+  // Exit non-zero below target so CI gates the build on routing accuracy.
+  if (!pass) {
+    process.exitCode = 1;
+  }
 }
 
 main().catch((err) => {
