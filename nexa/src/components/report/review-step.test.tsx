@@ -9,9 +9,10 @@ type OfficialForm = Parameters<typeof ReviewStep>[0]["officialForm"];
 function baseProps() {
   return {
     classification: {
-      issueType: "ROAD_DAMAGE",
+      issueType: "ROAD_DAMAGE" as const,
       aiDescription: "A deep pothole in the road.",
       severity: "high" as "low" | "medium" | "high",
+      confidence: 0.92,
     },
     imagePreview: null as string | null,
     description: "Big pothole",

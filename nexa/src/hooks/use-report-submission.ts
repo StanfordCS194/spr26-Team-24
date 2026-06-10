@@ -3,25 +3,19 @@
 import { useCallback, useState } from "react";
 import { queueReport } from "@/lib/offline-queue";
 import type { ApiResponse } from "@/lib/api/response";
+import type {
+  ClassificationResult,
+  ComparisonResult,
+} from "@/lib/classify/types";
 
-export interface ClassificationResult {
-  issueType: string;
-  aiDescription: string;
-  severity: "low" | "medium" | "high";
-  confidence?: number;
-}
-
-export interface ProviderResult extends ClassificationResult {
-  provider: string;
-  latencyMs: number;
-}
-
-export interface ComparisonResponse {
-  winner: ClassificationResult;
-  allResults: ProviderResult[];
-  consensus: boolean;
-  method: string;
-}
+// The classify route returns the canonical `ComparisonResult` (extended on the
+// server with diagnostic fields this hook does not read). Re-export under the
+// existing names so consumers of this hook keep their import paths.
+export type {
+  ClassificationResult,
+  ProviderResult,
+} from "@/lib/classify/types";
+export type ComparisonResponse = ComparisonResult;
 
 export interface CreatedReport {
   id: string;
