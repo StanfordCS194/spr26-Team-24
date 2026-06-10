@@ -110,6 +110,42 @@ describe("ReviewStep", () => {
     );
   });
 
+  it("marks the description field as optional", () => {
+    // Arrange / Act
+    renderWithProviders(<ReviewStep {...baseProps()} />);
+
+    // Assert: the user knows they can lean on the photo + AI instead of typing.
+    expect(screen.getByText("(optional)")).toBeInTheDocument();
+  });
+
+  it("adopts the AI description into the editable field in one tap", async () => {
+    // Arrange
+    const props = baseProps();
+    const { user } = renderWithProviders(<ReviewStep {...props} />);
+
+    // Act
+    await user.click(
+      screen.getByRole("button", { name: "Use this description" }),
+    );
+
+    // Assert: the AI suggestion is copied into the editable description.
+    expect(props.onDescriptionChange).toHaveBeenCalledWith(
+      "A deep pothole in the road.",
+    );
+  });
+
+  it("hides the adopt button once the description already matches the AI text", () => {
+    // Arrange / Act: editable description equals the AI suggestion.
+    const props = baseProps();
+    props.description = props.classification.aiDescription;
+    renderWithProviders(<ReviewStep {...props} />);
+
+    // Assert: nothing left to adopt.
+    expect(
+      screen.queryByRole("button", { name: "Use this description" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows a loading state while the official form is being looked up", () => {
     // Arrange / Act
     renderWithProviders(<ReviewStep {...baseProps()} officialFormLoading />);
