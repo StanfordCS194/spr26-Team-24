@@ -8,56 +8,10 @@ import { ReviewStep } from "@/components/report/review-step";
 import { ConfirmedStep } from "@/components/report/confirmed-step";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useGeolocation } from "@/hooks/use-geolocation";
+import { useAddressLookup } from "@/hooks/use-address-lookup";
+import { useFormLookup } from "@/hooks/use-form-lookup";
+import { useReportSubmission } from "@/hooks/use-report-submission";
 import { useI18n } from "@/i18n/provider";
-import { queueReport } from "@/lib/offline-queue";
-
-interface ClassificationResult {
-  issueType: string;
-  aiDescription: string;
-  severity: "low" | "medium" | "high";
-  confidence?: number;
-}
-
-interface ProviderResult extends ClassificationResult {
-  provider: string;
-  latencyMs: number;
-}
-
-interface ComparisonResponse {
-  winner: ClassificationResult;
-  allResults: ProviderResult[];
-  consensus: boolean;
-  method: string;
-}
-
-interface CreatedReport {
-  id: string;
-  issueType: string | null;
-  description: string | null;
-  aiDescription: string | null;
-  createdAt: string;
-}
-
-type OfficialFormLookupResult =
-  | {
-      status: "found";
-      cityName: string;
-      formUrl: string;
-      reason: string;
-      confidence: "low" | "medium" | "high";
-    }
-  | {
-      status: "not_found";
-      cityName: string | null;
-      message: string;
-      reason?: string;
-    };
-
-interface AddressSuggestion {
-  displayName: string;
-  latitude: number;
-  longitude: number;
-}
 
 export default function ReportPage() {
   const posthog = usePostHog();
@@ -72,122 +26,28 @@ export default function ReportPage() {
 
   const image = useImageUpload();
   const geo = useGeolocation();
+  const addressLookup = useAddressLookup();
+  const formLookup = useFormLookup();
+  const submission = useReportSubmission();
 
-  const [classifying, setClassifying] = useState(false);
-  const [classification, setClassification] =
-    useState<ClassificationResult | null>(null);
-  const [comparison, setComparison] = useState<ComparisonResponse | null>(null);
-  const [classifyError, setClassifyError] = useState<string | null>(null);
-
-  const [submitting, setSubmitting] = useState(false);
-  const [createdReport, setCreatedReport] = useState<CreatedReport | null>(
-    null,
-  );
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submittedOffline, setSubmittedOffline] = useState(false);
-  const [officialForm, setOfficialForm] =
-    useState<OfficialFormLookupResult | null>(null);
-  const [officialFormLoading, setOfficialFormLoading] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<
-    AddressSuggestion[]
-  >([]);
-  const [locationSuggesting, setLocationSuggesting] = useState(false);
-  const addressLookupTimerRef = useRef<number | null>(null);
-  const addressLookupRequestRef = useRef(0);
-
-  useEffect(() => {
-    return () => {
-      if (addressLookupTimerRef.current) {
-        window.clearTimeout(addressLookupTimerRef.current);
-      }
-    };
-  }, []);
-
-  const lookupAddressSuggestions = (query: string) => {
-    if (addressLookupTimerRef.current) {
-      window.clearTimeout(addressLookupTimerRef.current);
-      addressLookupTimerRef.current = null;
-    }
-
-    const trimmed = query.trim();
-    if (trimmed.length < 3) {
-      setAddressSuggestions([]);
-      setLocationSuggesting(false);
-      return;
-    }
-
-    setLocationSuggesting(true);
-    addressLookupTimerRef.current = window.setTimeout(async () => {
-      const requestId = ++addressLookupRequestRef.current;
-
-      try {
-        const response = await fetch(
-          `/api/location/suggest?q=${encodeURIComponent(trimmed)}`,
-        );
-        if (!response.ok) throw new Error("Location suggestion lookup failed.");
-
-        const data = (await response.json()) as {
-          suggestions?: AddressSuggestion[];
-        };
-        if (requestId !== addressLookupRequestRef.current) return;
-
-        setAddressSuggestions(data.suggestions ?? []);
-      } catch {
-        if (requestId !== addressLookupRequestRef.current) return;
-        setAddressSuggestions([]);
-      } finally {
-        if (requestId !== addressLookupRequestRef.current) return;
-        setLocationSuggesting(false);
-      }
-    }, 250);
-  };
-
-  const lookupOfficialForm = async (issueType: string) => {
-    const hasLocation =
-      !!geo.address.trim() ||
-      (typeof geo.latitude === "number" && typeof geo.longitude === "number");
-
-    if (!hasLocation) {
-      setOfficialForm({
-        status: "not_found",
-        cityName: null,
-        message: t("report.noOfficialForm"),
-        reason: t("report.locationPlaceholder"),
-      });
-      return;
-    }
-
-    setOfficialFormLoading(true);
-    try {
-      const res = await fetch("/api/reports/form-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          issueType,
-          address: geo.address || undefined,
-          latitude: geo.latitude ?? undefined,
-          longitude: geo.longitude ?? undefined,
-        }),
-      });
-      if (!res.ok) throw new Error(t("report.noOfficialForm"));
-      const result: OfficialFormLookupResult = await res.json();
-      setOfficialForm(result);
-    } catch (err) {
-      setOfficialForm({
-        status: "not_found",
-        cityName: null,
-        message: t("report.noOfficialForm"),
-        reason: err instanceof Error ? err.message : t("report.noOfficialForm"),
-      });
-    } finally {
-      setOfficialFormLoading(false);
-    }
-  };
+  const lookupOfficialForm = (issueType: string) =>
+    formLookup.lookup(
+      issueType,
+      {
+        address: geo.address,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+      },
+      {
+        noOfficialForm: t("report.noOfficialForm"),
+        noLocation: t("report.locationPlaceholder"),
+      },
+    );
 
   const handleAddressChange = (value: string) => {
     geo.setAddress(value);
 
-    const selectedSuggestion = addressSuggestions.find(
+    const selectedSuggestion = addressLookup.suggestions.find(
       (suggestion) => suggestion.displayName === value,
     );
 
@@ -196,136 +56,70 @@ export default function ReportPage() {
         selectedSuggestion.latitude,
         selectedSuggestion.longitude,
       );
-      setAddressSuggestions([]);
-      setLocationSuggesting(false);
+      addressLookup.setSuggestions([]);
+      addressLookup.setSuggesting(false);
       return;
     }
 
     geo.setCoordinates(null, null);
-    lookupAddressSuggestions(value);
+    addressLookup.lookup(value);
   };
 
-  const handleClassify = async () => {
-    setClassifying(true);
-    setClassifyError(null);
-    try {
-      setOfficialForm(null);
-      const res = await fetch("/api/reports/classify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description,
-          imageBase64: image.imageBase64,
-          latitude: geo.latitude ?? undefined,
-          longitude: geo.longitude ?? undefined,
-          address: geo.address || undefined,
-        }),
-      });
-
-      // Read the raw body once so non-JSON responses surface a useful error
-      // instead of Safari's cryptic "did not match the expected pattern".
-      const rawBody = await res.text();
-      let payload: unknown = null;
-      try {
-        payload = rawBody ? JSON.parse(rawBody) : null;
-      } catch {
-        throw new Error(
-          `Classification failed (HTTP ${res.status}). Server returned a non-JSON response.`,
-        );
-      }
-
-      if (!res.ok) {
-        const message =
-          (payload as { error?: string } | null)?.error ??
-          `Classification failed (HTTP ${res.status}).`;
-        throw new Error(message);
-      }
-
-      const data = payload as ComparisonResponse;
-      setComparison(data);
-      setClassification(data.winner);
-      void lookupOfficialForm(data.winner.issueType);
-      setStep("review");
-      posthog?.capture("report_classified", {
-        issue_type: data.winner.issueType,
-        severity: data.winner.severity,
-        has_image: !!image.imageBase64,
-        has_location: !!geo.latitude,
-      });
-    } catch (e) {
-      setClassifyError(
-        e instanceof Error ? e.message : t("common.somethingWrong"),
-      );
-    } finally {
-      setClassifying(false);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!classification) return;
-    setSubmitting(true);
-    setSubmitError(null);
-
-    const payload = {
+  const handleClassify = () =>
+    submission.classify({
       description,
-      aiDescription: classification.aiDescription,
-      issueType: classification.issueType,
-      latitude: geo.latitude,
-      longitude: geo.longitude,
-      address: geo.address,
-      imageUrl: image.imageBase64,
-    };
-
-    try {
-      const res = await fetch("/api/reports", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || t("report.submit"));
-      }
-
-      const report: CreatedReport = await res.json();
-      setCreatedReport(report);
-      setSubmittedOffline(false);
-      setStep("confirmed");
-      posthog?.capture("report_submitted", {
-        report_id: report.id,
-        issue_type: classification.issueType,
-        time_to_submit_ms: Date.now() - flowStartedAt.current,
-        has_image: !!image.imageBase64,
-        has_location: !!geo.latitude,
-      });
-    } catch (e) {
-      // No connectivity: park the report locally and confirm optimistically.
-      // PwaSetup replays the queue once the browser is back online.
-      if (typeof navigator !== "undefined" && !navigator.onLine) {
-        queueReport(payload);
-        setCreatedReport({
-          id: "Pending sync",
-          issueType: classification.issueType,
-          description,
-          aiDescription: classification.aiDescription,
-          createdAt: new Date().toISOString(),
+      imageBase64: image.imageBase64,
+      location: {
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        address: geo.address,
+      },
+      fallbackError: t("common.somethingWrong"),
+      onBeforeClassify: () => formLookup.setOfficialForm(null),
+      onClassified: (data) => {
+        void lookupOfficialForm(data.winner.issueType);
+        setStep("review");
+        posthog?.capture("report_classified", {
+          issue_type: data.winner.issueType,
+          severity: data.winner.severity,
+          has_image: !!image.imageBase64,
+          has_location: !!geo.latitude,
         });
-        setSubmittedOffline(true);
+      },
+    });
+
+  const handleSubmit = () => {
+    if (!submission.classification) return;
+    const classification = submission.classification;
+    return submission.submit({
+      description,
+      classification,
+      location: {
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        address: geo.address,
+      },
+      imageBase64: image.imageBase64,
+      fallbackError: t("common.somethingWrong"),
+      onSubmitted: (report) => {
+        setStep("confirmed");
+        posthog?.capture("report_submitted", {
+          report_id: report.id,
+          issue_type: classification.issueType,
+          time_to_submit_ms: Date.now() - flowStartedAt.current,
+          has_image: !!image.imageBase64,
+          has_location: !!geo.latitude,
+        });
+      },
+      onQueuedOffline: () => {
         setStep("confirmed");
         posthog?.capture("report_queued_offline", {
           issue_type: classification.issueType,
           has_image: !!image.imageBase64,
           has_location: !!geo.latitude,
         });
-      } else {
-        setSubmitError(
-          e instanceof Error ? e.message : t("common.somethingWrong"),
-        );
-      }
-    } finally {
-      setSubmitting(false);
-    }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -334,20 +128,9 @@ export default function ReportPage() {
     setDescription("");
     image.clearImage();
     geo.reset();
-    setAddressSuggestions([]);
-    setLocationSuggesting(false);
-    if (addressLookupTimerRef.current) {
-      window.clearTimeout(addressLookupTimerRef.current);
-      addressLookupTimerRef.current = null;
-    }
-    setClassification(null);
-    setComparison(null);
-    setCreatedReport(null);
-    setClassifyError(null);
-    setSubmitError(null);
-    setSubmittedOffline(false);
-    setOfficialForm(null);
-    setOfficialFormLoading(false);
+    addressLookup.reset();
+    submission.reset();
+    formLookup.reset();
   };
 
   return (
@@ -368,13 +151,13 @@ export default function ReportPage() {
             longitude={geo.longitude}
             accuracy={geo.accuracy}
             locationLoading={geo.loading}
-            locationSuggesting={locationSuggesting}
-            addressSuggestions={addressSuggestions.map(
+            locationSuggesting={addressLookup.suggesting}
+            addressSuggestions={addressLookup.suggestions.map(
               (suggestion) => suggestion.displayName,
             )}
             locationError={geo.error}
-            classifying={classifying}
-            classifyError={classifyError}
+            classifying={submission.classifying}
+            classifyError={submission.classifyError}
             canSubmit={!!(image.imageBase64 || description.trim())}
             onImageClick={() => document.getElementById("photo-input")?.click()}
             onDrop={image.handleDrop}
@@ -387,85 +170,87 @@ export default function ReportPage() {
           />
         )}
 
-        {step === "review" && classification && (
+        {step === "review" && submission.classification && (
           <>
             <ReviewStep
-              classification={classification}
+              classification={submission.classification}
               imagePreview={image.imagePreview}
               description={description}
               address={geo.address}
-              submitting={submitting}
-              submitError={submitError}
-              officialForm={officialForm}
-              officialFormLoading={officialFormLoading}
+              submitting={submission.submitting}
+              submitError={submission.submitError}
+              officialForm={formLookup.officialForm}
+              officialFormLoading={formLookup.loading}
               onDescriptionChange={setDescription}
               onAddressChange={geo.setAddress}
               onBack={() => setStep("describe")}
               onSubmit={handleSubmit}
             />
 
-            {comparison && comparison.allResults.length > 1 && (
-              <div className="mt-10">
-                <span className="section-label">
-                  {t("report.aiComparison")}
-                </span>
-                <p className="mt-2 mb-4 text-sm text-muted-foreground">
-                  {t("report.decisionMethod")}{" "}
-                  <span className="font-medium text-foreground">
-                    {comparison.method}
+            {submission.comparison &&
+              submission.comparison.allResults.length > 1 && (
+                <div className="mt-10">
+                  <span className="section-label">
+                    {t("report.aiComparison")}
                   </span>
-                  {comparison.consensus && t("report.modelsAgreed")}
-                </p>
-                <div className="flex flex-col gap-3">
-                  {comparison.allResults.map((r) => (
-                    <div
-                      key={r.provider}
-                      className={`ep-card p-4 ${r.issueType === comparison.winner.issueType ? "ring-2 ring-ep-green/40" : "opacity-60"}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-medium uppercase tracking-wider">
-                          {r.provider}
-                        </span>
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {r.latencyMs}ms
-                        </span>
+                  <p className="mt-2 mb-4 text-sm text-muted-foreground">
+                    {t("report.decisionMethod")}{" "}
+                    <span className="font-medium text-foreground">
+                      {submission.comparison.method}
+                    </span>
+                    {submission.comparison.consensus &&
+                      t("report.modelsAgreed")}
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    {submission.comparison.allResults.map((r) => (
+                      <div
+                        key={r.provider}
+                        className={`ep-card p-4 ${r.issueType === submission.comparison!.winner.issueType ? "ring-2 ring-ep-green/40" : "opacity-60"}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-xs font-medium uppercase tracking-wider">
+                            {r.provider}
+                          </span>
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {r.latencyMs}ms
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-3">
+                          <span className="text-sm font-semibold">
+                            {t(`issue.${r.issueType}`)}
+                          </span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 font-mono text-xs uppercase ${
+                              r.severity === "high"
+                                ? "bg-red-50 text-red-600"
+                                : r.severity === "medium"
+                                  ? "bg-yellow-50 text-yellow-600"
+                                  : "bg-ep-green-light text-ep-green"
+                            }`}
+                          >
+                            {t(`severity.${r.severity}`)}
+                          </span>
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {t("report.confident", {
+                              percent: Math.round((r.confidence ?? 0) * 100),
+                            })}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {r.aiDescription}
+                        </p>
                       </div>
-                      <div className="mt-2 flex items-center gap-3">
-                        <span className="text-sm font-semibold">
-                          {t(`issue.${r.issueType}`)}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 font-mono text-xs uppercase ${
-                            r.severity === "high"
-                              ? "bg-red-50 text-red-600"
-                              : r.severity === "medium"
-                                ? "bg-yellow-50 text-yellow-600"
-                                : "bg-ep-green-light text-ep-green"
-                          }`}
-                        >
-                          {t(`severity.${r.severity}`)}
-                        </span>
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {t("report.confident", {
-                            percent: Math.round((r.confidence ?? 0) * 100),
-                          })}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {r.aiDescription}
-                      </p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </>
         )}
 
-        {step === "confirmed" && createdReport && (
+        {step === "confirmed" && submission.createdReport && (
           <ConfirmedStep
-            report={createdReport}
-            offline={submittedOffline}
+            report={submission.createdReport}
+            offline={submission.submittedOffline}
             onReportAnother={resetForm}
           />
         )}
