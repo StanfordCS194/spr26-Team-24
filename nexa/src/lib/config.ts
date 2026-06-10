@@ -103,6 +103,15 @@ export const getAdminEmails = cached(() => {
   );
 });
 
+/**
+ * Sentry DSN for server-side error tracking (see `src/instrumentation.ts`).
+ * Optional and env-gated: when unset the error-tracking hook is a NO-OP — server
+ * errors are still surfaced via the existing `[…][ALERT]` console logs, and the
+ * app runs unchanged. Set it (in Vercel) to forward errors to Sentry in addition
+ * to those logs. The DSN is a public, non-secret identifier.
+ */
+export const getSentryDsn = cached(() => optionalEnv("SENTRY_DSN"));
+
 /** OpenAI API key (GPT classification + stage-1 observation). */
 export const getOpenAiKey = cached(() => optionalEnv("OPENAI_API_KEY"));
 

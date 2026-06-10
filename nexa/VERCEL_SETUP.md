@@ -125,3 +125,23 @@ The Vercel dashboard's **Deployments** tab → any prior green deployment →
 "Promote to Production" is a one-click rollback. Database migrations are
 **not** auto-rolled-back — keep them additive (no `DROP COLUMN` etc.) during
 the demo period.
+
+> An app rollback does **not** roll back the database. To recover from data
+> loss/corruption, see the Neon backup / point-in-time-restore procedure in the
+> [operations runbook](docs/ops.md).
+
+---
+
+## 6. Backups, disaster recovery, and observability
+
+Database backup / point-in-time restore (with RTO/RPO targets and a recovery
+runbook) and the error-tracking / APM strategy live in
+[`docs/ops.md`](docs/ops.md). Key points:
+
+- **Backups/PITR:** Neon instant restore (PITR) within the project's history
+  window; recommended targets RPO ≈ 0, RTO ≤ 30 min, history window ≥ 7 days
+  (requires a paid plan — the Free plan is fixed at 6 hours), plus periodic
+  off-platform `pg_dump` backups.
+- **Observability:** the existing `[…][ALERT]` logs and `/api/health` DB probe
+  are the baseline; an env-gated Sentry hook (`src/instrumentation.ts`, set
+  `SENTRY_DSN`) forwards server errors to an aggregator when configured.

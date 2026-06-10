@@ -47,3 +47,33 @@ describe("getAdminEmails", () => {
     expect(getAdminEmails()).toBe(getAdminEmails());
   });
 });
+
+const ORIGINAL_SENTRY_DSN = process.env.SENTRY_DSN;
+
+async function loadGetSentryDsn() {
+  vi.resetModules();
+  const mod = await import("./config");
+  return mod.getSentryDsn;
+}
+
+describe("getSentryDsn", () => {
+  beforeEach(() => {
+    delete process.env.SENTRY_DSN;
+  });
+
+  afterEach(() => {
+    if (ORIGINAL_SENTRY_DSN === undefined) delete process.env.SENTRY_DSN;
+    else process.env.SENTRY_DSN = ORIGINAL_SENTRY_DSN;
+  });
+
+  it("returns undefined when SENTRY_DSN is unset (error tracking is a no-op)", async () => {
+    const getSentryDsn = await loadGetSentryDsn();
+    expect(getSentryDsn()).toBeUndefined();
+  });
+
+  it("returns a trimmed DSN when set", async () => {
+    process.env.SENTRY_DSN = "  https://abc@o0.ingest.sentry.io/1  ";
+    const getSentryDsn = await loadGetSentryDsn();
+    expect(getSentryDsn()).toBe("https://abc@o0.ingest.sentry.io/1");
+  });
+});
