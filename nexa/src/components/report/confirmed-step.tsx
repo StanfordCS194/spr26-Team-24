@@ -20,6 +20,18 @@ interface ConfirmedStepProps {
    * user is a guest (`false`), never speculatively.
    */
   isLoggedIn?: boolean;
+  /**
+   * The report page's first-capture timestamp (`flowStartedAt`), i.e. the K2
+   * clock start. Forwarded to {@link SubmissionAssistant} so the timed
+   * `report_submitted` event it emits on a real agency submission measures the
+   * full capture -> SUBMITTED interval (#240). Omitted/0 means the clock never
+   * started; the assistant falls back to its own observation time.
+   */
+  captureStartedAt?: number;
+  /** Whether the report carried a photo — passed through for K2 event parity. */
+  hasImage?: boolean;
+  /** Whether the report carried a location — passed through for K2 event parity. */
+  hasLocation?: boolean;
   onReportAnother: () => void;
 }
 
@@ -27,6 +39,9 @@ export function ConfirmedStep({
   report,
   offline = false,
   isLoggedIn,
+  captureStartedAt,
+  hasImage,
+  hasLocation,
   onReportAnother,
 }: ConfirmedStepProps) {
   const { t, locale } = useI18n();
@@ -102,7 +117,15 @@ export function ConfirmedStep({
         </div>
       </div>
 
-      {!offline && <SubmissionAssistant reportId={report.id} />}
+      {!offline && (
+        <SubmissionAssistant
+          reportId={report.id}
+          issueType={report.issueType}
+          captureStartedAt={captureStartedAt}
+          hasImage={hasImage}
+          hasLocation={hasLocation}
+        />
+      )}
 
       {showUpgradePrompt && (
         <div className="ep-card w-full max-w-md p-6 text-left">
