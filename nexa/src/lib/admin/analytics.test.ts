@@ -98,10 +98,11 @@ describe("computeTimeToSubmit", () => {
     });
   });
 
-  it("computes rounded median and p90 seconds from createdAt..updatedAt", () => {
+  it("computes rounded median and p90 seconds from createdAt..submittedAt", () => {
     const rows = [10, 20, 30, 40].map((s) => ({
       createdAt: base,
-      updatedAt: plus(s),
+      updatedAt: plus(s + 1000), // ignored when submittedAt is present
+      submittedAt: plus(s),
     }));
     const result = computeTimeToSubmit(rows);
     expect(result.count).toBe(4);
@@ -109,10 +110,27 @@ describe("computeTimeToSubmit", () => {
     expect(result.p90Seconds).toBe(37); // 0.9*3=2.7 -> 30+0.7*10=37
   });
 
-  it("drops negative durations (updatedAt before createdAt)", () => {
+  it("prefers submittedAt over updatedAt for the submission time", () => {
+    // updatedAt (a later edit) would give 90s, but submittedAt is exact at 30s.
     const rows = [
-      { createdAt: plus(100), updatedAt: base }, // negative -> dropped
-      { createdAt: base, updatedAt: plus(50) },
+      { createdAt: base, updatedAt: plus(90), submittedAt: plus(30) },
+    ];
+    const result = computeTimeToSubmit(rows);
+    expect(result.count).toBe(1);
+    expect(result.medianSeconds).toBe(30);
+  });
+
+  it("falls back to updatedAt when submittedAt is null (legacy rows)", () => {
+    const rows = [{ createdAt: base, updatedAt: plus(50), submittedAt: null }];
+    const result = computeTimeToSubmit(rows);
+    expect(result.count).toBe(1);
+    expect(result.medianSeconds).toBe(50);
+  });
+
+  it("drops negative durations (submission before createdAt)", () => {
+    const rows = [
+      { createdAt: plus(100), updatedAt: base, submittedAt: base }, // negative -> dropped
+      { createdAt: base, updatedAt: plus(999), submittedAt: plus(50) },
     ];
     const result = computeTimeToSubmit(rows);
     expect(result.count).toBe(1);
@@ -123,7 +141,8 @@ describe("computeTimeToSubmit", () => {
 describe("computeAdminAnalytics", () => {
   it("aggregates counts, breakdowns, timing, and ambiguity via Prisma", async () => {
     const created = new Date("2026-01-01T00:00:00.000Z");
-    const updated = new Date("2026-01-01T00:01:00.000Z"); // +60s
+    const updated = new Date("2026-01-01T00:05:00.000Z"); // +300s (a later edit)
+    const submitted = new Date("2026-01-01T00:01:00.000Z"); // +60s (the real submit)
 
     prismaMock.report.count.mockImplementation((args?: { where?: unknown }) => {
       // No-args call => total; { where: { agencyId: null } } => no-agency count.
@@ -152,7 +171,7 @@ describe("computeAdminAnalytics", () => {
     });
 
     prismaMock.report.findMany.mockResolvedValue([
-      { createdAt: created, updatedAt: updated },
+      { createdAt: created, updatedAt: updated, submittedAt: submitted },
     ] as never);
 
     prismaMock.agency.findMany.mockResolvedValue([

@@ -23,6 +23,7 @@ export function makeReport(overrides: Partial<Report> = {}): Report {
     status: ReportStatus.CONFIRMED,
     agencyId: null,
     externalTrackingId: null,
+    submittedAt: null,
     userResolved: null,
     userResolvedAt: null,
     issueGroupId: null,

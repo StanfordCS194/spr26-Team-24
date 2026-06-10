@@ -14,8 +14,10 @@ import { ReportStatus } from "@/generated/prisma/enums";
 // Data layer note: this reuses the shared Prisma singleton (no parallel data
 // access) and pushes the heavy lifting into the DB with `groupBy` / `aggregate`
 // rather than pulling every row into the app. The one exception is
-// time-to-submit, which needs per-row `(updatedAt - createdAt)` and so reads a
-// trimmed projection of the submitted-or-later reports.
+// time-to-submit, which needs per-row `(submittedAt - createdAt)` and so reads a
+// trimmed projection of the submitted-or-later reports. `submittedAt` is the
+// timestamp orchestrateSubmission stamps on the SUBMITTED transition (#241); we
+// fall back to `updatedAt` only for rows submitted before that column existed.
 //
 // The pure shaping helpers (rates, percentiles, distribution) are exported so
 // they can be unit-tested without a database.
@@ -145,15 +147,19 @@ export function computeSubmissionRates(
 /**
  * Compute median & p90 time-to-submit (in whole seconds) from a list of
  * creation/submission timestamp pairs. The submission timestamp is the report's
- * `updatedAt` for reports that reached SUBMITTED — an approximation, since
- * `updatedAt` reflects the most recent change, but it's the best signal the
- * schema records. Negative or non-finite durations are dropped defensively.
+ * `submittedAt` — stamped on the SUBMITTED transition (#241) — which is exact.
+ * Rows submitted before that column existed have a null `submittedAt`; for those
+ * we fall back to `updatedAt`, an approximation since it reflects the most recent
+ * change. Negative or non-finite durations are dropped defensively.
  */
 export function computeTimeToSubmit(
-  rows: { createdAt: Date; updatedAt: Date }[],
+  rows: { createdAt: Date; updatedAt: Date; submittedAt: Date | null }[],
 ): TimeToSubmitStats {
   const durations = rows
-    .map((row) => (row.updatedAt.getTime() - row.createdAt.getTime()) / 1000)
+    .map((row) => {
+      const submittedAt = row.submittedAt ?? row.updatedAt;
+      return (submittedAt.getTime() - row.createdAt.getTime()) / 1000;
+    })
     .filter((seconds) => Number.isFinite(seconds) && seconds >= 0);
 
   const median = percentile(durations, 50);
@@ -187,7 +193,7 @@ export async function computeAdminAnalytics(): Promise<AdminAnalytics> {
     prisma.report.count({ where: { agencyId: null } }),
     prisma.report.findMany({
       where: { status: { in: SUBMITTED_STATUSES } },
-      select: { createdAt: true, updatedAt: true },
+      select: { createdAt: true, updatedAt: true, submittedAt: true },
     }),
     prisma.agency.findMany({ select: { id: true, name: true } }),
   ]);
