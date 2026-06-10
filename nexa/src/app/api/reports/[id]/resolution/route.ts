@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { ResolutionSchema } from "@/lib/api/schemas";
+import {
+  parseJsonRequest,
+  RequestParseError,
+  parseErrorResponse,
+} from "@/lib/api/request-parser";
 
 export async function POST(
   request: NextRequest,
@@ -16,16 +22,7 @@ export async function POST(
     }
 
     const { id } = await context.params;
-    const body = (await request.json().catch(() => null)) as {
-      resolved?: unknown;
-    } | null;
-
-    if (!body || typeof body.resolved !== "boolean") {
-      return NextResponse.json(
-        { error: "Field `resolved` must be a boolean." },
-        { status: 400 },
-      );
-    }
+    const { resolved } = await parseJsonRequest(request, ResolutionSchema);
 
     const report = await prisma.report.findUnique({
       where: { id },
@@ -49,7 +46,7 @@ export async function POST(
     // resolved, the whole case resolves for every reporter linked to it. The
     // group is flagged resolved and every non-closed member report is updated to
     // match. Reports with no group keep the single-report behavior below.
-    if (report.issueGroupId && body.resolved) {
+    if (report.issueGroupId && resolved) {
       await prisma.$transaction([
         prisma.issueGroup.update({
           where: { id: report.issueGroupId },
@@ -80,12 +77,12 @@ export async function POST(
     }
 
     const nextStatus =
-      body.resolved && report.status !== "CLOSED" ? "RESOLVED" : report.status;
+      resolved && report.status !== "CLOSED" ? "RESOLVED" : report.status;
 
     const updated = await prisma.report.update({
       where: { id },
       data: {
-        userResolved: body.resolved,
+        userResolved: resolved,
         userResolvedAt: resolvedAt,
         status: nextStatus,
       },
@@ -94,6 +91,9 @@ export async function POST(
 
     return NextResponse.json(updated);
   } catch (error) {
+    if (error instanceof RequestParseError) {
+      return parseErrorResponse(error);
+    }
     console.error("Report resolution update error:", error);
     return NextResponse.json(
       { error: "Failed to update resolution. Please try again." },

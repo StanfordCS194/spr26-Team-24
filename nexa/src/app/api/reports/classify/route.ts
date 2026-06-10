@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { classifyWithConsensus } from "@/lib/classify/consensus";
 import type { LocationContext } from "@/lib/classify/types";
+import { ClassifyRequestSchema } from "@/lib/api/schemas";
+import {
+  parseJsonRequest,
+  RequestParseError,
+  parseErrorResponse,
+} from "@/lib/api/request-parser";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
     const {
       description,
       imageBase64,
@@ -12,14 +17,7 @@ export async function POST(request: NextRequest) {
       longitude,
       address,
       jurisdiction,
-    } = body as {
-      description?: string;
-      imageBase64?: string;
-      latitude?: number;
-      longitude?: number;
-      address?: string;
-      jurisdiction?: string;
-    };
+    } = await parseJsonRequest(request, ClassifyRequestSchema);
 
     if (!description && !imageBase64) {
       return NextResponse.json(
@@ -29,13 +27,13 @@ export async function POST(request: NextRequest) {
     }
 
     const location: LocationContext | null =
-      typeof latitude === "number" ||
-      typeof longitude === "number" ||
+      latitude !== undefined ||
+      longitude !== undefined ||
       address ||
       jurisdiction
         ? {
-            latitude: typeof latitude === "number" ? latitude : null,
-            longitude: typeof longitude === "number" ? longitude : null,
+            latitude: latitude ?? null,
+            longitude: longitude ?? null,
             address: address ?? null,
             jurisdiction: jurisdiction ?? null,
           }
@@ -49,6 +47,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof RequestParseError) {
+      return parseErrorResponse(error);
+    }
     console.error("[classify] Unexpected error:", error);
     return NextResponse.json(
       { error: "Classification failed. Please try again." },
