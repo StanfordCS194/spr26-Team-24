@@ -25,6 +25,7 @@ vi.mock("@/components/report/describe-step", () => ({
     onDescriptionChange: (v: string) => void;
     onClearDescription: () => void;
     onClassify: () => void;
+    onImageClick: () => void;
   }) => (
     <div>
       <div data-testid="description">{props.description}</div>
@@ -36,6 +37,7 @@ vi.mock("@/components/report/describe-step", () => ({
       </button>
       <button onClick={() => props.onClearDescription()}>clear</button>
       <button onClick={() => props.onClassify()}>analyze</button>
+      <button onClick={() => props.onImageClick()}>upload</button>
     </div>
   ),
 }));
@@ -321,5 +323,53 @@ describe("ReportPage auto-suggest on upload", () => {
     expect(screen.getByTestId("description")).toHaveTextContent("");
     expect(screen.getByTestId("is-ai")).toHaveTextContent("false");
     expect(screen.getByTestId("detected")).toHaveTextContent("");
+  });
+
+  it("on a touch device, the upload control opens a Take Photo / Choose from Library chooser", async () => {
+    // Arrange: simulate a phone (coarse pointer) so the explicit chooser shows.
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn((query: string) => ({
+        matches: query.includes("coarse"),
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+        onchange: null,
+      })),
+    );
+    const cameraClick = vi.fn();
+    const libraryClick = vi.fn();
+    const { user } = renderWithProviders(<ReportPage />);
+    // Spy on the two hidden inputs' click() so we can assert which one fires.
+    document
+      .getElementById("camera-input")
+      ?.addEventListener("click", cameraClick);
+    document
+      .getElementById("photo-input")
+      ?.addEventListener("click", libraryClick);
+
+    // Act: tap the single upload control -> the chooser appears.
+    await user.click(screen.getByRole("button", { name: "upload" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    // Take Photo routes to the capture camera input.
+    await user.click(screen.getByRole("button", { name: /take photo/i }));
+    expect(cameraClick).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    // Re-open and choose the library, which routes to the no-capture input.
+    await user.click(screen.getByRole("button", { name: "upload" }));
+    await user.click(
+      screen.getByRole("button", { name: /choose from library/i }),
+    );
+    expect(libraryClick).toHaveBeenCalledTimes(1);
+
+    // Re-open and cancel just closes the sheet.
+    await user.click(screen.getByRole("button", { name: "upload" }));
+    await user.click(screen.getByRole("button", { name: /cancel/i }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
