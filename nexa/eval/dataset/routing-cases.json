@@ -1,0 +1,428 @@
+[
+  {
+    "id": "stanford-01",
+    "latitude": 37.42954,
+    "longitude": -122.17078,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "stanford-campus",
+    "note": "Stanford main quad area"
+  },
+  {
+    "id": "stanford-02",
+    "latitude": 37.42712,
+    "longitude": -122.1838,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "stanford-campus",
+    "note": "Stanford west campus"
+  },
+  {
+    "id": "stanford-03",
+    "latitude": 37.42875,
+    "longitude": -122.1838,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "stanford-campus",
+    "note": "Stanford west campus"
+  },
+  {
+    "id": "stanford-04",
+    "latitude": 37.43038,
+    "longitude": -122.1838,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "stanford-campus",
+    "note": "Stanford west campus"
+  },
+  {
+    "id": "stanford-05",
+    "latitude": 37.43201,
+    "longitude": -122.1838,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "stanford-campus",
+    "note": "Stanford west campus"
+  },
+  {
+    "id": "stanford-06",
+    "latitude": 37.42224,
+    "longitude": -122.18153,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "stanford-campus",
+    "note": "Stanford south campus"
+  },
+  {
+    "id": "stanford-07",
+    "latitude": 37.42387,
+    "longitude": -122.18153,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "stanford-campus",
+    "note": "Stanford south campus"
+  },
+  {
+    "id": "stanford-08",
+    "latitude": 37.4255,
+    "longitude": -122.18153,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "stanford-campus",
+    "note": "Stanford south campus"
+  },
+
+  {
+    "id": "palo-alto-01",
+    "latitude": 37.35109,
+    "longitude": -122.19389,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-palo-alto",
+    "note": "Palo Alto south"
+  },
+  {
+    "id": "palo-alto-02",
+    "latitude": 37.36378,
+    "longitude": -122.19389,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-palo-alto",
+    "note": "Palo Alto south"
+  },
+  {
+    "id": "palo-alto-03",
+    "latitude": 37.37646,
+    "longitude": -122.19389,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-palo-alto",
+    "note": "Palo Alto west"
+  },
+  {
+    "id": "palo-alto-04",
+    "latitude": 37.33841,
+    "longitude": -122.18512,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-palo-alto",
+    "note": "Palo Alto south hills"
+  },
+  {
+    "id": "palo-alto-05",
+    "latitude": 37.35109,
+    "longitude": -122.18512,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-palo-alto",
+    "note": "Palo Alto south"
+  },
+  {
+    "id": "palo-alto-06",
+    "latitude": 37.36378,
+    "longitude": -122.18512,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-palo-alto",
+    "note": "Palo Alto central"
+  },
+  {
+    "id": "palo-alto-07",
+    "latitude": 37.37646,
+    "longitude": -122.18512,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-palo-alto",
+    "note": "Palo Alto central"
+  },
+  {
+    "id": "palo-alto-08",
+    "latitude": 37.31304,
+    "longitude": -122.17635,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-palo-alto",
+    "note": "Palo Alto foothills"
+  },
+
+  {
+    "id": "menlo-park-01",
+    "latitude": 37.44865,
+    "longitude": -122.17515,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-menlo-park",
+    "note": "Menlo Park central"
+  },
+  {
+    "id": "menlo-park-02",
+    "latitude": 37.42467,
+    "longitude": -122.21866,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-menlo-park",
+    "note": "Menlo Park west"
+  },
+  {
+    "id": "menlo-park-03",
+    "latitude": 37.42467,
+    "longitude": -122.20888,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-menlo-park",
+    "note": "Menlo Park west"
+  },
+  {
+    "id": "menlo-park-04",
+    "latitude": 37.42467,
+    "longitude": -122.1991,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-menlo-park",
+    "note": "Menlo Park south"
+  },
+  {
+    "id": "menlo-park-05",
+    "latitude": 37.44015,
+    "longitude": -122.1991,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-menlo-park",
+    "note": "Menlo Park central"
+  },
+  {
+    "id": "menlo-park-06",
+    "latitude": 37.43241,
+    "longitude": -122.18933,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-menlo-park",
+    "note": "Menlo Park central"
+  },
+  {
+    "id": "menlo-park-07",
+    "latitude": 37.44015,
+    "longitude": -122.18933,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-menlo-park",
+    "note": "Menlo Park central"
+  },
+  {
+    "id": "menlo-park-08",
+    "latitude": 37.44789,
+    "longitude": -122.18933,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-menlo-park",
+    "note": "Menlo Park north"
+  },
+
+  {
+    "id": "mountain-view-01",
+    "latitude": 37.40154,
+    "longitude": -122.08137,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-mountain-view",
+    "note": "Mountain View central"
+  },
+  {
+    "id": "mountain-view-02",
+    "latitude": 37.40875,
+    "longitude": -122.11272,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-mountain-view",
+    "note": "Mountain View west"
+  },
+  {
+    "id": "mountain-view-03",
+    "latitude": 37.40096,
+    "longitude": -122.10788,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-mountain-view",
+    "note": "Mountain View west"
+  },
+  {
+    "id": "mountain-view-04",
+    "latitude": 37.40096,
+    "longitude": -122.10304,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-mountain-view",
+    "note": "Mountain View central"
+  },
+  {
+    "id": "mountain-view-05",
+    "latitude": 37.40875,
+    "longitude": -122.10304,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-mountain-view",
+    "note": "Mountain View central"
+  },
+  {
+    "id": "mountain-view-06",
+    "latitude": 37.39317,
+    "longitude": -122.0982,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-mountain-view",
+    "note": "Mountain View south"
+  },
+  {
+    "id": "mountain-view-07",
+    "latitude": 37.40096,
+    "longitude": -122.0982,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-mountain-view",
+    "note": "Mountain View central"
+  },
+  {
+    "id": "mountain-view-08",
+    "latitude": 37.40875,
+    "longitude": -122.0982,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-mountain-view",
+    "note": "Mountain View central"
+  },
+
+  {
+    "id": "east-palo-alto-01",
+    "latitude": 37.45857,
+    "longitude": -122.13351,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-east-palo-alto",
+    "note": "East Palo Alto"
+  },
+  {
+    "id": "east-palo-alto-02",
+    "latitude": 37.46892,
+    "longitude": -122.15358,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-east-palo-alto",
+    "note": "East Palo Alto west"
+  },
+  {
+    "id": "east-palo-alto-03",
+    "latitude": 37.47105,
+    "longitude": -122.15358,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-east-palo-alto",
+    "note": "East Palo Alto west"
+  },
+  {
+    "id": "east-palo-alto-04",
+    "latitude": 37.47319,
+    "longitude": -122.15358,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-east-palo-alto",
+    "note": "East Palo Alto north"
+  },
+  {
+    "id": "east-palo-alto-05",
+    "latitude": 37.4625,
+    "longitude": -122.15081,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-east-palo-alto",
+    "note": "East Palo Alto central"
+  },
+  {
+    "id": "east-palo-alto-06",
+    "latitude": 37.46464,
+    "longitude": -122.15081,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-east-palo-alto",
+    "note": "East Palo Alto central"
+  },
+  {
+    "id": "east-palo-alto-07",
+    "latitude": 37.46678,
+    "longitude": -122.15081,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-east-palo-alto",
+    "note": "East Palo Alto central"
+  },
+  {
+    "id": "east-palo-alto-08",
+    "latitude": 37.46892,
+    "longitude": -122.15081,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-east-palo-alto",
+    "note": "East Palo Alto central"
+  },
+
+  {
+    "id": "scc-uninc-01",
+    "latitude": 37.24497,
+    "longitude": -121.76879,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "county-santa-clara-unincorporated",
+    "note": "SCC unincorporated east"
+  },
+  {
+    "id": "scc-uninc-02",
+    "latitude": 37.28744,
+    "longitude": -122.13637,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "county-santa-clara-unincorporated",
+    "note": "SCC unincorporated hills"
+  },
+  {
+    "id": "scc-uninc-03",
+    "latitude": 37.3663,
+    "longitude": -122.13637,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "county-santa-clara-unincorporated",
+    "note": "SCC unincorporated foothills"
+  },
+  {
+    "id": "scc-uninc-04",
+    "latitude": 37.24801,
+    "longitude": -122.07008,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "county-santa-clara-unincorporated",
+    "note": "SCC unincorporated"
+  },
+  {
+    "id": "scc-uninc-05",
+    "latitude": 37.28744,
+    "longitude": -122.07008,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "county-santa-clara-unincorporated",
+    "note": "SCC unincorporated"
+  },
+  {
+    "id": "scc-uninc-06",
+    "latitude": 37.32687,
+    "longitude": -122.07008,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "county-santa-clara-unincorporated",
+    "note": "SCC unincorporated"
+  },
+  {
+    "id": "scc-uninc-07",
+    "latitude": 37.44517,
+    "longitude": -122.07008,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "county-santa-clara-unincorporated",
+    "note": "SCC unincorporated north"
+  },
+  {
+    "id": "scc-uninc-08",
+    "latitude": 37.16914,
+    "longitude": -122.00379,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "county-santa-clara-unincorporated",
+    "note": "SCC unincorporated south"
+  },
+
+  {
+    "id": "contested-stanford-vs-paloalto",
+    "latitude": 37.4305,
+    "longitude": -122.1535,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "stanford-campus",
+    "contested": true,
+    "note": "On the Stanford/Palo Alto seam; Stanford polygon has higher priority (10 < 50) and wins."
+  },
+  {
+    "id": "contested-menlo-vs-paloalto",
+    "latitude": 37.4305,
+    "longitude": -122.191,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-menlo-park",
+    "contested": true,
+    "note": "On the Menlo Park/Palo Alto seam; this point falls inside Menlo Park's polygon."
+  },
+  {
+    "id": "contested-paloalto-vs-eastpaloalto",
+    "latitude": 37.4515,
+    "longitude": -122.128,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-palo-alto",
+    "contested": true,
+    "note": "On the Palo Alto/East Palo Alto seam; this point falls inside Palo Alto's polygon."
+  },
+  {
+    "id": "contested-menlo-vs-eastpaloalto",
+    "latitude": 37.4605,
+    "longitude": -122.146,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-menlo-park",
+    "contested": true,
+    "note": "On the Menlo Park/East Palo Alto seam; this point falls inside Menlo Park's polygon."
+  }
+]
