@@ -52,6 +52,18 @@ export const CreateReportSchema = z.object({
   // covers the location + issue type). Validated server-side against the
   // resolved candidate set so a client can't assign an arbitrary agency.
   selectedAgencyId: z.string().optional(),
+  // Free-form link to the correct agency the user supplies from the review step
+  // when the auto-routing landed on the wrong one. Accepts a valid http(s) URL
+  // OR an empty string (the field left untouched); the route treats empty as
+  // "not provided". Not validated against the routed candidate set — the whole
+  // point is that the auto-routing was wrong, so the override is taken as-is.
+  customAgencyUrl: z
+    .string()
+    .trim()
+    .url({ error: "Enter a valid URL." })
+    .max(2048)
+    .optional()
+    .or(z.literal("")),
 });
 export type CreateReportInput = z.infer<typeof CreateReportSchema>;
 

@@ -46,6 +46,13 @@ interface ReviewStepProps {
   /** The agency the user has selected from an ambiguous candidate set. */
   selectedAgencyId: string | null;
   onSelectAgency: (agencyId: string) => void;
+  /**
+   * Free-form link to the correct agency, supplied by the user when the app
+   * routed to the wrong one. Persisted as-is — intentionally not validated
+   * against the routed candidate set (the whole point is the routing was wrong).
+   */
+  customAgencyUrl: string;
+  onCustomAgencyUrlChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onAddressChange: (value: string) => void;
   onBack: () => void;
@@ -67,6 +74,8 @@ export function ReviewStep({
   onRetryAgencyCandidates,
   selectedAgencyId,
   onSelectAgency,
+  customAgencyUrl,
+  onCustomAgencyUrlChange,
   onDescriptionChange,
   onAddressChange,
   onBack,
@@ -310,6 +319,35 @@ export function ReviewStep({
           </p>
         </div>
       )}
+
+      {/*
+        Wrong-agency override. When the auto-routing lands on the wrong office,
+        the user can paste the correct agency's link here. It's a free-form
+        escape hatch — the create route stores it verbatim and does NOT validate
+        it against the routed candidates, because the premise is that routing
+        was wrong. Lives at the bottom so it reads as a fallback, not the
+        primary path.
+      */}
+      <div className="ep-card p-6">
+        <Label
+          htmlFor="custom-agency-url"
+          className="block font-mono text-xs uppercase tracking-wider text-muted-foreground"
+        >
+          {t("report.customAgencyLabel")}
+        </Label>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {t("report.customAgencyHelp")}
+        </p>
+        <Input
+          id="custom-agency-url"
+          type="url"
+          inputMode="url"
+          value={customAgencyUrl}
+          onChange={(e) => onCustomAgencyUrlChange(e.target.value)}
+          className="mt-3"
+          placeholder={t("report.customAgencyPlaceholder")}
+        />
+      </div>
 
       {submitError && <ErrorBanner message={submitError} />}
 

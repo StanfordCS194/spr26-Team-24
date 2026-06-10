@@ -197,6 +197,10 @@ const enMessages = {
   "report.noAgencyMatch":
     "No specific agency matched this location. You can still submit and we'll route your report for you.",
   "report.noOfficialForm": "No official city form found.",
+  "report.customAgencyLabel": "Filing somewhere else?",
+  "report.customAgencyHelp":
+    "If we routed to the wrong agency, paste the correct agency's link here.",
+  "report.customAgencyPlaceholder": "https://city.gov/report",
   "report.submit": "Submit Report",
   "report.submitting": "Submitting...",
   "report.submitted": "Report submitted!",
@@ -528,6 +532,10 @@ export const messages = {
     "report.noAgencyMatch":
       "Ninguna agencia específica coincidió con esta ubicación. Aún puedes enviarlo y dirigiremos tu reporte por ti.",
     "report.noOfficialForm": "No se encontró formulario oficial de la ciudad.",
+    "report.customAgencyLabel": "¿Presentar en otro lugar?",
+    "report.customAgencyHelp":
+      "Si lo dirigimos a la agencia equivocada, pega aquí el enlace de la agencia correcta.",
+    "report.customAgencyPlaceholder": "https://ciudad.gov/reportar",
     "report.submit": "Enviar reporte",
     "report.submitting": "Enviando...",
     "report.submitted": "¡Reporte enviado!",
@@ -845,6 +853,10 @@ export const messages = {
     "report.noAgencyMatch":
       "没有与此位置匹配的特定机构。您仍可提交，我们会为您转交报告。",
     "report.noOfficialForm": "未找到官方城市表格。",
+    "report.customAgencyLabel": "想提交到其他机构？",
+    "report.customAgencyHelp":
+      "如果我们转交给了错误的机构，请在此粘贴正确机构的链接。",
+    "report.customAgencyPlaceholder": "https://city.gov/report",
     "report.submit": "提交报告",
     "report.submitting": "正在提交...",
     "report.submitted": "报告已提交！",
@@ -1168,6 +1180,10 @@ export const messages = {
     "report.noAgencyMatch":
       "Aucune agence spécifique ne correspond à cet emplacement. Vous pouvez tout de même soumettre et nous acheminerons votre signalement pour vous.",
     "report.noOfficialForm": "Aucun formulaire officiel trouvé.",
+    "report.customAgencyLabel": "Déposer ailleurs ?",
+    "report.customAgencyHelp":
+      "Si nous avons acheminé vers la mauvaise agence, collez ici le lien de la bonne agence.",
+    "report.customAgencyPlaceholder": "https://ville.gov/signaler",
     "report.submit": "Envoyer le signalement",
     "report.submitting": "Envoi...",
     "report.submitted": "Signalement envoyé !",

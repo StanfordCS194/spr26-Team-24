@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       address,
       imageUrl,
       selectedAgencyId,
+      customAgencyUrl,
     } = await parseJsonRequest(request, CreateReportSchema);
 
     const validIssueType = issueType ?? null;
@@ -106,6 +107,10 @@ export async function POST(request: NextRequest) {
         address,
         imageUrl,
         agencyId,
+        // Free-form user override of the routed agency (review-step link). Stored
+        // as-is — deliberately NOT validated against the routed candidates, since
+        // the point is that the auto-routing was wrong. Empty string -> null.
+        customAgencyUrl: customAgencyUrl?.trim() || null,
         issueGroupId,
         // A report row is only created once the user has reviewed the AI
         // classification and confirmed it client-side (the `/api/reports/classify`
