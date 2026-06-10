@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { usePostHog } from "posthog-js/react";
 import { Stepper, type ReportStep } from "@/components/report/stepper";
 import { DescribeStep } from "@/components/report/describe-step";
@@ -16,13 +16,30 @@ import { useI18n } from "@/i18n/provider";
 export default function ReportPage() {
   const posthog = usePostHog();
   const { t } = useI18n();
+  // `time_to_submit_ms` measures the full capture -> submit loop (O1.KR2 / K2).
+  // The clock starts at the user's first capture action — their first photo or
+  // first keystroke of the description — NOT at page mount and NOT at the
+  // classify POST. Anchoring it before classification means the reported
+  // interval includes classification latency, matching the OKR definition of
+  // capture -> submitted. Stays 0 until the first capture so an empty page that
+  // is never used contributes nothing.
   const flowStartedAt = useRef(0);
-  useEffect(() => {
-    flowStartedAt.current = Date.now();
+  const markCaptureStart = useCallback(() => {
+    if (flowStartedAt.current === 0) {
+      flowStartedAt.current = Date.now();
+    }
   }, []);
 
   const [step, setStep] = useState<ReportStep>("describe");
   const [description, setDescription] = useState("");
+
+  const handleDescriptionChange = useCallback(
+    (value: string) => {
+      markCaptureStart();
+      setDescription(value);
+    },
+    [markCaptureStart],
+  );
 
   const image = useImageUpload();
   const geo = useGeolocation();
@@ -96,10 +113,14 @@ export default function ReportPage() {
       {
         onSuccess: (report) => {
           setStep("confirmed");
+          // Guard against an unstarted clock (0) so we never emit an
+          // epoch-sized interval; in practice a submit always follows a
+          // capture, so the fallback is defensive only.
+          const captureStart = flowStartedAt.current || Date.now();
           posthog?.capture("report_submitted", {
             report_id: report.id,
             issue_type: classification.issueType,
-            time_to_submit_ms: Date.now() - flowStartedAt.current,
+            time_to_submit_ms: Date.now() - captureStart,
             has_image: !!image.imageBase64,
             has_location: !!geo.latitude,
           });
@@ -121,8 +142,19 @@ export default function ReportPage() {
     );
   };
 
+  const handleImageDrop = (e: React.DragEvent) => {
+    markCaptureStart();
+    image.handleDrop(e);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    markCaptureStart();
+    image.handleFileInput(e);
+  };
+
   const resetForm = () => {
-    flowStartedAt.current = Date.now();
+    // Re-arm the clock: the next capture action starts a fresh interval.
+    flowStartedAt.current = 0;
     setStep("describe");
     setDescription("");
     image.clearImage();
@@ -159,9 +191,9 @@ export default function ReportPage() {
             classifyError={submission.classifyError}
             canSubmit={!!(image.imageBase64 || description.trim())}
             onImageClick={() => document.getElementById("photo-input")?.click()}
-            onDrop={image.handleDrop}
+            onDrop={handleImageDrop}
             onClearImage={image.clearImage}
-            onDescriptionChange={setDescription}
+            onDescriptionChange={handleDescriptionChange}
             onAddressChange={handleAddressChange}
             onDetectLocation={geo.detect}
             onLocationChange={geo.movePin}
@@ -180,7 +212,7 @@ export default function ReportPage() {
               submitError={submission.submitError}
               officialForm={formLookup.officialForm}
               officialFormLoading={formLookup.loading}
-              onDescriptionChange={setDescription}
+              onDescriptionChange={handleDescriptionChange}
               onAddressChange={geo.setAddress}
               onBack={() => setStep("describe")}
               onSubmit={handleSubmit}
@@ -264,7 +296,7 @@ export default function ReportPage() {
         accept="image/*"
         capture="environment"
         className="hidden"
-        onChange={image.handleFileInput}
+        onChange={handleFileInput}
       />
     </main>
   );
