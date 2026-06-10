@@ -77,11 +77,20 @@ export async function POST(
       );
     }
 
-    // Mark in-flight so concurrent submits don't double-file.
-    await prisma.report.update({
-      where: { id },
+    // Atomically claim the report for submission. A single conditional update
+    // (CONFIRMED -> SUBMITTING) is the DB-level guard against concurrent
+    // submits: only one of two simultaneous POSTs can flip the row, so only
+    // one ever reaches submitToOpen311 below. The loser sees count === 0.
+    const claim = await prisma.report.updateMany({
+      where: { id, status: ReportStatus.CONFIRMED },
       data: { status: ReportStatus.SUBMITTING },
     });
+    if (claim.count !== 1) {
+      return NextResponse.json(
+        { error: "This report is already being submitted." },
+        { status: 409 },
+      );
+    }
 
     const config = parseOpen311Config(agency.requiredFields);
     const result = await submitToOpen311(report, {
