@@ -186,16 +186,18 @@ describe("config.matcher", () => {
     ]);
   });
 
-  it.each(["_next/static/chunk.js", "_next/image", "favicon.ico", "public/logo.png"])(
-    "does not match excluded asset path %s",
-    (path) => {
-      // Arrange — reconstruct the matcher regex and anchor it like Next does.
-      const pattern = new RegExp(`^${config.matcher[0]}$`);
+  it.each([
+    "_next/static/chunk.js",
+    "_next/image",
+    "favicon.ico",
+    "public/logo.png",
+  ])("does not match excluded asset path %s", (path) => {
+    // Arrange — reconstruct the matcher regex and anchor it like Next does.
+    const pattern = new RegExp(`^${config.matcher[0]}$`);
 
-      // Act / Assert — the negative lookahead means these are NOT matched.
-      expect(pattern.test(`/${path}`)).toBe(false);
-    },
-  );
+    // Act / Assert — the negative lookahead means these are NOT matched.
+    expect(pattern.test(`/${path}`)).toBe(false);
+  });
 
   it.each(["/", "/report", "/dashboard/x", "/login"])(
     "matches application path %s",
