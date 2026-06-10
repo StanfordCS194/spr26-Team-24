@@ -37,13 +37,56 @@ function humanize(key: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
+// Recognized token sets per derivation branch. We tokenize the key on
+// non-alphanumeric boundaries and match WHOLE tokens, so `license_plate`
+// (license/plate) no longer false-matches the `lat` latitude token the way the
+// old `k.includes("lat")` substring check did (issue #234).
+const PHOTO_TOKENS = new Set(["photo", "image", "attachment"]);
+const DESCRIPTION_TOKENS = new Set([
+  "description",
+  "details",
+  "comment",
+  "comments",
+  "problem",
+  "issue",
+]);
+const ADDRESS_TOKENS = new Set([
+  "address",
+  "location",
+  "intersection",
+  "street",
+]);
+const LATITUDE_TOKENS = new Set(["lat", "latitude"]);
+const LONGITUDE_TOKENS = new Set(["lon", "long", "lng", "longitude"]);
+const EMAIL_TOKENS = new Set(["email"]);
+const DATETIME_TOKENS = new Set([
+  "datetime",
+  "date",
+  "time",
+  "observed",
+  "timestamp",
+]);
+
+// Split a field key into lowercased alphanumeric tokens
+// (e.g. "observation_datetime" -> ["observation", "datetime"]).
+function tokenize(key: string): string[] {
+  return key
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+function hasToken(tokens: string[], set: Set<string>): boolean {
+  return tokens.some((t) => set.has(t));
+}
+
 function valueForKey(
   key: string,
   type: string,
   report: PrefillReport,
   embeddedValue?: string | null,
 ): { value: string | null; hint?: string } {
-  const k = key.toLowerCase();
+  const tokens = tokenize(key);
   const description =
     report.description?.trim() || report.aiDescription?.trim();
 
@@ -55,7 +98,7 @@ function valueForKey(
     return { value: embeddedValue };
   }
 
-  if (type === "file" || /photo|image|attachment/.test(k)) {
+  if (type === "file" || hasToken(tokens, PHOTO_TOKENS)) {
     return {
       value: null,
       hint: report.imageUrl
@@ -63,24 +106,24 @@ function valueForKey(
         : "No photo attached.",
     };
   }
-  if (/description|details|comment|problem|issue/.test(k)) {
+  if (hasToken(tokens, DESCRIPTION_TOKENS)) {
     return { value: description ?? null };
   }
-  if (/address|location|intersection|street/.test(k)) {
+  if (hasToken(tokens, ADDRESS_TOKENS)) {
     return { value: report.address ?? null };
   }
-  if (k.includes("lat")) {
+  if (hasToken(tokens, LATITUDE_TOKENS)) {
     return { value: report.latitude != null ? String(report.latitude) : null };
   }
-  if (k.includes("lon") || k.includes("lng")) {
+  if (hasToken(tokens, LONGITUDE_TOKENS)) {
     return {
       value: report.longitude != null ? String(report.longitude) : null,
     };
   }
-  if (k.includes("email")) {
+  if (hasToken(tokens, EMAIL_TOKENS)) {
     return { value: report.contactEmail ?? null };
   }
-  if (/datetime|date|time|observed|observation_date/.test(k)) {
+  if (hasToken(tokens, DATETIME_TOKENS)) {
     return { value: new Date(report.createdAt).toLocaleString() };
   }
 

@@ -247,11 +247,55 @@ describe("buildPrefillFields — unknown / underivable field branch", () => {
     expect(f?.hint).toBe("You'll need to fill this in.");
   });
 
-  it("matches the lat branch for any key containing 'lat' (e.g. license_plate)", () => {
-    // Documents a real substring quirk: license_pLATe contains "lat", so it
-    // resolves to the report latitude rather than falling through to unknown.
+  it("does NOT match license_plate to latitude (whole-token matching, #234)", () => {
+    // Regression for the substring quirk: license_pLATe used to contain "lat"
+    // and resolve to the report latitude. With token matching it splits to
+    // ["license","plate"] — neither is a latitude token — so it stays unknown.
     const f = fieldFor("license_plate", { type: "string" }, makeFullReport());
-    expect(f?.value).toBe("37.4419");
+    expect(f?.value).toBeNull();
+    expect(f?.hint).toBe("You'll need to fill this in.");
+  });
+
+  it("leaves the other CARB vehicle fields unfilled (no false token match)", () => {
+    // template/vehicle_make/etc. must not false-match any derivation branch.
+    for (const key of [
+      "template",
+      "vehicle_make",
+      "vehicle_model",
+      "vehicle_color",
+      "contact_name",
+    ]) {
+      const f = fieldFor(key, { type: "string" }, makeFullReport());
+      expect(f?.value).toBeNull();
+      expect(f?.hint).toBe("You'll need to fill this in.");
+    }
+  });
+
+  it("keeps the real CARB form-field keys mapping correctly", () => {
+    // Pin every derivable key from the CARB VEHICLE_EMISSIONS schema.
+    const report = makeFullReport();
+    expect(
+      fieldFor("observation_location", { type: "string" }, report)?.value,
+    ).toBe("100 Main St, Palo Alto, CA");
+    expect(
+      fieldFor("observation_datetime", { type: "datetime" }, report)?.value,
+    ).toBe(new Date(report.createdAt as Date).toLocaleString());
+    // And the keys from the SeeClickFix-style schema.
+    expect(
+      fieldFor("location_address", { type: "string" }, report)?.value,
+    ).toBe("100 Main St, Palo Alto, CA");
+    expect(fieldFor("latitude", { type: "number" }, report)?.value).toBe(
+      "37.4419",
+    );
+    expect(fieldFor("longitude", { type: "number" }, report)?.value).toBe(
+      "-122.143",
+    );
+    expect(fieldFor("contact_email", { type: "string" }, report)?.value).toBe(
+      "reporter@example.com",
+    );
+    expect(fieldFor("description", { type: "string" }, report)?.value).toBe(
+      "Pothole on Main St",
+    );
   });
 });
 
