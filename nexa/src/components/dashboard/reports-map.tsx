@@ -14,6 +14,8 @@ export interface ReportMapPoint {
   shortLocation: string;
   status: string;
   relativeTime: string;
+  /** 1-based sequence in the order the report was filed (1 = earliest). */
+  order: number;
 }
 
 interface ReportsMapProps {
@@ -30,7 +32,9 @@ const CONFIRMED_STATUSES = new Set([
   "CLOSED",
 ]);
 
-function pinSvg(color: string): string {
+function pinSvg(color: string, label: number): string {
+  // Two-digit counts need a slightly smaller glyph to stay inside the head.
+  const fontSize = label >= 10 ? 8 : 10;
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 36" width="28" height="36" aria-hidden="true">
       <defs>
@@ -40,7 +44,8 @@ function pinSvg(color: string): string {
       </defs>
       <g filter="url(#shadow)">
         <path d="M14 1c-6.6 0-12 5.3-12 11.8 0 8.8 11 21.5 11.5 22 .3.3.8.3 1.1 0 .5-.5 11.4-13.2 11.4-22C26 6.3 20.6 1 14 1z" fill="${color}" />
-        <circle cx="14" cy="13" r="4.5" fill="#ffffff" />
+        <circle cx="14" cy="13" r="7.5" fill="#ffffff" />
+        <text x="14" y="13.5" text-anchor="middle" dominant-baseline="central" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${fontSize}" font-weight="700" fill="${color}">${label}</text>
       </g>
     </svg>
   `;
@@ -95,7 +100,7 @@ export function ReportsMap({ points }: ReportsMapProps) {
 
         const icon = L.divIcon({
           className: "nexa-map-pin",
-          html: pinSvg(color),
+          html: pinSvg(color, point.order),
           iconSize: [28, 36],
           iconAnchor: [14, 35],
           popupAnchor: [0, -30],

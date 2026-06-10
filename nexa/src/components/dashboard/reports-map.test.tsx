@@ -52,6 +52,7 @@ function makePoint(overrides: Partial<ReportMapPoint> = {}): ReportMapPoint {
     shortLocation: "Palo Alto, CA",
     status: "CONFIRMED",
     relativeTime: "2 days ago",
+    order: 1,
     ...overrides,
   };
 }
@@ -116,6 +117,23 @@ describe("ReportsMap", () => {
     await waitFor(() => expect(divIconCalls.length).toBe(2));
     expect(divIconCalls[0].html).toContain("#22c55e");
     expect(divIconCalls[1].html).toContain("#9b87f5");
+  });
+
+  it("renders each pin's filing-order number", async () => {
+    // Arrange / Act
+    renderWithProviders(
+      <ReportsMap
+        points={[
+          makePoint({ id: "a", order: 2 }),
+          makePoint({ id: "b", order: 1 }),
+        ]}
+      />,
+    );
+
+    // Assert: the order is drawn into the pin glyph as an SVG <text> label.
+    await waitFor(() => expect(divIconCalls.length).toBe(2));
+    expect(divIconCalls[0].html).toContain(">2</text>");
+    expect(divIconCalls[1].html).toContain(">1</text>");
   });
 
   it("opens a pin's popup on hover and closes it on mouse-out", async () => {
