@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Camera, ImagePlus } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { addPendingReportId } from "@/lib/pending-reports";
 import { Stepper, type ReportStep } from "@/components/report/stepper";
@@ -374,6 +375,23 @@ export default function ReportPage() {
     image.handleFileInput(e);
   };
 
+  // One "Upload a photo" control. On a touch device we pop a small chooser so
+  // the user can explicitly "Take Photo" or "Choose from Library" — the OS file
+  // picker on its own does not reliably surface the camera on every phone. On a
+  // laptop (fine pointer, typically no camera) we skip the sheet and open the
+  // file picker directly, so the only option there is uploading a file.
+  const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
+  const openPhotoPicker = () => {
+    const coarsePointer =
+      typeof window !== "undefined" &&
+      !!window.matchMedia?.("(pointer: coarse)").matches;
+    if (coarsePointer) {
+      setPhotoSheetOpen(true);
+    } else {
+      document.getElementById("photo-input")?.click();
+    }
+  };
+
   const resetForm = () => {
     // Re-arm the clock: the next capture action starts a fresh interval.
     flowStartedAt.current = 0;
@@ -422,7 +440,7 @@ export default function ReportPage() {
             detectedIssueType={detectedIssueType}
             descriptionIsAiSuggestion={descriptionSource === "ai"}
             canSubmit={!!(image.imageBase64 || description.trim())}
-            onImageClick={() => document.getElementById("photo-input")?.click()}
+            onImageClick={openPhotoPicker}
             onDrop={handleImageDrop}
             onClearImage={handleClearImage}
             onDescriptionChange={handleDescriptionChange}
@@ -456,67 +474,6 @@ export default function ReportPage() {
               onBack={() => setStep("describe")}
               onSubmit={handleSubmit}
             />
-
-            {submission.comparison &&
-              submission.comparison.allResults.length > 1 &&
-              (() => {
-                const comparison = submission.comparison;
-                return (
-                  <div className="mt-10">
-                    <span className="section-label">
-                      {t("report.aiComparison")}
-                    </span>
-                    <p className="mt-2 mb-4 text-sm text-muted-foreground">
-                      {t("report.decisionMethod")}{" "}
-                      <span className="font-medium text-foreground">
-                        {comparison.method}
-                      </span>
-                      {comparison.consensus && t("report.modelsAgreed")}
-                    </p>
-                    <div className="flex flex-col gap-3">
-                      {comparison.allResults.map((r) => (
-                        <div
-                          key={r.provider}
-                          className={`ep-card p-4 ${r.issueType === comparison.winner.issueType ? "ring-2 ring-ep-green/40" : "opacity-60"}`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-xs font-medium uppercase tracking-wider">
-                              {r.provider}
-                            </span>
-                            <span className="font-mono text-xs text-muted-foreground">
-                              {r.latencyMs}ms
-                            </span>
-                          </div>
-                          <div className="mt-2 flex items-center gap-3">
-                            <span className="text-sm font-semibold">
-                              {t(`issue.${r.issueType}`)}
-                            </span>
-                            <span
-                              className={`rounded-full px-2 py-0.5 font-mono text-xs uppercase ${
-                                r.severity === "high"
-                                  ? "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300"
-                                  : r.severity === "medium"
-                                    ? "bg-yellow-50 text-yellow-600 dark:bg-yellow-950 dark:text-yellow-300"
-                                    : "bg-ep-green-light text-ep-green dark:bg-green-950 dark:text-green-300"
-                              }`}
-                            >
-                              {t(`severity.${r.severity}`)}
-                            </span>
-                            <span className="font-mono text-xs text-muted-foreground">
-                              {t("report.confident", {
-                                percent: Math.round((r.confidence ?? 0) * 100),
-                              })}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {r.aiDescription}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
           </>
         )}
 
@@ -539,13 +496,22 @@ export default function ReportPage() {
       </div>
 
       {/*
-        One hidden file input behind the single "Upload a photo" control. It has
-        no `capture`, so `accept="image/*"` lets a phone's native chooser offer
-        both "Take Photo" and the photo library from this one control, while
-        desktop just opens the file picker. Feeds `handleFileInput`, which drives
-        the on-upload auto-suggest (#261). The id is kept because the e2e specs
-        set files on it directly.
+        Two hidden file inputs behind the single "Upload a photo" control, both
+        feeding `handleFileInput` (which drives the on-upload auto-suggest #261).
+        `#camera-input` carries `capture="environment"` so "Take Photo" opens the
+        rear camera; `#photo-input` has no `capture` so "Choose from Library"
+        opens the gallery/file picker. The visible UI is still one control — the
+        chooser sheet below only appears on touch devices. `#photo-input` keeps
+        its id because the e2e specs set files on it directly.
       */}
+      <input
+        id="camera-input"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileInput}
+      />
       <input
         id="photo-input"
         type="file"
@@ -553,6 +519,56 @@ export default function ReportPage() {
         className="hidden"
         onChange={handleFileInput}
       />
+
+      {photoSheetOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("report.addPhoto")}
+          onClick={() => setPhotoSheetOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-background p-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="px-2 pb-3 pt-1 text-center font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              {t("report.addPhoto")}
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/40"
+                onClick={() => {
+                  setPhotoSheetOpen(false);
+                  document.getElementById("camera-input")?.click();
+                }}
+              >
+                <Camera className="size-4" />
+                {t("report.takePhoto")}
+              </button>
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/40"
+                onClick={() => {
+                  setPhotoSheetOpen(false);
+                  document.getElementById("photo-input")?.click();
+                }}
+              >
+                <ImagePlus className="size-4" />
+                {t("report.chooseFromLibrary")}
+              </button>
+              <button
+                type="button"
+                className="mt-1 w-full rounded-xl px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/40"
+                onClick={() => setPhotoSheetOpen(false)}
+              >
+                {t("common.cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

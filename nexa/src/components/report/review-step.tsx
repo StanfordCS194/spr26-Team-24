@@ -85,11 +85,15 @@ export function ReviewStep({
 
   // The fetch resolved but no agency covers this location + issue type. Not an
   // error: the user can still submit and the create route routes/validates it.
-  // We say so plainly rather than leaving the section blank.
+  // We say so plainly rather than leaving the section blank — but NOT when an
+  // official city form was already found above, since that card already tells
+  // the user where the report goes (e.g. Palo Alto 311). Showing "no agency
+  // matched" alongside a found destination reads as a contradiction.
   const isEmptyCandidates =
     !!agencyCandidates &&
     agencyCandidates.candidates.length === 0 &&
-    !agencyCandidates.agencyId;
+    !agencyCandidates.agencyId &&
+    officialForm?.status !== "found";
 
   // Let the user adopt the AI's suggested description in one tap. Offered only
   // when there's a suggestion to adopt and the editable field doesn't already
@@ -219,9 +223,6 @@ export function ReviewStep({
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
               {officialForm.reason}
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t("report.externalNotice")}
             </p>
           </div>
         ) : (
