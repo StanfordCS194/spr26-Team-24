@@ -10,7 +10,6 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -22,7 +21,8 @@
     "eval:baseline": "tsx eval/run.ts --mode=baseline",
     "eval:two-stage": "tsx eval/run.ts --mode=two-stage",
     "eval:routing": "tsx eval/routing.ts",
-    "eval:validate-boundaries": "tsx eval/validate-boundaries.ts"
+    "eval:validate-boundaries": "tsx eval/validate-boundaries.ts",
+    "eval:readiness": "tsx eval/readiness.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
