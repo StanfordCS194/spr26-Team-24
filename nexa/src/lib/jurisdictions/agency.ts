@@ -86,3 +86,78 @@ export async function resolveAgencyId(args: {
 
   return UNRESOLVED;
 }
+
+/** Details about a candidate agency the user can disambiguate between. */
+export type AgencyCandidateDetail = {
+  id: string;
+  name: string;
+  jurisdiction: string;
+  intakeMethod: "API" | "WEB_FORM" | "EMAIL" | "PHONE";
+};
+
+/**
+ * Resolution enriched with the candidate agencies' details so the
+ * disambiguation UI can render names/jurisdictions/intake methods, plus a short
+ * disambiguating question when the match is ambiguous (more than one candidate).
+ */
+export type AgencyDisambiguation = {
+  agencyId: string | null;
+  candidates: AgencyCandidateDetail[];
+  disambiguation: string | null;
+};
+
+/**
+ * Builds the short disambiguating question for an ambiguous match. When the
+ * candidates span more than one jurisdiction we ask the classic city-vs-county
+ * question; when they share a jurisdiction (e.g. Menlo Park's web-form desk and
+ * its Open311 API both cover the same area) we ask the user to pick the office.
+ */
+function disambiguationQuestion(candidates: AgencyCandidateDetail[]): string {
+  const jurisdictions = new Set(candidates.map((c) => c.jurisdiction));
+  if (jurisdictions.size > 1) {
+    return "More than one agency covers this spot. Is this on a city street, or a county/state road?";
+  }
+  return "More than one office handles this here. Which should we file your report with?";
+}
+
+/**
+ * Resolves the agency for a report AND, when the match is ambiguous, hydrates
+ * the candidate agency ids into displayable details plus a disambiguating
+ * question for the user to choose from. Reuses {@link resolveAgencyId} for the
+ * routing decision — it does NOT re-run polygon routing.
+ *
+ * - Single confident match: `agencyId` set, `candidates` has the one agency,
+ *   `disambiguation` is null.
+ * - Ambiguous (>1 candidate): `agencyId` null, `candidates` lists every covering
+ *   agency, `disambiguation` is the question to ask.
+ * - Unresolved (no match): everything empty/null.
+ */
+export async function resolveAgencyCandidates(args: {
+  latitude?: number | null;
+  longitude?: number | null;
+  issueType?: IssueType | null;
+}): Promise<AgencyDisambiguation> {
+  const { agencyId, candidates } = await resolveAgencyId(args);
+  if (candidates.length === 0) {
+    return { agencyId: null, candidates: [], disambiguation: null };
+  }
+
+  const rows = await prisma.agency.findMany({
+    where: { id: { in: candidates } },
+    select: { id: true, name: true, jurisdiction: true, intakeMethod: true },
+    orderBy: { name: "asc" },
+  });
+
+  const details: AgencyCandidateDetail[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    jurisdiction: r.jurisdiction,
+    intakeMethod: r.intakeMethod,
+  }));
+
+  return {
+    agencyId,
+    candidates: details,
+    disambiguation: details.length > 1 ? disambiguationQuestion(details) : null,
+  };
+}

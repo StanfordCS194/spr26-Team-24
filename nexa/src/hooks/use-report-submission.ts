@@ -41,6 +41,12 @@ export interface SubmitInput {
   longitude: number | null;
   address: string;
   imageBase64: string | null;
+  /**
+   * Agency the user chose when routing was ambiguous (more than one agency
+   * covers the location + issue type). Sent to the create route, which
+   * validates it against the resolved candidate set before honoring it.
+   */
+  selectedAgencyId?: string | null;
 }
 
 export interface ClassifyCallbacks {
@@ -154,6 +160,11 @@ export function useReportSubmission() {
         longitude: input.longitude,
         address: input.address,
         imageUrl: input.imageBase64,
+        // The create route re-resolves candidates and validates this against
+        // them, so it's safe to carry through the offline queue and replay.
+        ...(input.selectedAgencyId
+          ? { selectedAgencyId: input.selectedAgencyId }
+          : {}),
       };
 
       try {

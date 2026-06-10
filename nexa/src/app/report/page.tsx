@@ -11,6 +11,7 @@ import { useImageUpload } from "@/hooks/use-image-upload";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { useAddressLookup } from "@/hooks/use-address-lookup";
 import { useFormLookup } from "@/hooks/use-form-lookup";
+import { useAgencyCandidates } from "@/hooks/use-agency-candidates";
 import { useReportSubmission } from "@/hooks/use-report-submission";
 import { useI18n } from "@/i18n/provider";
 
@@ -33,6 +34,11 @@ export default function ReportPage() {
 
   const [step, setStep] = useState<ReportStep>("describe");
   const [description, setDescription] = useState("");
+
+  // When routing is ambiguous (more than one agency covers the location + issue
+  // type), the review step lets the user pick one; we hold their choice here and
+  // pass it to the create route, which validates it server-side.
+  const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
 
   // Anonymous reporting: a guest can complete the whole flow without an account.
   // We check session state only to decide whether to offer the post-submit
@@ -62,6 +68,7 @@ export default function ReportPage() {
   const geo = useGeolocation();
   const addressLookup = useAddressLookup();
   const formLookup = useFormLookup();
+  const agencyCandidates = useAgencyCandidates();
   const submission = useReportSubmission();
 
   const handleAddressChange = (value: string) => {
@@ -87,6 +94,8 @@ export default function ReportPage() {
 
   const handleClassify = async () => {
     formLookup.setOfficialForm(null);
+    agencyCandidates.reset();
+    setSelectedAgencyId(null);
     await submission.classify(
       {
         description,
@@ -99,6 +108,10 @@ export default function ReportPage() {
         onSuccess: (data) => {
           void formLookup.lookup(data.winner.issueType, {
             address: geo.address,
+            latitude: geo.latitude,
+            longitude: geo.longitude,
+          });
+          void agencyCandidates.lookup(data.winner.issueType, {
             latitude: geo.latitude,
             longitude: geo.longitude,
           });
@@ -126,6 +139,7 @@ export default function ReportPage() {
         longitude: geo.longitude,
         address: geo.address,
         imageBase64: image.imageBase64,
+        selectedAgencyId,
       },
       {
         onSuccess: (report) => {
@@ -186,6 +200,8 @@ export default function ReportPage() {
     addressLookup.reset();
     submission.reset();
     formLookup.reset();
+    agencyCandidates.reset();
+    setSelectedAgencyId(null);
   };
 
   return (
@@ -236,6 +252,9 @@ export default function ReportPage() {
               submitError={submission.submitError}
               officialForm={formLookup.officialForm}
               officialFormLoading={formLookup.loading}
+              agencyCandidates={agencyCandidates.result}
+              selectedAgencyId={selectedAgencyId}
+              onSelectAgency={setSelectedAgencyId}
               onDescriptionChange={handleDescriptionChange}
               onAddressChange={geo.setAddress}
               onBack={() => setStep("describe")}
