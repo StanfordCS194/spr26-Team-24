@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { createToken, SESSION_COOKIE, cookieOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { LoginSchema } from "@/lib/api/schemas";
+import {
+  parseJsonRequest,
+  RequestParseError,
+  parseErrorResponse,
+} from "@/lib/api/request-parser";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password } = await parseJsonRequest(request, LoginSchema);
 
     if (!email || !password) {
       return NextResponse.json(
@@ -44,6 +50,9 @@ export async function POST(request: NextRequest) {
     response.cookies.set(SESSION_COOKIE, token, cookieOptions);
     return response;
   } catch (error) {
+    if (error instanceof RequestParseError) {
+      return parseErrorResponse(error);
+    }
     console.error("Login error:", error);
     return NextResponse.json(
       { error: "Login failed. Please try again." },

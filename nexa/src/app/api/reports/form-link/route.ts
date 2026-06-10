@@ -3,6 +3,12 @@ import { getOpenAI } from "@/lib/openai";
 import { ISSUE_TYPE_LABELS, US_STATE_CODES } from "@/lib/constants";
 import { IssueType } from "@/generated/prisma/enums";
 import { resolveJurisdiction } from "@/lib/jurisdictions/resolve";
+import { FormLinkRequestSchema } from "@/lib/api/schemas";
+import {
+  parseJsonRequest,
+  RequestParseError,
+  parseErrorResponse,
+} from "@/lib/api/request-parser";
 
 type Confidence = "low" | "medium" | "high";
 
@@ -418,18 +424,12 @@ Do not say "not_found" just because there is no "${issueLabel}"-specific form â€
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { issueType, address, latitude, longitude } = body as {
-      issueType?: string;
-      address?: string;
-      latitude?: number;
-      longitude?: number;
-    };
+    const { issueType, address, latitude, longitude } = await parseJsonRequest(
+      request,
+      FormLinkRequestSchema,
+    );
 
-    if (
-      !issueType ||
-      !Object.values(IssueType).includes(issueType as IssueType)
-    ) {
+    if (!issueType) {
       return NextResponse.json(
         { error: "Valid issueType is required." },
         { status: 400 },
@@ -480,7 +480,7 @@ export async function POST(request: NextRequest) {
     const lookup = await lookupOfficialForm({
       cityName: location.cityName,
       stateName: location.stateName,
-      issueType: issueType as IssueType,
+      issueType,
       address,
     });
 
@@ -503,6 +503,9 @@ export async function POST(request: NextRequest) {
     };
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof RequestParseError) {
+      return parseErrorResponse(error);
+    }
     console.error("Official form lookup error:", error);
     return NextResponse.json(
       { error: "Failed to look up official city form." },

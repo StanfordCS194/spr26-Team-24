@@ -2,10 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { createToken, SESSION_COOKIE, cookieOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { RegisterSchema } from "@/lib/api/schemas";
+import {
+  parseJsonRequest,
+  RequestParseError,
+  parseErrorResponse,
+} from "@/lib/api/request-parser";
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json();
+    const { name, email, password } = await parseJsonRequest(
+      request,
+      RegisterSchema,
+    );
 
     if (!email || !password) {
       return NextResponse.json(
@@ -47,6 +56,9 @@ export async function POST(request: NextRequest) {
     response.cookies.set(SESSION_COOKIE, token, cookieOptions);
     return response;
   } catch (error) {
+    if (error instanceof RequestParseError) {
+      return parseErrorResponse(error);
+    }
     console.error("Registration error:", error);
     return NextResponse.json(
       { error: "Registration failed. Please try again." },
