@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       longitude,
       address,
       imageUrl,
+      selectedAgencyId,
     } = await parseJsonRequest(request, CreateReportSchema);
 
     const validIssueType = issueType ?? null;
@@ -51,11 +52,30 @@ export async function POST(request: NextRequest) {
     // type so the submission pipeline has somewhere to file it. When routing is
     // unresolved or ambiguous we persist agencyId=null and log why rather than
     // failing the request — the report can still be created and routed later.
-    const { agencyId, candidates } = await resolveAgencyId({
+    const { agencyId: resolvedAgencyId, candidates } = await resolveAgencyId({
       latitude,
       longitude,
       issueType: validIssueType,
     });
+
+    // When the user disambiguated an ambiguous match in the review step, honor
+    // their choice — but only after validating it server-side against the freshly
+    // resolved candidate set. Re-resolving here (rather than trusting the client)
+    // means a client cannot assign an arbitrary agency: the selected id MUST be
+    // one of the agencies that actually cover this location + issue type.
+    let agencyId = resolvedAgencyId;
+    if (selectedAgencyId !== undefined) {
+      if (!candidates.includes(selectedAgencyId)) {
+        return errorResponse(
+          "Selected agency is not a valid candidate for this report's location and issue type.",
+          400,
+          "INVALID_AGENCY_CHOICE",
+          { candidates },
+        );
+      }
+      agencyId = selectedAgencyId;
+    }
+
     if (!agencyId) {
       const reason =
         candidates.length > 1

@@ -48,6 +48,10 @@ export const CreateReportSchema = z.object({
   longitude: longitudeSchema.optional(),
   address: z.string().optional(),
   imageUrl: z.string().optional(),
+  // The agency the user picked when routing was ambiguous (more than one agency
+  // covers the location + issue type). Validated server-side against the
+  // resolved candidate set so a client can't assign an arbitrary agency.
+  selectedAgencyId: z.string().optional(),
 });
 export type CreateReportInput = z.infer<typeof CreateReportSchema>;
 
@@ -61,6 +65,19 @@ export const ClassifyRequestSchema = z.object({
   jurisdiction: z.string().optional(),
 });
 export type ClassifyRequestInput = z.infer<typeof ClassifyRequestSchema>;
+
+/**
+ * `POST /api/reports/agency-candidates` — resolve the candidate agencies for a
+ * location + issue type so the review step can disambiguate an ambiguous match.
+ */
+export const AgencyCandidatesRequestSchema = z.object({
+  issueType: z.enum(IssueType).optional(),
+  latitude: latitudeSchema.optional(),
+  longitude: longitudeSchema.optional(),
+});
+export type AgencyCandidatesRequestInput = z.infer<
+  typeof AgencyCandidatesRequestSchema
+>;
 
 /** `POST /api/reports/form-link` — look up an official city form. */
 export const FormLinkRequestSchema = z.object({

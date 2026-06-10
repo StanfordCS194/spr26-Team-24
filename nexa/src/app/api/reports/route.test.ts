@@ -81,6 +81,80 @@ describe("POST /api/reports", () => {
     expect(prismaMock.report.create).not.toHaveBeenCalled();
   });
 
+  it("honors a user-selected agency that is one of the resolved candidates", async () => {
+    // Arrange: an ambiguous match — two agencies cover this Menlo Park spot, so
+    // resolveAgencyId returns agencyId=null with both as candidates. The user
+    // disambiguated to the Open311 one (the Menlo Park unblock case).
+    prismaMock.agency.findMany.mockResolvedValue([
+      { id: "agency-act" },
+      { id: "agency-open311" },
+    ] as Awaited<ReturnType<typeof prismaMock.agency.findMany>>);
+    prismaMock.issueGroup.findMany.mockResolvedValue([]);
+    prismaMock.report.findMany.mockResolvedValue([]);
+    prismaMock.issueGroup.create.mockResolvedValue({
+      id: "group_1",
+    } as Awaited<ReturnType<typeof prismaMock.issueGroup.create>>);
+    prismaMock.report.create.mockResolvedValue(
+      makeReport({ id: "report_created", agencyId: "agency-open311" }),
+    );
+
+    const request = new NextRequest("http://localhost/api/reports", {
+      method: "POST",
+      body: JSON.stringify({
+        description: "Pothole",
+        issueType: "ROAD_DAMAGE",
+        // Menlo Park (Santa Cruz Ave area) — inside a known polygon.
+        latitude: 37.4524,
+        longitude: -122.1817,
+        selectedAgencyId: "agency-open311",
+      }),
+    });
+
+    // Act
+    const response = await POST(request);
+    const body = await response.json();
+
+    // Assert: the chosen agency is persisted on the new report.
+    expect(response.status).toBe(201);
+    expect(body.success).toBe(true);
+    expect(prismaMock.report.create).toHaveBeenCalledOnce();
+    expect(prismaMock.report.create.mock.calls[0][0].data.agencyId).toBe(
+      "agency-open311",
+    );
+  });
+
+  it("rejects a user-selected agency that is not a resolved candidate", async () => {
+    // Arrange: same ambiguous match, but the client sends an agency id that is
+    // NOT in the candidate set — a forged/arbitrary choice.
+    prismaMock.agency.findMany.mockResolvedValue([
+      { id: "agency-act" },
+      { id: "agency-open311" },
+    ] as Awaited<ReturnType<typeof prismaMock.agency.findMany>>);
+    prismaMock.issueGroup.findMany.mockResolvedValue([]);
+    prismaMock.report.findMany.mockResolvedValue([]);
+
+    const request = new NextRequest("http://localhost/api/reports", {
+      method: "POST",
+      body: JSON.stringify({
+        description: "Pothole",
+        issueType: "ROAD_DAMAGE",
+        latitude: 37.4524,
+        longitude: -122.1817,
+        selectedAgencyId: "agency-evil",
+      }),
+    });
+
+    // Act
+    const response = await POST(request);
+    const body = await response.json();
+
+    // Assert: rejected with a 400 and the report is never created.
+    expect(response.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("INVALID_AGENCY_CHOICE");
+    expect(prismaMock.report.create).not.toHaveBeenCalled();
+  });
+
   it("returns 500 when the database write throws", async () => {
     // Arrange
     prismaMock.agency.findMany.mockResolvedValue([]);

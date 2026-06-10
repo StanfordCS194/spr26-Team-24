@@ -5,6 +5,7 @@ import { renderWithProviders, screen } from "@/test";
 import { ReviewStep } from "./review-step";
 
 type OfficialForm = Parameters<typeof ReviewStep>[0]["officialForm"];
+type Candidates = Parameters<typeof ReviewStep>[0]["agencyCandidates"];
 
 function baseProps() {
   return {
@@ -21,12 +22,36 @@ function baseProps() {
     submitError: null as string | null,
     officialForm: null as OfficialForm,
     officialFormLoading: false,
+    agencyCandidates: null as Candidates,
+    selectedAgencyId: null as string | null,
+    onSelectAgency: vi.fn(),
     onDescriptionChange: vi.fn(),
     onAddressChange: vi.fn(),
     onBack: vi.fn(),
     onSubmit: vi.fn(),
   };
 }
+
+/** Two agencies covering the same Menlo Park spot — the canonical ambiguity. */
+const AMBIGUOUS_CANDIDATES: Candidates = {
+  agencyId: null,
+  candidates: [
+    {
+      id: "agency-act",
+      name: "Menlo Park ACT",
+      jurisdiction: "city-menlo-park",
+      intakeMethod: "WEB_FORM",
+    },
+    {
+      id: "agency-open311",
+      name: "Menlo Park SeeClickFix (Open311)",
+      jurisdiction: "city-menlo-park",
+      intakeMethod: "API",
+    },
+  ],
+  disambiguation:
+    "More than one office handles this here. Which should we file your report with?",
+};
 
 describe("ReviewStep", () => {
   it("renders the classified issue label and AI description", () => {
@@ -188,5 +213,94 @@ describe("ReviewStep", () => {
 
     // Assert
     expect(screen.getByText("Submission failed")).toBeInTheDocument();
+  });
+
+  it("renders candidate agencies and the disambiguating question when ambiguous", () => {
+    // Arrange / Act
+    renderWithProviders(
+      <ReviewStep {...baseProps()} agencyCandidates={AMBIGUOUS_CANDIDATES} />,
+    );
+
+    // Assert: question + both candidates (name, jurisdiction, intake method).
+    expect(
+      screen.getByText(AMBIGUOUS_CANDIDATES.disambiguation as string),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Menlo Park ACT")).toBeInTheDocument();
+    expect(
+      screen.getByText("Menlo Park SeeClickFix (Open311)"),
+    ).toBeInTheDocument();
+    const radios = screen.getAllByRole("radio");
+    expect(radios).toHaveLength(2);
+  });
+
+  it("calls onSelectAgency with the chosen candidate id", async () => {
+    // Arrange
+    const props = baseProps();
+    const { user } = renderWithProviders(
+      <ReviewStep {...props} agencyCandidates={AMBIGUOUS_CANDIDATES} />,
+    );
+
+    // Act: pick the Open311 agency (the Menlo Park unblock case).
+    await user.click(screen.getByText("Menlo Park SeeClickFix (Open311)"));
+
+    // Assert
+    expect(props.onSelectAgency).toHaveBeenCalledWith("agency-open311");
+  });
+
+  it("disables submit until the user picks an agency when ambiguous", () => {
+    // Arrange / Act: ambiguous, nothing selected yet.
+    const { rerender } = renderWithProviders(
+      <ReviewStep
+        {...baseProps()}
+        agencyCandidates={AMBIGUOUS_CANDIDATES}
+        selectedAgencyId={null}
+      />,
+    );
+
+    // Assert: submit is blocked until a choice is made.
+    expect(
+      screen.getByRole("button", { name: /Submit Report/ }),
+    ).toBeDisabled();
+
+    // Act: once selected, submit unlocks.
+    rerender(
+      <ReviewStep
+        {...baseProps()}
+        agencyCandidates={AMBIGUOUS_CANDIDATES}
+        selectedAgencyId="agency-open311"
+      />,
+    );
+
+    // Assert
+    expect(
+      screen.getByRole("button", { name: /Submit Report/ }),
+    ).not.toBeDisabled();
+  });
+
+  it("shows no disambiguation prompt for an unambiguous single candidate", () => {
+    // Arrange / Act
+    renderWithProviders(
+      <ReviewStep
+        {...baseProps()}
+        agencyCandidates={{
+          agencyId: "agency-act",
+          candidates: [
+            {
+              id: "agency-act",
+              name: "Menlo Park ACT",
+              jurisdiction: "city-menlo-park",
+              intakeMethod: "WEB_FORM",
+            },
+          ],
+          disambiguation: null,
+        }}
+      />,
+    );
+
+    // Assert: no picker, no regression to the submit button.
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Submit Report/ }),
+    ).not.toBeDisabled();
   });
 });

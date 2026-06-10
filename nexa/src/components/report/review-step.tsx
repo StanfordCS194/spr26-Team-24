@@ -13,7 +13,10 @@ import { Input } from "@/components/ui/input";
 import { ErrorBanner } from "@/components/error-banner";
 import { useI18n } from "@/i18n/provider";
 import type { ClassificationResult } from "@/lib/classify/types";
-import type { OfficialFormLookupResult } from "@/lib/api/types";
+import type {
+  AgencyCandidatesResult,
+  OfficialFormLookupResult,
+} from "@/lib/api/types";
 
 interface ReviewStepProps {
   classification: ClassificationResult;
@@ -24,6 +27,15 @@ interface ReviewStepProps {
   submitError: string | null;
   officialForm: OfficialFormLookupResult | null;
   officialFormLoading: boolean;
+  /**
+   * Candidate agencies for this report's location + issue type. When more than
+   * one covers the same spot (an ambiguous match), the review step renders a
+   * picker so the user disambiguates which one to file with.
+   */
+  agencyCandidates: AgencyCandidatesResult | null;
+  /** The agency the user has selected from an ambiguous candidate set. */
+  selectedAgencyId: string | null;
+  onSelectAgency: (agencyId: string) => void;
   onDescriptionChange: (value: string) => void;
   onAddressChange: (value: string) => void;
   onBack: () => void;
@@ -39,12 +51,24 @@ export function ReviewStep({
   submitError,
   officialForm,
   officialFormLoading,
+  agencyCandidates,
+  selectedAgencyId,
+  onSelectAgency,
   onDescriptionChange,
   onAddressChange,
   onBack,
   onSubmit,
 }: ReviewStepProps) {
   const { t } = useI18n();
+
+  // Ambiguous routing: more than one agency covers this location + issue type
+  // (e.g. Menlo Park's web-form desk vs. its Open311 API). Surface the
+  // candidates with a disambiguating question and let the user pick one. A
+  // single confident match needs no prompt — the create route routes it.
+  const isAmbiguous =
+    !!agencyCandidates &&
+    agencyCandidates.candidates.length > 1 &&
+    !agencyCandidates.agencyId;
 
   return (
     <div className="flex flex-col gap-10">
@@ -174,6 +198,46 @@ export function ReviewStep({
         )}
       </div>
 
+      {isAmbiguous && (
+        <div className="ep-card p-6">
+          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            {t("report.chooseAgency")}
+          </span>
+          {agencyCandidates?.disambiguation && (
+            <p className="mt-2 text-sm text-foreground">
+              {agencyCandidates.disambiguation}
+            </p>
+          )}
+          <div className="mt-3 flex flex-col gap-2" role="radiogroup">
+            {agencyCandidates?.candidates.map((candidate) => {
+              const selected = candidate.id === selectedAgencyId;
+              return (
+                <button
+                  key={candidate.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => onSelectAgency(candidate.id)}
+                  className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors ${
+                    selected
+                      ? "border-ep-purple bg-ep-purple/5 ring-2 ring-ep-purple/40"
+                      : "border-border hover:border-ep-purple/50"
+                  }`}
+                >
+                  <span className="text-sm font-medium text-foreground">
+                    {candidate.name}
+                  </span>
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {candidate.jurisdiction} ·{" "}
+                    {t(`report.intake.${candidate.intakeMethod}`)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {submitError && <ErrorBanner message={submitError} />}
 
       <div className="flex gap-3">
@@ -187,7 +251,7 @@ export function ReviewStep({
         <button
           className="btn-cta btn-cta-purple flex-1 justify-center"
           onClick={onSubmit}
-          disabled={submitting}
+          disabled={submitting || (isAmbiguous && !selectedAgencyId)}
         >
           {submitting ? (
             <>
