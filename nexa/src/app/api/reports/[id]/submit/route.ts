@@ -1,20 +1,25 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { IntakeMethod, ReportStatus } from "@/generated/prisma/enums";
-import { parseOpen311Config, submitToOpen311 } from "@/lib/submission/open311";
-import { resolveAgencyId } from "@/lib/jurisdictions/agency";
+import { orchestrateSubmission } from "@/lib/submission/orchestrate";
 import { successResponse, errorResponse } from "@/lib/api/response";
 
 // POST /api/reports/[id]/submit
 //
-// Submits a single confirmed report to its assigned agency via the Open311
-// GeoReport v2 API. This is the API submission agent from issue #32; web-form,
-// email, and phone intake methods are handled by their own agents (#31, #33)
-// and are out of scope here.
+// Submits a single confirmed report to its assigned agency, dispatching to the
+// right submission agent by the agency's `intakeMethod` (issue #34):
 //
-// On success the report's externalTrackingId is stored and its status advances
-// to SUBMITTED so the status poller (#37) can later track it.
+//   - API:              the report is filed automatically via the Open311
+//                       GeoReport agent (#32). On success its
+//                       externalTrackingId is stored and its status advances to
+//                       SUBMITTED so the status poller (#37) can track it.
+//   - WEB_FORM / EMAIL: there is no automated agent yet (#31/#33), so we degrade
+//                       gracefully — the response reports `manualAssist` with
+//                       the official intake link so the UI can guide the user
+//                       through filing it themselves. The report stays CONFIRMED.
+//
+// The orchestration itself (auth, agency resolution, status transitions, agent
+// dispatch) lives in `@/lib/submission/orchestrate`; this route is a thin
+// translation of its discriminated result onto HTTP.
 export async function POST(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> },
@@ -23,94 +28,61 @@ export async function POST(
     const session = await getSession();
     const { id } = await context.params;
 
-    const report = await prisma.report.findUnique({
-      where: { id },
-      include: { agency: true },
-    });
+    const result = await orchestrateSubmission(id, { userId: session?.userId });
 
-    if (!report) {
-      return errorResponse("Report not found.", 404);
-    }
+    switch (result.status) {
+      case "submitted":
+        return successResponse({
+          reportId: result.reportId,
+          status: "SUBMITTED",
+          submitted: true,
+          externalTrackingId: result.externalTrackingId,
+        });
 
-    // Only the report's owner may submit it. Anonymous (userId === null)
-    // reports remain submittable by anyone holding the link, matching the
-    // anonymous-reporting model elsewhere in the app.
-    if (report.userId && report.userId !== session?.userId) {
-      return errorResponse("You can only submit your own reports.", 403);
-    }
+      case "manual_assist":
+        // Not an error: the agency simply has no automated agent, so the user
+        // files it via the official channel. 200 with the details the UI needs
+        // to render the manual-assist guidance.
+        return successResponse({
+          reportId: result.reportId,
+          status: "CONFIRMED",
+          submitted: false,
+          manualAssist: {
+            intakeMethod: result.intakeMethod,
+            agencyName: result.agencyName,
+            intakeUrl: result.intakeUrl,
+            intakeEmail: result.intakeEmail,
+          },
+        });
 
-    if (report.status === ReportStatus.SUBMITTED || report.externalTrackingId) {
-      return errorResponse("This report has already been submitted.", 409);
-    }
-
-    // Reports created before jurisdiction routing existed (or whose location
-    // was added later) may not have an agency yet — resolve it on demand.
-    let agency = report.agency;
-    if (!agency) {
-      const { agencyId } = await resolveAgencyId({
-        latitude: report.latitude,
-        longitude: report.longitude,
-        issueType: report.issueType,
-      });
-      if (agencyId) {
-        await prisma.report.update({ where: { id }, data: { agencyId } });
-        agency = await prisma.agency.findUnique({ where: { id: agencyId } });
+      case "error": {
+        // The Open311 agent's failure reason is worth surfacing to the user.
+        const message =
+          result.code === "submit_failed"
+            ? `Submission failed: ${result.message}`
+            : result.message;
+        return errorResponse(message, ERROR_STATUS[result.code], result.code);
       }
     }
-    if (!agency) {
-      return errorResponse("No agency is assigned to this report.", 400);
-    }
-    if (agency.intakeMethod !== IntakeMethod.API) {
-      return errorResponse(
-        `Agency "${agency.name}" does not accept API submissions (intake method: ${agency.intakeMethod}).`,
-        400,
-      );
-    }
-
-    // Atomically claim the report for submission. A single conditional update
-    // (CONFIRMED -> SUBMITTING) is the DB-level guard against concurrent
-    // submits: only one of two simultaneous POSTs can flip the row, so only
-    // one ever reaches submitToOpen311 below. The loser sees count === 0.
-    const claim = await prisma.report.updateMany({
-      where: { id, status: ReportStatus.CONFIRMED },
-      data: { status: ReportStatus.SUBMITTING },
-    });
-    if (claim.count !== 1) {
-      return errorResponse("This report is already being submitted.", 409);
-    }
-
-    const config = parseOpen311Config(agency.requiredFields);
-    const result = await submitToOpen311(report, {
-      config,
-      intakeUrl: agency.intakeUrl,
-    });
-
-    if (result.status === "error") {
-      // Roll back to CONFIRMED so the user can retry.
-      await prisma.report.update({
-        where: { id },
-        data: { status: ReportStatus.CONFIRMED },
-      });
-      return errorResponse(`Submission failed: ${result.message}`, 502);
-    }
-
-    const updated = await prisma.report.update({
-      where: { id },
-      data: {
-        status: ReportStatus.SUBMITTED,
-        // Prefer the immediate id; fall back to the async token until a later
-        // poll resolves it to a real service_request_id.
-        externalTrackingId: result.serviceRequestId ?? result.token,
-      },
-    });
-
-    return successResponse({
-      reportId: updated.id,
-      status: updated.status,
-      externalTrackingId: updated.externalTrackingId,
-    });
   } catch (error) {
     console.error("Report submission error:", error);
     return errorResponse("Failed to submit report. Please try again.", 500);
   }
 }
+
+// HTTP status for each orchestration error code. Keeping this here (rather than
+// in the orchestrator) lets the service stay transport-agnostic.
+const ERROR_STATUS: Record<
+  Extract<
+    Awaited<ReturnType<typeof orchestrateSubmission>>,
+    { status: "error" }
+  >["code"],
+  number
+> = {
+  not_found: 404,
+  forbidden: 403,
+  already_submitted: 409,
+  in_progress: 409,
+  no_agency: 400,
+  submit_failed: 502,
+};
