@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getGoogleMapsApiKey } from "@/lib/config";
 import { fetchWithTimeout } from "@/lib/http";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 type NominatimSearchResult = {
   display_name?: string;
@@ -161,6 +162,9 @@ async function fetchNominatimSuggestions(
 
 export async function GET(request: NextRequest) {
   try {
+    const limited = enforceRateLimit(request.headers);
+    if (limited) return limited;
+
     const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
     if (query.length < 3) {
       return successResponse({ suggestions: [] });
