@@ -7,6 +7,7 @@ import { isReportEligibleForFollowUpReminder } from "@/lib/reports/follow-up";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 import { DeleteReportButton } from "@/components/dashboard/delete-report-button";
 import { ResolutionPrompt } from "@/components/dashboard/resolution-prompt";
+import { SubmitReportAction } from "@/components/dashboard/submit-report-action";
 import { useI18n } from "@/i18n/provider";
 
 const STATUSES_HIDING_PROMPT = new Set([
@@ -28,6 +29,12 @@ export interface DashboardReport {
   updatedAt?: Date | null;
   externalTrackingId?: string | null;
   userResolved?: boolean | null;
+}
+
+// A CONFIRMED report with no tracking id was confirmed but never filed with the
+// agency — the one case where the dashboard offers a "Submit" action.
+function isPendingSubmission(report: DashboardReport): boolean {
+  return report.status === "CONFIRMED" && !report.externalTrackingId;
 }
 
 function shouldShowResolutionPrompt(report: DashboardReport): boolean {
@@ -94,7 +101,7 @@ export function ReportCard({ report }: ReportCardProps) {
             <h2 className="mt-2 text-lg font-medium leading-snug">
               {shortLocation || t("dashboard.locationUnavailable")}
             </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               <time
                 dateTime={report.createdAt.toISOString()}
                 title={formatFullDateTime(report.createdAt, locale)}
@@ -105,6 +112,17 @@ export function ReportCard({ report }: ReportCardProps) {
                   t("time.justNow"),
                 )}
               </time>
+              {report.externalTrackingId ? (
+                <span className="font-mono text-ep-purple">
+                  {t("dashboard.trackingId", {
+                    id: report.externalTrackingId,
+                  })}
+                </span>
+              ) : isPendingSubmission(report) ? (
+                <span className="font-mono uppercase tracking-wider">
+                  {t("dashboard.pendingSubmission")}
+                </span>
+              ) : null}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -127,6 +145,10 @@ export function ReportCard({ report }: ReportCardProps) {
           <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-foreground">
             {summary}
           </p>
+        )}
+
+        {isPendingSubmission(report) && (
+          <SubmitReportAction reportId={report.id} />
         )}
 
         {shouldShowResolutionPrompt(report) && (

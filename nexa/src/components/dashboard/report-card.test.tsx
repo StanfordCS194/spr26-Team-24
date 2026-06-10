@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { renderWithProviders, screen } from "@/test";
+import { renderWithProviders, screen, within } from "@/test";
 
 import { ReportCard, type DashboardReport } from "./report-card";
 
@@ -88,6 +88,54 @@ describe("ReportCard (collapsed)", () => {
 
     // Assert: still collapsed.
     expect(region).toHaveAttribute("aria-expanded", "false");
+  });
+});
+
+describe("ReportCard submission + tracking", () => {
+  // The card's clickable header is a role="button" whose accessible name is its
+  // whole text content, so a role-based query for the inner "Submit" button is
+  // ambiguous. Match the action by its own text and assert it's a real <button>.
+  it("offers a Submit action for a CONFIRMED, never-submitted report", () => {
+    // Arrange / Act
+    const { container } = renderWithProviders(
+      <ReportCard report={makeDashboardReport({ status: "CONFIRMED" })} />,
+    );
+    const card = within(container.querySelector("article") as HTMLElement);
+
+    // Assert: pending affordance + the submit action.
+    expect(card.getByText("Pending submission")).toBeInTheDocument();
+    const submit = card.getByText("Submit to agency");
+    expect(submit.closest("button")).not.toBeNull();
+  });
+
+  it("shows the tracking id (not a Submit action) once a report is tracked", () => {
+    // Arrange / Act
+    const { container } = renderWithProviders(
+      <ReportCard
+        report={makeDashboardReport({
+          status: "SUBMITTED",
+          externalTrackingId: "SR-42",
+        })}
+      />,
+    );
+    const card = within(container.querySelector("article") as HTMLElement);
+
+    // Assert
+    expect(card.getByText("Tracking #SR-42")).toBeInTheDocument();
+    expect(card.queryByText("Submit to agency")).not.toBeInTheDocument();
+    expect(card.queryByText("Pending submission")).not.toBeInTheDocument();
+  });
+
+  it("does not offer a Submit action for a tracked status without a tracking id yet", () => {
+    // Arrange / Act: e.g. an IN_PROGRESS report — already past CONFIRMED.
+    const { container } = renderWithProviders(
+      <ReportCard report={makeDashboardReport({ status: "IN_PROGRESS" })} />,
+    );
+    const card = within(container.querySelector("article") as HTMLElement);
+
+    // Assert
+    expect(card.queryByText("Submit to agency")).not.toBeInTheDocument();
+    expect(card.queryByText("Pending submission")).not.toBeInTheDocument();
   });
 });
 
