@@ -15,16 +15,18 @@
  *
  * FULLY OFFLINE: it only imports the static seed array. No network, DB, or LLM.
  *
- * HONESTY POLICY: this script reports the REAL verified count. As of the East
- * Palo Alto + verified-coverage expansion (issues #195/#198) the seeded data
- * yields 16 distinct triples — short of the 30 target. The remaining gap is NOT
- * closed by inventing agencies or fields; reaching 30 requires onboarding more
- * source-verified intake channels (see the "STILL NEEDED" section printed below
- * and the agency-research comments on issues #23 / #98). By default the script
- * exits 0 (it is a documentation/visibility tool, not a hard CI gate, precisely
- * because faking the number to pass a gate is forbidden). Pass `--strict` to
- * make it exit non-zero below the target once the verified data genuinely
- * reaches 30.
+ * HONESTY POLICY: this script reports the REAL verified count. After the East
+ * Palo Alto + verified-coverage expansion (issues #195/#198) the seed yielded 16
+ * distinct triples — short of the 30 target. The O2.KR2 coverage expansion then
+ * onboarded six source-verified SeeClickFix Open311 California cities (Milpitas,
+ * Morgan Hill, Gilroy, Watsonville, Vallejo, San Leandro), each verified live
+ * against the SeeClickFix Open311 API (services.json HTTP 200 with the city's own
+ * `organization`, every chosen service_code re-confirmed via services/<code>.json
+ * HTTP 200) and each backed by a real OSM city-boundary polygon. That brings the
+ * verified total to 34 distinct triples across 11 jurisdictions — clearing the 30
+ * target WITHOUT inventing any agency, service_code, or field. By default the
+ * script exits 0 (it is a documentation/visibility tool); pass `--strict` to make
+ * it exit non-zero if the verified data ever regresses below the target.
  */
 import { AGENCIES } from "../prisma/agencies";
 

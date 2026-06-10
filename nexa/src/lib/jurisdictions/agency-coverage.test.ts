@@ -51,15 +51,21 @@ describe("seeded agency coverage (issues #195 / #198)", () => {
   it("counts the distinct (jurisdiction × issueType × intakeMethod) triples (O2.KR2)", () => {
     const { total, jurisdictions, intakeMethods } = countTriples();
 
-    // HONEST count: the verified seed yields 16 distinct triples — short of the
-    // 30 target. This assertion is the regression lock; raise it (never lower
-    // it) only when MORE source-verified triples are added. We do NOT fabricate
-    // agencies/fields to hit 30 (see eval/coverage.ts "STILL NEEDED").
-    expect(total).toBe(16);
+    // HONEST count: the verified seed now yields 34 distinct triples — clearing
+    // the 30 target after onboarding six source-verified SeeClickFix Open311
+    // California cities (Milpitas, Morgan Hill, Gilroy, Watsonville, Vallejo,
+    // San Leandro), each contributing 3 API triples (ROAD_DAMAGE,
+    // ILLEGAL_DUMPING, STREETLIGHT_OUTAGE) whose service_codes were verified
+    // live against the SeeClickFix Open311 API. This assertion is the
+    // regression lock; raise it (never lower it) only when MORE source-verified
+    // triples are added. We do NOT fabricate agencies/fields to inflate it.
+    expect(total).toBe(34);
+    expect(total).toBeGreaterThanOrEqual(30);
 
     // Across >=2 jurisdictions, with all four intake methods represented.
     expect(jurisdictions.length).toBeGreaterThanOrEqual(2);
     expect(jurisdictions).toContain("city-east-palo-alto");
+    expect(jurisdictions).toContain("city-milpitas");
     expect(intakeMethods).toEqual(["API", "EMAIL", "PHONE", "WEB_FORM"]);
   });
 });

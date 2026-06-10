@@ -278,5 +278,125 @@
       "vehicleColor": null,
       "observationDatetime": null
     }
+  },
+  {
+    "id": "road-mil-15-api",
+    "issueType": "ROAD_DAMAGE",
+    "note": "Milpitas pothole -> Milpitas SeeClickFix (Open311 API).",
+    "report": {
+      "description": "Pothole in the roadway lane near the intersection.",
+      "aiDescription": "Pothole in roadway.",
+      "latitude": 37.41862,
+      "longitude": -121.9299,
+      "address": "Milpitas, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-mil-15-api.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "dump-mh-16-api",
+    "issueType": "ILLEGAL_DUMPING",
+    "note": "Morgan Hill dumping -> Morgan Hill SeeClickFix (Open311 API).",
+    "report": {
+      "description": "Pile of dumped furniture and bags on the street.",
+      "aiDescription": "Illegal dumping on public street.",
+      "latitude": 37.12522,
+      "longitude": -121.69618,
+      "address": "Morgan Hill, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/dump-mh-16-api.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "light-gil-17-api",
+    "issueType": "STREETLIGHT_OUTAGE",
+    "note": "Gilroy streetlight out -> Gilroy SeeClickFix (Open311 API).",
+    "report": {
+      "description": "Street light has been out for several nights.",
+      "aiDescription": "Streetlight outage.",
+      "latitude": 36.9989,
+      "longitude": -121.64129,
+      "address": "Gilroy, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/light-gil-17-api.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "road-wat-18-api",
+    "issueType": "ROAD_DAMAGE",
+    "note": "Watsonville pothole -> Watsonville SeeClickFix (Open311 API).",
+    "report": {
+      "description": "Deep pothole damaging tires on the road.",
+      "aiDescription": "Pothole in roadway.",
+      "latitude": 36.91557,
+      "longitude": -121.82574,
+      "address": "Watsonville, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-wat-18-api.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "dump-val-19-api",
+    "issueType": "ILLEGAL_DUMPING",
+    "note": "Vallejo dumping -> Vallejo SeeClickFix (Open311 API).",
+    "report": {
+      "description": "Mattress and debris dumped on the public right-of-way.",
+      "aiDescription": "Illegal dumping on public property.",
+      "latitude": 38.12024,
+      "longitude": -122.38386,
+      "address": "Vallejo, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/dump-val-19-api.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "light-sl-20-api",
+    "issueType": "STREETLIGHT_OUTAGE",
+    "note": "San Leandro streetlight out -> San Leandro SeeClickFix (Open311 API).",
+    "report": {
+      "description": "Streetlight flickering then fully out on the block.",
+      "aiDescription": "Streetlight outage.",
+      "latitude": 37.70885,
+      "longitude": -122.20861,
+      "address": "San Leandro, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/light-sl-20-api.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
   }
 ]

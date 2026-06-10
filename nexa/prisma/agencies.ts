@@ -217,4 +217,161 @@ export const AGENCIES: AgencySeed[] = [
       longitude: { type: "number", required: false },
     },
   },
+  // ─── SeeClickFix Open311 cities (O2.KR2 expansion) ─────────────────────────
+  // Each row mirrors the existing "Menlo Park SeeClickFix (Open311)" shape: an
+  // `open311` block with { endpoint, serviceCodes } that parseOpen311Config()
+  // consumes, plus the base endpoint mirrored into intakeUrl.
+  //
+  // VERIFIED LIVE 2026-06-10 against the SeeClickFix Open311 production API
+  // (`GET https://seeclickfix.com/open311/v2/services.json?lat=<lat>&long=<lng>`,
+  // each HTTP 200 returning the city's own `organization`, and every chosen
+  // service_code re-confirmed via `GET /open311/v2/services/<code>.json`
+  // HTTP 200). No value below was invented — each service_code is the exact
+  // integer the live catalog returns for that city.
+  //
+  // CAVEAT (same as the Menlo Park row, UNVERIFIED): no live POST was performed
+  // and the per-jurisdiction POST `jurisdiction_id` token was not confirmed, so
+  // we omit jurisdictionId. Several of these services also declare service-
+  // specific `required` attributes (e.g. Milpitas pothole "direction",
+  // streetlight "pole number"); those are NOT modelled here (the existing
+  // Open311Config shape carries only serviceCodes), so confirm against the
+  // SeeClickFix sandbox before relying on the production write path.
+  {
+    // City of Milpitas — verified service_codes:
+    //   ROAD_DAMAGE        26652 (Pothole/Roadway Repairs)
+    //   ILLEGAL_DUMPING    26647 (Debris / Illegal Dumping)
+    //   STREETLIGHT_OUTAGE 26659 (Street Lights)
+    name: "Milpitas SeeClickFix (Open311)",
+    jurisdiction: "city-milpitas",
+    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    intakeMethod: "API",
+    intakeUrl: "https://seeclickfix.com/open311/v2",
+    intakeEmail: null,
+    requiredFields: {
+      open311: {
+        endpoint: "https://seeclickfix.com/open311/v2",
+        sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        serviceCodes: {
+          ROAD_DAMAGE: "26652",
+          ILLEGAL_DUMPING: "26647",
+          STREETLIGHT_OUTAGE: "26659",
+        },
+      },
+    },
+  },
+  {
+    // City of Morgan Hill — verified service_codes:
+    //   ROAD_DAMAGE        38109 (STREET - Pothole In Street)
+    //   ILLEGAL_DUMPING    38127 (STREET - Illegal Dump/Debris)
+    //   STREETLIGHT_OUTAGE 38111 (TRAFFIC - Street Light Outage)
+    name: "Morgan Hill SeeClickFix (Open311)",
+    jurisdiction: "city-morgan-hill",
+    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    intakeMethod: "API",
+    intakeUrl: "https://seeclickfix.com/open311/v2",
+    intakeEmail: null,
+    requiredFields: {
+      open311: {
+        endpoint: "https://seeclickfix.com/open311/v2",
+        sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        serviceCodes: {
+          ROAD_DAMAGE: "38109",
+          ILLEGAL_DUMPING: "38127",
+          STREETLIGHT_OUTAGE: "38111",
+        },
+      },
+    },
+  },
+  {
+    // City of Gilroy — verified service_codes (org "Maintenance Requests"):
+    //   ROAD_DAMAGE        57749 (Streets)
+    //   ILLEGAL_DUMPING    62727 (Garbage - On Public Right-of-Way)
+    //   STREETLIGHT_OUTAGE 57748 (Streetlights)
+    name: "Gilroy SeeClickFix (Open311)",
+    jurisdiction: "city-gilroy",
+    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    intakeMethod: "API",
+    intakeUrl: "https://seeclickfix.com/open311/v2",
+    intakeEmail: null,
+    requiredFields: {
+      open311: {
+        endpoint: "https://seeclickfix.com/open311/v2",
+        sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        serviceCodes: {
+          ROAD_DAMAGE: "57749",
+          ILLEGAL_DUMPING: "62727",
+          STREETLIGHT_OUTAGE: "57748",
+        },
+      },
+    },
+  },
+  {
+    // City of Watsonville (org "Watsonville, CA") — verified service_codes:
+    //   ROAD_DAMAGE        50064 (Pothole)
+    //   ILLEGAL_DUMPING    53301 (Illegal Dumping)
+    //   STREETLIGHT_OUTAGE 50067 (Street Light)
+    name: "Watsonville SeeClickFix (Open311)",
+    jurisdiction: "city-watsonville",
+    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    intakeMethod: "API",
+    intakeUrl: "https://seeclickfix.com/open311/v2",
+    intakeEmail: null,
+    requiredFields: {
+      open311: {
+        endpoint: "https://seeclickfix.com/open311/v2",
+        sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        serviceCodes: {
+          ROAD_DAMAGE: "50064",
+          ILLEGAL_DUMPING: "53301",
+          STREETLIGHT_OUTAGE: "50067",
+        },
+      },
+    },
+  },
+  {
+    // City of Vallejo (org "City of Vallejo") — verified service_codes:
+    //   ROAD_DAMAGE        3376 (Pothole)
+    //   ILLEGAL_DUMPING    3613 (Illegal Dumping (on public property only))
+    //   STREETLIGHT_OUTAGE 3378 (Street Light)
+    name: "Vallejo SeeClickFix (Open311)",
+    jurisdiction: "city-vallejo",
+    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    intakeMethod: "API",
+    intakeUrl: "https://seeclickfix.com/open311/v2",
+    intakeEmail: null,
+    requiredFields: {
+      open311: {
+        endpoint: "https://seeclickfix.com/open311/v2",
+        sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        serviceCodes: {
+          ROAD_DAMAGE: "3376",
+          ILLEGAL_DUMPING: "3613",
+          STREETLIGHT_OUTAGE: "3378",
+        },
+      },
+    },
+  },
+  {
+    // City of San Leandro (org "San Leandro, CA") — verified service_codes:
+    //   ROAD_DAMAGE        53596 (Roads)
+    //   ILLEGAL_DUMPING    53329 (Illegal Dumping – Public Right of Way)
+    //   STREETLIGHT_OUTAGE 53607 (Street lights)
+    name: "San Leandro SeeClickFix (Open311)",
+    jurisdiction: "city-san-leandro",
+    issueTypes: ["ROAD_DAMAGE", "ILLEGAL_DUMPING", "STREETLIGHT_OUTAGE"],
+    intakeMethod: "API",
+    intakeUrl: "https://seeclickfix.com/open311/v2",
+    intakeEmail: null,
+    requiredFields: {
+      open311: {
+        endpoint: "https://seeclickfix.com/open311/v2",
+        sandboxEndpoint: "https://int.seeclickfix.com/open311/v2",
+        serviceCodes: {
+          ROAD_DAMAGE: "53596",
+          ILLEGAL_DUMPING: "53329",
+          STREETLIGHT_OUTAGE: "53607",
+        },
+      },
+    },
+  },
 ];

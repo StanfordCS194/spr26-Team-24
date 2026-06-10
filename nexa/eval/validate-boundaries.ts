@@ -66,6 +66,40 @@ const GOLDEN_POINTS: ReadonlyArray<{
     latitude: 37.24497,
     longitude: -121.76879,
   },
+  // SeeClickFix Open311 cities (O2.KR2 expansion). Each interior point was found
+  // by scanning the city's own OSM boundary polygon and confirming the REAL
+  // resolveJurisdiction returns the expected id (so the assertion guards the
+  // newly added boundary geometry).
+  {
+    jurisdictionId: "city-milpitas",
+    latitude: 37.41862,
+    longitude: -121.9299,
+  },
+  {
+    jurisdictionId: "city-morgan-hill",
+    latitude: 37.12387,
+    longitude: -121.69618,
+  },
+  {
+    jurisdictionId: "city-gilroy",
+    latitude: 36.99637,
+    longitude: -121.64129,
+  },
+  {
+    jurisdictionId: "city-watsonville",
+    latitude: 36.91557,
+    longitude: -121.82574,
+  },
+  {
+    jurisdictionId: "city-vallejo",
+    latitude: 38.12024,
+    longitude: -122.38386,
+  },
+  {
+    jurisdictionId: "city-san-leandro",
+    latitude: 37.70885,
+    longitude: -122.20861,
+  },
 ];
 
 const errors: string[] = [];

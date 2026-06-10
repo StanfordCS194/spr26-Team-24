@@ -92,6 +92,89 @@ export const JURISDICTIONS: Record<JurisdictionId, Jurisdiction> = {
     },
   },
 
+  // ─── SeeClickFix Open311 cities (verified live 2026-06-10) ─────────────────
+  // Each of these three cities runs a city-backed SeeClickFix Open311 service
+  // (services.json HTTP 200 with the city's own `organization`). The public
+  // SeeClickFix web report page is the verified portal; the machine API
+  // endpoint + per-issue service codes are seeded in prisma/agencies.ts.
+  "city-milpitas": {
+    id: "city-milpitas",
+    displayName: "Milpitas",
+    endpoints: {
+      default: {
+        url: "https://seeclickfix.com/milpitas",
+        reason:
+          "City of Milpitas runs a SeeClickFix Open311 service (verified live: services.json org 'City of Milpitas').",
+        confidence: "high",
+      },
+    },
+  },
+
+  "city-morgan-hill": {
+    id: "city-morgan-hill",
+    displayName: "Morgan Hill",
+    endpoints: {
+      default: {
+        url: "https://seeclickfix.com/morgan-hill",
+        reason:
+          "City of Morgan Hill runs a SeeClickFix Open311 service (verified live: services.json org 'City of Morgan Hill').",
+        confidence: "high",
+      },
+    },
+  },
+
+  "city-gilroy": {
+    id: "city-gilroy",
+    displayName: "Gilroy",
+    endpoints: {
+      default: {
+        url: "https://seeclickfix.com/gilroy",
+        reason:
+          "City of Gilroy runs a SeeClickFix Open311 service (verified live: services.json org 'Maintenance Requests' / 'Customer Service Requests').",
+        confidence: "high",
+      },
+    },
+  },
+
+  "city-watsonville": {
+    id: "city-watsonville",
+    displayName: "Watsonville",
+    endpoints: {
+      default: {
+        url: "https://seeclickfix.com/watsonville",
+        reason:
+          "City of Watsonville runs a SeeClickFix Open311 service (verified live: services.json org 'Watsonville, CA').",
+        confidence: "high",
+      },
+    },
+  },
+
+  "city-vallejo": {
+    id: "city-vallejo",
+    displayName: "Vallejo",
+    endpoints: {
+      default: {
+        url: "https://seeclickfix.com/vallejo",
+        reason:
+          "City of Vallejo runs a SeeClickFix Open311 service (verified live: services.json org 'City of Vallejo').",
+        confidence: "high",
+      },
+    },
+  },
+
+  "city-san-leandro": {
+    id: "city-san-leandro",
+    displayName: "San Leandro",
+    endpoints: {
+      default: {
+        url: "https://seeclickfix.com/san-leandro",
+        reason:
+          "City of San Leandro runs a SeeClickFix Open311 service (verified live: services.json org 'San Leandro, CA').",
+        confidence: "high",
+      },
+    },
+  },
+
   "county-santa-clara-unincorporated": {
     id: "county-santa-clara-unincorporated",
     displayName: "Santa Clara County (unincorporated)",

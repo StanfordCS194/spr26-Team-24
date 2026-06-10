@@ -63,7 +63,6 @@
     "expectedJurisdictionId": "stanford-campus",
     "note": "Stanford south campus"
   },
-
   {
     "id": "palo-alto-01",
     "latitude": 37.35109,
@@ -128,7 +127,6 @@
     "expectedJurisdictionId": "city-palo-alto",
     "note": "Palo Alto foothills"
   },
-
   {
     "id": "menlo-park-01",
     "latitude": 37.44865,
@@ -193,7 +191,6 @@
     "expectedJurisdictionId": "city-menlo-park",
     "note": "Menlo Park north"
   },
-
   {
     "id": "mountain-view-01",
     "latitude": 37.40154,
@@ -258,7 +255,6 @@
     "expectedJurisdictionId": "city-mountain-view",
     "note": "Mountain View central"
   },
-
   {
     "id": "east-palo-alto-01",
     "latitude": 37.45857,
@@ -323,7 +319,6 @@
     "expectedJurisdictionId": "city-east-palo-alto",
     "note": "East Palo Alto central"
   },
-
   {
     "id": "scc-uninc-01",
     "latitude": 37.24497,
@@ -388,7 +383,6 @@
     "expectedJurisdictionId": "county-santa-clara-unincorporated",
     "note": "SCC unincorporated south"
   },
-
   {
     "id": "contested-stanford-vs-paloalto",
     "latitude": 37.4305,
@@ -424,5 +418,149 @@
     "expectedJurisdictionId": "city-menlo-park",
     "contested": true,
     "note": "On the Menlo Park/East Palo Alto seam; this point falls inside Menlo Park's polygon."
+  },
+  {
+    "id": "mil-01",
+    "latitude": 37.41862,
+    "longitude": -121.9299,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-milpitas",
+    "note": "Milpitas SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "mil-02",
+    "latitude": 37.41979,
+    "longitude": -121.9299,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-milpitas",
+    "note": "Milpitas SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "mil-03",
+    "latitude": 37.42097,
+    "longitude": -121.9299,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-milpitas",
+    "note": "Milpitas SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "mh-01",
+    "latitude": 37.12387,
+    "longitude": -121.69618,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-morgan-hill",
+    "note": "Morgan Hill SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "mh-02",
+    "latitude": 37.12522,
+    "longitude": -121.69618,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-morgan-hill",
+    "note": "Morgan Hill SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "mh-03",
+    "latitude": 37.12657,
+    "longitude": -121.69618,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-morgan-hill",
+    "note": "Morgan Hill SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "gil-01",
+    "latitude": 36.99637,
+    "longitude": -121.64129,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-gilroy",
+    "note": "Gilroy SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "gil-02",
+    "latitude": 36.99764,
+    "longitude": -121.64129,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-gilroy",
+    "note": "Gilroy SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "gil-03",
+    "latitude": 36.9989,
+    "longitude": -121.64129,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-gilroy",
+    "note": "Gilroy SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "wat-01",
+    "latitude": 36.91557,
+    "longitude": -121.82574,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-watsonville",
+    "note": "Watsonville SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "wat-02",
+    "latitude": 36.91332,
+    "longitude": -121.82416,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-watsonville",
+    "note": "Watsonville SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "wat-03",
+    "latitude": 36.91557,
+    "longitude": -121.82416,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-watsonville",
+    "note": "Watsonville SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "val-01",
+    "latitude": 38.12024,
+    "longitude": -122.38386,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-vallejo",
+    "note": "Vallejo SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "val-02",
+    "latitude": 38.12214,
+    "longitude": -122.38386,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-vallejo",
+    "note": "Vallejo SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "val-03",
+    "latitude": 38.12405,
+    "longitude": -122.38386,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-vallejo",
+    "note": "Vallejo SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "sl-01",
+    "latitude": 37.70885,
+    "longitude": -122.20861,
+    "issueType": "ROAD_DAMAGE",
+    "expectedJurisdictionId": "city-san-leandro",
+    "note": "San Leandro SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "sl-02",
+    "latitude": 37.7101,
+    "longitude": -122.20861,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedJurisdictionId": "city-san-leandro",
+    "note": "San Leandro SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "sl-03",
+    "latitude": 37.71136,
+    "longitude": -122.20861,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedJurisdictionId": "city-san-leandro",
+    "note": "San Leandro SeeClickFix Open311 city (verified interior point)"
   }
 ]
