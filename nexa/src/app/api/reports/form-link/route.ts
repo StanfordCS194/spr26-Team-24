@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOpenAI } from "@/lib/openai";
-import { ISSUE_TYPE_LABELS } from "@/lib/constants";
+import { ISSUE_TYPE_LABELS, US_STATE_CODES } from "@/lib/constants";
 import { IssueType } from "@/generated/prisma/enums";
 import { resolveJurisdiction } from "@/lib/jurisdictions/resolve";
 
@@ -80,15 +80,41 @@ Rules:
 
 Example: For Palo Alto, "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311" is the correct unified 311 page and should be returned for any civic issue type, including road damage.`;
 
+/**
+ * Accepts only URLs hosted on an official US government domain. Guards against
+ * suffix-only bypasses that the old `endsWith(".gov"|".us")` check allowed:
+ * - userinfo tricks (`https://trusted.gov@evil.us/`) resolve `hostname` to the
+ *   attacker host, so any credentials in the URL are rejected outright;
+ * - non-https URLs are rejected;
+ * - `.us` is openly registrable (`evil.us`) and lets attackers append the label
+ *   to anything (`paloalto.gov.evil.us`), so `.us` is trusted only when the
+ *   registrable suffix is `<state>.us` (`paloalto.ca.us`);
+ * - `.gov` registration is restricted to US government entities, so an exact
+ *   `.gov` TLD (with at least one label in front) stays trusted.
+ */
 function isOfficialCityGovUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    if (parsed.protocol !== "https:") return false;
+    // Userinfo (`user:pass@host`) lets an attacker disguise the real host.
+    if (parsed.username !== "" || parsed.password !== "") return false;
+
+    const host = parsed.hostname.toLowerCase();
+    const labels = host.split(".");
+    if (labels.length < 2 || labels.some((label) => label === "")) {
       return false;
     }
-    const host = parsed.hostname.toLowerCase();
-    if (host.endsWith(".gov")) return true;
-    if (host.endsWith(".us")) return true;
+
+    const tld = labels[labels.length - 1];
+
+    // `.gov` is a restricted, government-only TLD: trust any subdomain of it.
+    if (tld === "gov") return true;
+
+    // `.us` only when the registrable suffix is `<state-code>.us`.
+    if (tld === "us" && labels.length >= 3) {
+      return US_STATE_CODES.has(labels[labels.length - 2]);
+    }
+
     return false;
   } catch {
     return false;
