@@ -493,27 +493,27 @@
   },
   {
     "id": "wat-01",
-    "latitude": 36.91557,
-    "longitude": -121.82574,
+    "latitude": 36.91,
+    "longitude": -121.7681,
     "issueType": "ROAD_DAMAGE",
     "expectedJurisdictionId": "city-watsonville",
-    "note": "Watsonville SeeClickFix Open311 city (verified interior point)"
+    "note": "Watsonville SeeClickFix Open311 city (central interior point; previous (36.91557,-121.82574) sat on the far-western polygon edge)"
   },
   {
     "id": "wat-02",
-    "latitude": 36.91332,
-    "longitude": -121.82416,
+    "latitude": 36.9105,
+    "longitude": -121.76,
     "issueType": "ILLEGAL_DUMPING",
     "expectedJurisdictionId": "city-watsonville",
-    "note": "Watsonville SeeClickFix Open311 city (verified interior point)"
+    "note": "Watsonville SeeClickFix Open311 city (central interior point; previous (36.91332,-121.82416) sat on the far-western polygon edge)"
   },
   {
     "id": "wat-03",
-    "latitude": 36.91557,
-    "longitude": -121.82416,
+    "latitude": 36.912,
+    "longitude": -121.765,
     "issueType": "STREETLIGHT_OUTAGE",
     "expectedJurisdictionId": "city-watsonville",
-    "note": "Watsonville SeeClickFix Open311 city (verified interior point)"
+    "note": "Watsonville SeeClickFix Open311 city (central interior point; previous (36.91557,-121.82416) sat on the far-western polygon edge)"
   },
   {
     "id": "val-01",
@@ -562,5 +562,109 @@
     "issueType": "STREETLIGHT_OUTAGE",
     "expectedJurisdictionId": "city-san-leandro",
     "note": "San Leandro SeeClickFix Open311 city (verified interior point)"
+  },
+  {
+    "id": "taxonomy-mil-graffiti",
+    "latitude": 37.41862,
+    "longitude": -121.9299,
+    "issueType": "GRAFFITI",
+    "expectedJurisdictionId": "city-milpitas",
+    "note": "New taxonomy type (#264). Milpitas interior point reused from mil-01; jurisdiction resolution is issue-type independent so this resolves today, and the agency assertion lands with the sibling routing seed."
+  },
+  {
+    "id": "taxonomy-mil-sidewalk_damage",
+    "latitude": 37.41979,
+    "longitude": -121.9299,
+    "issueType": "SIDEWALK_DAMAGE",
+    "expectedJurisdictionId": "city-milpitas",
+    "note": "New taxonomy type (#264). Milpitas interior point reused from mil-02."
+  },
+  {
+    "id": "taxonomy-mil-tree_maintenance",
+    "latitude": 37.42097,
+    "longitude": -121.9299,
+    "issueType": "TREE_MAINTENANCE",
+    "expectedJurisdictionId": "city-milpitas",
+    "note": "New taxonomy type (#264). Milpitas interior point reused from mil-03."
+  },
+  {
+    "id": "taxonomy-mh-traffic_signal",
+    "latitude": 37.12387,
+    "longitude": -121.69618,
+    "issueType": "TRAFFIC_SIGNAL",
+    "expectedJurisdictionId": "city-morgan-hill",
+    "note": "New taxonomy type (#264). Morgan Hill interior point reused from mh-01."
+  },
+  {
+    "id": "taxonomy-mh-public_signage",
+    "latitude": 37.12522,
+    "longitude": -121.69618,
+    "issueType": "PUBLIC_SIGNAGE",
+    "expectedJurisdictionId": "city-morgan-hill",
+    "note": "New taxonomy type (#264). Morgan Hill interior point reused from mh-02."
+  },
+  {
+    "id": "taxonomy-gil-flooding_drainage",
+    "latitude": 36.99637,
+    "longitude": -121.64129,
+    "issueType": "FLOODING_DRAINAGE",
+    "expectedJurisdictionId": "city-gilroy",
+    "note": "New taxonomy type (#264). Gilroy interior point reused from gil-01."
+  },
+  {
+    "id": "taxonomy-gil-water_system",
+    "latitude": 36.99764,
+    "longitude": -121.64129,
+    "issueType": "WATER_SYSTEM",
+    "expectedJurisdictionId": "city-gilroy",
+    "note": "New taxonomy type (#264). Gilroy interior point reused from gil-02."
+  },
+  {
+    "id": "taxonomy-wat-parks_playgrounds",
+    "latitude": 36.91,
+    "longitude": -121.7681,
+    "issueType": "PARKS_PLAYGROUNDS",
+    "expectedJurisdictionId": "city-watsonville",
+    "note": "New taxonomy type (#264). Watsonville central interior point reused from wat-01."
+  },
+  {
+    "id": "taxonomy-wat-weed_abatement",
+    "latitude": 36.9105,
+    "longitude": -121.76,
+    "issueType": "WEED_ABATEMENT",
+    "expectedJurisdictionId": "city-watsonville",
+    "note": "New taxonomy type (#264). Watsonville central interior point reused from wat-02."
+  },
+  {
+    "id": "taxonomy-val-abandoned_vehicle",
+    "latitude": 38.12024,
+    "longitude": -122.38386,
+    "issueType": "ABANDONED_VEHICLE",
+    "expectedJurisdictionId": "city-vallejo",
+    "note": "New taxonomy type (#264). Vallejo interior point reused from val-01."
+  },
+  {
+    "id": "taxonomy-val-parking",
+    "latitude": 38.12214,
+    "longitude": -122.38386,
+    "issueType": "PARKING",
+    "expectedJurisdictionId": "city-vallejo",
+    "note": "New taxonomy type (#264). Vallejo interior point reused from val-02."
+  },
+  {
+    "id": "taxonomy-sl-code_enforcement",
+    "latitude": 37.70885,
+    "longitude": -122.20861,
+    "issueType": "CODE_ENFORCEMENT",
+    "expectedJurisdictionId": "city-san-leandro",
+    "note": "New taxonomy type (#264). San Leandro interior point reused from sl-01."
+  },
+  {
+    "id": "taxonomy-sl-street_sweeping",
+    "latitude": 37.7101,
+    "longitude": -122.20861,
+    "issueType": "STREET_SWEEPING",
+    "expectedJurisdictionId": "city-san-leandro",
+    "note": "New taxonomy type (#264). San Leandro interior point reused from sl-02."
   }
 ]

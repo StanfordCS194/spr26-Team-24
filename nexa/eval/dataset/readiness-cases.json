@@ -346,8 +346,8 @@
     "report": {
       "description": "Deep pothole damaging tires on the road.",
       "aiDescription": "Pothole in roadway.",
-      "latitude": 36.91557,
-      "longitude": -121.82574,
+      "latitude": 36.91,
+      "longitude": -121.7681,
       "address": "Watsonville, CA",
       "photoUrl": "https://uploads.nexa.example/reports/road-wat-18-api.jpg",
       "contactEmail": "reporter@example.com",
