@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Camera, MapPin, Mic, Loader2, X, Zap } from "lucide-react";
+import { Camera, MapPin, Mic, Loader2, Sparkles, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,18 @@ interface DescribeStepProps {
   locationError: string | null;
   classifying: boolean;
   classifyError: string | null;
+  /** True while the on-upload auto-suggestion classification is in flight. */
+  autoSuggesting: boolean;
+  /**
+   * Issue type detected from the uploaded photo (e.g. "ROAD_DAMAGE"), surfaced
+   * as a hint near the description. Null when nothing has been detected yet.
+   */
+  detectedIssueType: string | null;
+  /**
+   * True when the current description text is an unedited AI suggestion, so the
+   * field is badged as such. Cleared once the user edits the text.
+   */
+  descriptionIsAiSuggestion: boolean;
   canSubmit: boolean;
   onImageClick: () => void;
   onDrop: (e: React.DragEvent) => void;
@@ -59,6 +71,9 @@ export function DescribeStep({
   locationError,
   classifying,
   classifyError,
+  autoSuggesting,
+  detectedIssueType,
+  descriptionIsAiSuggestion,
   canSubmit,
   onImageClick,
   onDrop,
@@ -204,12 +219,27 @@ export function DescribeStep({
 
       <div className="ep-card p-6">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <Label
-            htmlFor="description"
-            className="block font-mono text-xs uppercase tracking-wider text-muted-foreground"
-          >
-            {t("report.description")}
-          </Label>
+          <div className="flex flex-wrap items-center gap-2">
+            <Label
+              htmlFor="description"
+              className="block font-mono text-xs uppercase tracking-wider text-muted-foreground"
+            >
+              {t("report.description")}
+            </Label>
+            {autoSuggesting ? (
+              <span className="inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                <Loader2 className="size-3 animate-spin" />
+                {t("report.analyzingPhoto")}
+              </span>
+            ) : (
+              descriptionIsAiSuggestion && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-ep-purple/10 px-2 py-0.5 font-mono text-xs uppercase tracking-wider text-ep-purple">
+                  <Sparkles className="size-3" />
+                  {t("report.aiSuggestion")}
+                </span>
+              )
+            )}
+          </div>
           {speech.supported && (
             <button
               type="button"
@@ -242,6 +272,19 @@ export function DescribeStep({
         />
         {speech.error && (
           <p className="mt-3 text-xs text-red-500">{t(speech.error)}</p>
+        )}
+        {detectedIssueType && (
+          <p className="mt-3 font-mono text-xs text-muted-foreground">
+            {t("report.detectedIssue")}{" "}
+            <span className="font-medium text-foreground">
+              {t(`issue.${detectedIssueType}`)}
+            </span>
+          </p>
+        )}
+        {descriptionIsAiSuggestion && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t("report.aiSuggestionHint")}
+          </p>
         )}
       </div>
 

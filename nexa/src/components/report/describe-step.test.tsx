@@ -50,6 +50,9 @@ function baseProps() {
     locationError: null as string | null,
     classifying: false,
     classifyError: null as string | null,
+    autoSuggesting: false,
+    detectedIssueType: null as string | null,
+    descriptionIsAiSuggestion: false,
     canSubmit: false,
     onImageClick: vi.fn(),
     onDrop: vi.fn(),
@@ -366,5 +369,55 @@ describe("DescribeStep", () => {
 
     // Assert
     expect(screen.getByText("Classification failed")).toBeInTheDocument();
+  });
+
+  it("shows the 'Analyzing photo...' indicator while auto-suggesting", () => {
+    // Arrange / Act
+    renderWithProviders(<DescribeStep {...baseProps()} autoSuggesting />);
+
+    // Assert
+    expect(screen.getByText("Analyzing photo...")).toBeInTheDocument();
+  });
+
+  it("badges the description as an AI suggestion and shows the editable hint", () => {
+    // Arrange / Act
+    renderWithProviders(
+      <DescribeStep
+        {...baseProps()}
+        descriptionIsAiSuggestion
+        description="A large pothole in the roadway."
+      />,
+    );
+
+    // Assert: the badge and the "you can edit/clear it" hint are both shown.
+    expect(screen.getByText("AI suggestion")).toBeInTheDocument();
+    expect(screen.getByText(/edit or clear it/i)).toBeInTheDocument();
+  });
+
+  it("surfaces the detected issue type as a hint", () => {
+    // Arrange / Act
+    renderWithProviders(
+      <DescribeStep {...baseProps()} detectedIssueType="ROAD_DAMAGE" />,
+    );
+
+    // Assert: the localized issue label is rendered next to the "Detected issue:" hint.
+    expect(screen.getByText("Detected issue:")).toBeInTheDocument();
+    expect(screen.getByText("Road Damage")).toBeInTheDocument();
+  });
+
+  it("hides the AI-suggestion badge while auto-suggesting is in flight", () => {
+    // Arrange / Act: the in-flight indicator takes precedence over the badge.
+    renderWithProviders(
+      <DescribeStep
+        {...baseProps()}
+        autoSuggesting
+        descriptionIsAiSuggestion
+        description="draft"
+      />,
+    );
+
+    // Assert
+    expect(screen.getByText("Analyzing photo...")).toBeInTheDocument();
+    expect(screen.queryByText("AI suggestion")).not.toBeInTheDocument();
   });
 });

@@ -35,6 +35,23 @@ export default function ReportPage() {
   const [step, setStep] = useState<ReportStep>("describe");
   const [description, setDescription] = useState("");
 
+  // Provenance of the current description text, so the on-upload auto-suggestion
+  // never clobbers what the user wrote. "none" = empty/untouched (safe to fill),
+  // "ai" = an AI suggestion the user has not edited (safe to replace with a
+  // fresh suggestion when the image changes), "user" = the user typed or edited
+  // it (never overwrite). Once "user", auto-suggest leaves the field alone.
+  const [descriptionSource, setDescriptionSource] = useState<
+    "none" | "ai" | "user"
+  >("none");
+
+  // On-upload auto-suggestion UI state (distinct from the explicit "Analyze
+  // Issue" `classifying` flag). `autoSuggesting` drives the "Analyzing photo..."
+  // indicator; `detectedIssueType` surfaces the detected category as a hint.
+  const [autoSuggesting, setAutoSuggesting] = useState(false);
+  const [detectedIssueType, setDetectedIssueType] = useState<string | null>(
+    null,
+  );
+
   // Snapshot of `flowStartedAt` taken when the report row is created/CONFIRMED.
   // Held in state (not read off the ref during render) so it can be threaded to
   // the confirmed step's SubmissionAssistant, which emits the timed K2
@@ -67,6 +84,9 @@ export default function ReportPage() {
     (value: string) => {
       markCaptureStart();
       setDescription(value);
+      // Any manual edit (including clearing the field) marks the text as
+      // user-owned so the on-upload auto-suggestion stops touching it.
+      setDescriptionSource("user");
     },
     [markCaptureStart],
   );
@@ -77,6 +97,93 @@ export default function ReportPage() {
   const formLookup = useFormLookup();
   const agencyCandidates = useAgencyCandidates();
   const submission = useReportSubmission();
+
+  // Latest values the auto-suggest effect needs to read without re-firing on
+  // every keystroke/location change — the effect must run only when the *image*
+  // changes. Reading these off refs keeps that dependency list image-only. The
+  // refs are synced in an effect (never written during render).
+  const descriptionRef = useRef(description);
+  const descriptionSourceRef = useRef(descriptionSource);
+  const geoRef = useRef(geo);
+  useEffect(() => {
+    descriptionRef.current = description;
+    descriptionSourceRef.current = descriptionSource;
+    geoRef.current = geo;
+  });
+
+  const classify = submission.classify;
+  const registerClassifyCacheKey = submission.registerClassifyCacheKey;
+
+  // Auto-detect on photo upload: when a new image is set, quietly run the
+  // existing classification (reusing the same multi-LLM path + cache) and
+  // pre-fill the description with the AI's suggestion as an editable starting
+  // point. Triggered by the image bytes changing — NOT by mount, keystrokes, or
+  // location edits. The file-input/drop handlers already called
+  // `markCaptureStart`, so this must not touch the K2 clock. Degrades silently:
+  // on failure (or no AI keys) the field is simply left for the user to type.
+  const lastAnalyzedImage = useRef<string | null>(null);
+  useEffect(() => {
+    const imageBase64 = image.imageBase64;
+    // Only react to a genuinely new image. Clearing the image resets the guard
+    // (so re-uploading the same bytes re-analyzes); the detected-issue hint is
+    // cleared by `handleClearImage`, not here, to keep this effect free of
+    // synchronous setState on the no-image path.
+    if (!imageBase64) {
+      lastAnalyzedImage.current = null;
+      return;
+    }
+    if (imageBase64 === lastAnalyzedImage.current) return;
+    lastAnalyzedImage.current = imageBase64;
+
+    let cancelled = false;
+    setAutoSuggesting(true);
+    const g = geoRef.current;
+    void classify(
+      {
+        description: descriptionRef.current,
+        imageBase64,
+        latitude: g.latitude,
+        longitude: g.longitude,
+        address: g.address,
+      },
+      {
+        onSuccess: (data) => {
+          if (cancelled) return;
+          setDetectedIssueType(data.winner.issueType);
+          // Only suggest into a field the user does not own. Read the source off
+          // the ref so a description typed *during* analysis is respected.
+          if (
+            descriptionSourceRef.current !== "user" &&
+            data.winner.aiDescription
+          ) {
+            setDescription(data.winner.aiDescription);
+            setDescriptionSource("ai");
+            // The field now holds the AI text. Alias that input combination onto
+            // this same result so the explicit "Analyze Issue" — which classifies
+            // with the (now AI-filled) description — is served from cache instead
+            // of re-hitting the LLM for an unchanged image.
+            registerClassifyCacheKey({
+              description: data.winner.aiDescription,
+              imageBase64,
+              latitude: g.latitude,
+              longitude: g.longitude,
+              address: g.address,
+            });
+          }
+        },
+        // Unused on the silent path (errors are swallowed) but required by the
+        // callback contract.
+        errorFallback: t("common.somethingWrong"),
+      },
+      { silent: true },
+    ).finally(() => {
+      if (!cancelled) setAutoSuggesting(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [image.imageBase64, classify, registerClassifyCacheKey, t]);
 
   const handleAddressChange = (value: string) => {
     geo.setAddress(value);
@@ -226,6 +333,20 @@ export default function ReportPage() {
     );
   };
 
+  const handleClearImage = () => {
+    image.clearImage();
+    // The detected-issue hint belongs to the (now removed) photo; clear it.
+    setDetectedIssueType(null);
+    setAutoSuggesting(false);
+    // If the description is an unedited AI suggestion, it was derived from the
+    // photo too — drop it so it doesn't linger without its source. User-typed
+    // text is left untouched.
+    if (descriptionSource === "ai") {
+      setDescription("");
+      setDescriptionSource("none");
+    }
+  };
+
   const handleImageDrop = (e: React.DragEvent) => {
     markCaptureStart();
     image.handleDrop(e);
@@ -242,6 +363,9 @@ export default function ReportPage() {
     setSubmitCaptureStart(0);
     setStep("describe");
     setDescription("");
+    setDescriptionSource("none");
+    setAutoSuggesting(false);
+    setDetectedIssueType(null);
     image.clearImage();
     geo.reset();
     addressLookup.reset();
@@ -277,10 +401,13 @@ export default function ReportPage() {
             locationError={geo.error}
             classifying={submission.classifying}
             classifyError={submission.classifyError}
+            autoSuggesting={autoSuggesting}
+            detectedIssueType={detectedIssueType}
+            descriptionIsAiSuggestion={descriptionSource === "ai"}
             canSubmit={!!(image.imageBase64 || description.trim())}
             onImageClick={() => document.getElementById("photo-input")?.click()}
             onDrop={handleImageDrop}
-            onClearImage={image.clearImage}
+            onClearImage={handleClearImage}
             onDescriptionChange={handleDescriptionChange}
             onAddressChange={handleAddressChange}
             onDetectLocation={geo.detect}
