@@ -27,6 +27,8 @@ import type { DatasetCase } from "./dataset/fetch";
 import {
   aggregate,
   diffReport,
+  flipReport,
+  renderFlipReport,
   renderReport,
   type CasePrediction,
 } from "./metrics";
@@ -172,10 +174,13 @@ async function main() {
 
   let baselineMetrics = null;
   let twoStageMetrics = null;
+  let baselinePreds: CasePrediction[] | null = null;
+  let twoStagePreds: CasePrediction[] | null = null;
 
   if (args.mode === "baseline" || args.mode === "both") {
     console.log(`\n>>> Baseline (single-stage), n=${cases.length}`);
     const preds = await runMode(cases, false, args.download);
+    baselinePreds = preds;
     baselineMetrics = aggregate(preds);
     await writeFile(
       path.join(RESULTS_DIR, "baseline.json"),
@@ -199,6 +204,7 @@ async function main() {
       `\n>>> Two-stage (preprocess + observe + classify), n=${cases.length}`,
     );
     const preds = await runMode(cases, true, args.download);
+    twoStagePreds = preds;
     twoStageMetrics = aggregate(preds);
     await writeFile(
       path.join(RESULTS_DIR, "two-stage.json"),
@@ -220,6 +226,20 @@ async function main() {
   if (baselineMetrics && twoStageMetrics) {
     console.log(
       diffReport("Baseline", baselineMetrics, "Two-stage", twoStageMetrics),
+    );
+  }
+
+  // Per-case flip diff: which exact cases the observation stage helped vs hurt,
+  // and the per-category net contribution. This is the inspectable artifact the
+  // regression investigation (issue #96) needs — run with --mode=both so both
+  // prediction sets exist in one process.
+  if (baselinePreds && twoStagePreds) {
+    const flips = flipReport(baselinePreds, twoStagePreds);
+    console.log(renderFlipReport("Two-stage", flips));
+    await writeFile(
+      path.join(RESULTS_DIR, "flips.json"),
+      JSON.stringify({ ranAt: new Date().toISOString(), ...flips }, null, 2) +
+        "\n",
     );
   }
 }
