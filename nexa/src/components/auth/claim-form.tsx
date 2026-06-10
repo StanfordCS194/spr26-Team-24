@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { ApiResponse } from "@/lib/api/response";
 
 export function ClaimForm() {
   const router = useRouter();
@@ -32,10 +33,10 @@ export function ClaimForm() {
         }),
       });
 
-      const data = await res.json();
+      const payload = (await res.json()) as ApiResponse<unknown>;
 
-      if (!res.ok) {
-        setError(data.error || "Failed to claim account");
+      if (!res.ok || !payload.success) {
+        setError(!payload.success ? payload.error : "Failed to claim account");
         return;
       }
 

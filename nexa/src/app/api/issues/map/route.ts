@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getIssueMapPoints } from "@/lib/issues/map";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 /**
  * Aggregated community issue map: every IssueGroup as a single pin, regardless
@@ -10,9 +10,9 @@ import { getIssueMapPoints } from "@/lib/issues/map";
 export async function GET() {
   const session = await getSession();
   if (!session) {
-    return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
+    return errorResponse("Not authenticated.", 401);
   }
 
   const points = await getIssueMapPoints(session.userId);
-  return NextResponse.json({ points });
+  return successResponse({ points });
 }

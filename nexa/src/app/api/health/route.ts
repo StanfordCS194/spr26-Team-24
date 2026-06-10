@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { errorResponse, successResponse } from "@/lib/api/response";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/health
@@ -8,8 +8,9 @@ import { prisma } from "@/lib/prisma";
 // `SELECT 1`, so an external monitor (e.g. Vercel/UptimeRobot) can distinguish a
 // healthy app from one whose DB is unreachable.
 //
-// Returns 200 with `{ status: "ok", database: "ok" }` when the DB responds, and
-// 503 with `{ status: "error", database: "unreachable" }` when it does not.
+// Returns 200 `{ success: true, data: { status: "ok", database: "ok" } }` when
+// the DB responds, and 503 `{ success: false, error, code: "db_unreachable" }`
+// when it does not.
 
 // Bound the probe so a hung connection can't make the health check itself hang.
 const DB_PROBE_TIMEOUT_MS = 5_000;
@@ -18,13 +19,10 @@ export async function GET() {
   const dbOk = await checkDatabase();
 
   if (!dbOk) {
-    return NextResponse.json(
-      { status: "error", database: "unreachable" },
-      { status: 503 },
-    );
+    return errorResponse("Database unreachable", 503, "db_unreachable");
   }
 
-  return NextResponse.json({ status: "ok", database: "ok" });
+  return successResponse({ status: "ok", database: "ok" });
 }
 
 /**

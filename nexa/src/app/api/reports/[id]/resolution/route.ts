@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { ResolutionSchema } from "@/lib/api/schemas";
@@ -7,6 +7,7 @@ import {
   RequestParseError,
   parseErrorResponse,
 } from "@/lib/api/request-parser";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 export async function POST(
   request: NextRequest,
@@ -15,10 +16,7 @@ export async function POST(
   try {
     const session = await getSession();
     if (!session) {
-      return NextResponse.json(
-        { error: "Not authenticated." },
-        { status: 401 },
-      );
+      return errorResponse("Not authenticated.", 401);
     }
 
     const { id } = await context.params;
@@ -30,14 +28,11 @@ export async function POST(
     });
 
     if (!report) {
-      return NextResponse.json({ error: "Report not found." }, { status: 404 });
+      return errorResponse("Report not found.", 404);
     }
 
     if (report.userId !== session.userId) {
-      return NextResponse.json(
-        { error: "You can only update your own reports." },
-        { status: 403 },
-      );
+      return errorResponse("You can only update your own reports.", 403);
     }
 
     const resolvedAt = new Date();
@@ -69,7 +64,7 @@ export async function POST(
         }),
       ]);
 
-      return NextResponse.json({
+      return successResponse({
         id: report.id,
         userResolved: true,
         status: report.status === "CLOSED" ? "CLOSED" : "RESOLVED",
@@ -89,15 +84,12 @@ export async function POST(
       select: { id: true, userResolved: true, status: true },
     });
 
-    return NextResponse.json(updated);
+    return successResponse(updated);
   } catch (error) {
     if (error instanceof RequestParseError) {
       return parseErrorResponse(error);
     }
     console.error("Report resolution update error:", error);
-    return NextResponse.json(
-      { error: "Failed to update resolution. Please try again." },
-      { status: 500 },
-    );
+    return errorResponse("Failed to update resolution. Please try again.", 500);
   }
 }

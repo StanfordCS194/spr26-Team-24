@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 import type { MessageKey } from "@/i18n/messages";
+import type { ApiResponse } from "@/lib/api/response";
 
 interface DeleteReportButtonProps {
   reportId: string;
@@ -49,10 +50,14 @@ export function DeleteReportButton({
       });
 
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        throw new Error(data?.error ?? t("common.somethingWrong"));
+        const payload = (await response
+          .json()
+          .catch(() => null)) as ApiResponse<unknown> | null;
+        throw new Error(
+          payload && !payload.success
+            ? payload.error
+            : t("common.somethingWrong"),
+        );
       }
 
       if (redirectTo) {

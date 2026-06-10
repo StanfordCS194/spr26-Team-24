@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { resolveAgencyId } from "@/lib/jurisdictions/agency";
@@ -9,6 +9,7 @@ import {
   RequestParseError,
   parseErrorResponse,
 } from "@/lib/api/request-parser";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,15 +70,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(report, { status: 201 });
+    return successResponse(report, 201);
   } catch (error) {
     if (error instanceof RequestParseError) {
       return parseErrorResponse(error);
     }
     console.error("Report creation error:", error);
-    return NextResponse.json(
-      { error: "Failed to create report. Please try again." },
-      { status: 500 },
-    );
+    return errorResponse("Failed to create report. Please try again.", 500);
   }
 }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { classifyWithConsensus } from "@/lib/classify/consensus";
 import type { LocationContext } from "@/lib/classify/types";
 import { ClassifyRequestSchema } from "@/lib/api/schemas";
@@ -7,6 +7,7 @@ import {
   RequestParseError,
   parseErrorResponse,
 } from "@/lib/api/request-parser";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,10 +21,7 @@ export async function POST(request: NextRequest) {
     } = await parseJsonRequest(request, ClassifyRequestSchema);
 
     if (!description && !imageBase64) {
-      return NextResponse.json(
-        { error: "Provide a description or image." },
-        { status: 400 },
-      );
+      return errorResponse("Provide a description or image.", 400);
     }
 
     const location: LocationContext | null =
@@ -45,15 +43,12 @@ export async function POST(request: NextRequest) {
       { twoStage: true, location },
     );
 
-    return NextResponse.json(result);
+    return successResponse(result);
   } catch (error) {
     if (error instanceof RequestParseError) {
       return parseErrorResponse(error);
     }
     console.error("[classify] Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Classification failed. Please try again." },
-      { status: 500 },
-    );
+    return errorResponse("Classification failed. Please try again.", 500);
   }
 }

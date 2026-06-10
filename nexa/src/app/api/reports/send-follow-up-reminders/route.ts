@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { sendReportFollowUpReminderEmail } from "@/lib/email";
 import { FOLLOW_UP_REMINDER_STALE_DAYS } from "@/lib/reports/follow-up";
 import { findStaleUnresolvedReportsForFollowUp } from "@/lib/reports/follow-up-reminders";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 function isAuthorized(request: NextRequest): boolean {
   const secret = process.env.FOLLOW_UP_REMINDER_SECRET;
@@ -21,17 +22,14 @@ function parsePositiveInteger(value: string | null): number | null {
 
 export async function POST(request: NextRequest) {
   if (!process.env.FOLLOW_UP_REMINDER_SECRET) {
-    return NextResponse.json(
-      {
-        error:
-          "FOLLOW_UP_REMINDER_SECRET is not configured. Set it before running reminders.",
-      },
-      { status: 500 },
+    return errorResponse(
+      "FOLLOW_UP_REMINDER_SECRET is not configured. Set it before running reminders.",
+      500,
     );
   }
 
   if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+    return errorResponse("Not authorized.", 401);
   }
 
   const staleDays =
@@ -40,12 +38,9 @@ export async function POST(request: NextRequest) {
   const dryRun = request.nextUrl.searchParams.get("dryRun") !== "false";
 
   if (!dryRun && !process.env.BREVO_API_KEY) {
-    return NextResponse.json(
-      {
-        error:
-          "BREVO_API_KEY is not configured. Run with dryRun=true or configure Brevo before sending reminders.",
-      },
-      { status: 500 },
+    return errorResponse(
+      "BREVO_API_KEY is not configured. Run with dryRun=true or configure Brevo before sending reminders.",
+      500,
     );
   }
 
@@ -56,10 +51,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Follow-up reminder lookup error:", error);
-    return NextResponse.json(
-      { error: "Failed to look up eligible reports." },
-      { status: 500 },
-    );
+    return errorResponse("Failed to look up eligible reports.", 500);
   }
 
   const result = {
@@ -74,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   if (dryRun) {
     result.skipped = candidates.length;
-    return NextResponse.json(result);
+    return successResponse(result);
   }
 
   for (const report of candidates) {
@@ -94,5 +86,5 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json(result);
+  return successResponse(result);
 }

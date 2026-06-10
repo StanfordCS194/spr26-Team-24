@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useI18n } from "@/i18n/provider";
+import type { ApiResponse } from "@/lib/api/response";
 
 export type OfficialFormLookupResult =
   | {
@@ -64,9 +65,14 @@ export function useFormLookup() {
             longitude: location.longitude ?? undefined,
           }),
         });
-        if (!res.ok) throw new Error(t("report.noOfficialForm"));
-        const result: OfficialFormLookupResult = await res.json();
-        setOfficialForm(result);
+        const payload =
+          (await res.json()) as ApiResponse<OfficialFormLookupResult>;
+        if (!res.ok || !payload.success) {
+          throw new Error(
+            !payload.success ? payload.error : t("report.noOfficialForm"),
+          );
+        }
+        setOfficialForm(payload.data);
       } catch (err) {
         console.error("Official form lookup failed:", err);
         setOfficialForm({

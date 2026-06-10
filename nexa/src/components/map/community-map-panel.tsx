@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { MapPinned } from "lucide-react";
 import type { IssueMapPoint } from "@/components/map/community-map";
+import type { ApiResponse } from "@/lib/api/response";
 
 // Leaflet touches `window`/`document`, so render the map only on the client.
 const CommunityMap = dynamic(() => import("@/components/map/community-map"), {
@@ -31,8 +32,10 @@ export default function CommunityMapPanel({
   const refetch = useCallback(async () => {
     const response = await fetch("/api/issues/map");
     if (!response.ok) return;
-    const data = (await response.json()) as { points: IssueMapPoint[] };
-    setPoints(data.points);
+    const payload = (await response.json()) as ApiResponse<{
+      points: IssueMapPoint[];
+    }>;
+    if (payload.success) setPoints(payload.data.points);
   }, []);
 
   const handleResolve = useCallback(
@@ -44,10 +47,14 @@ export default function CommunityMapPanel({
         body: JSON.stringify({ resolved: true }),
       });
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        setError(data?.error ?? "Failed to mark resolved.");
+        const payload = (await response
+          .json()
+          .catch(() => null)) as ApiResponse<unknown> | null;
+        setError(
+          payload && !payload.success
+            ? payload.error
+            : "Failed to mark resolved.",
+        );
         throw new Error("resolve-failed");
       }
       await refetch();

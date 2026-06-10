@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 export async function DELETE(
   _request: NextRequest,
@@ -9,10 +10,7 @@ export async function DELETE(
   try {
     const session = await getSession();
     if (!session) {
-      return NextResponse.json(
-        { error: "Not authenticated." },
-        { status: 401 },
-      );
+      return errorResponse("Not authenticated.", 401);
     }
 
     const { id } = await context.params;
@@ -23,14 +21,11 @@ export async function DELETE(
     });
 
     if (!report) {
-      return NextResponse.json({ error: "Report not found." }, { status: 404 });
+      return errorResponse("Report not found.", 404);
     }
 
     if (report.userId !== session.userId) {
-      return NextResponse.json(
-        { error: "You can only delete your own reports." },
-        { status: 403 },
-      );
+      return errorResponse("You can only delete your own reports.", 403);
     }
 
     // Delete the report and keep its IssueGroup consistent: a stale reportCount
@@ -74,12 +69,9 @@ export async function DELETE(
       });
     });
 
-    return NextResponse.json({ success: true });
+    return successResponse({ deleted: true });
   } catch (error) {
     console.error("Report deletion error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete report. Please try again." },
-      { status: 500 },
-    );
+    return errorResponse("Failed to delete report. Please try again.", 500);
   }
 }

@@ -6,7 +6,8 @@ import { GET } from "./route";
 
 // Integration test (node project) for the health route with the Prisma
 // singleton deep-mocked. The route now probes the DB with `SELECT 1`, so these
-// tests stub `$queryRaw` to simulate a reachable / unreachable database.
+// tests stub `$queryRaw` to simulate a reachable / unreachable database, and
+// assert the shared API response envelope shape.
 describe("GET /api/health", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -22,8 +23,8 @@ describe("GET /api/health", () => {
     // Assert
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      status: "ok",
-      database: "ok",
+      success: true,
+      data: { status: "ok", database: "ok" },
     });
   });
 
@@ -38,8 +39,9 @@ describe("GET /api/health", () => {
     // Assert
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toEqual({
-      status: "error",
-      database: "unreachable",
+      success: false,
+      error: "Database unreachable",
+      code: "db_unreachable",
     });
   });
 });

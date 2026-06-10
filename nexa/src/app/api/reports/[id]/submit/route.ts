@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { IntakeMethod, ReportStatus } from "@/generated/prisma/enums";
 import { parseOpen311Config, submitToOpen311 } from "@/lib/submission/open311";
 import { resolveAgencyId } from "@/lib/jurisdictions/agency";
+import { successResponse, errorResponse } from "@/lib/api/response";
 
 // POST /api/reports/[id]/submit
 //
@@ -28,24 +29,18 @@ export async function POST(
     });
 
     if (!report) {
-      return NextResponse.json({ error: "Report not found." }, { status: 404 });
+      return errorResponse("Report not found.", 404);
     }
 
     // Only the report's owner may submit it. Anonymous (userId === null)
     // reports remain submittable by anyone holding the link, matching the
     // anonymous-reporting model elsewhere in the app.
     if (report.userId && report.userId !== session?.userId) {
-      return NextResponse.json(
-        { error: "You can only submit your own reports." },
-        { status: 403 },
-      );
+      return errorResponse("You can only submit your own reports.", 403);
     }
 
     if (report.status === ReportStatus.SUBMITTED || report.externalTrackingId) {
-      return NextResponse.json(
-        { error: "This report has already been submitted." },
-        { status: 409 },
-      );
+      return errorResponse("This report has already been submitted.", 409);
     }
 
     // Reports created before jurisdiction routing existed (or whose location
@@ -63,17 +58,12 @@ export async function POST(
       }
     }
     if (!agency) {
-      return NextResponse.json(
-        { error: "No agency is assigned to this report." },
-        { status: 400 },
-      );
+      return errorResponse("No agency is assigned to this report.", 400);
     }
     if (agency.intakeMethod !== IntakeMethod.API) {
-      return NextResponse.json(
-        {
-          error: `Agency "${agency.name}" does not accept API submissions (intake method: ${agency.intakeMethod}).`,
-        },
-        { status: 400 },
+      return errorResponse(
+        `Agency "${agency.name}" does not accept API submissions (intake method: ${agency.intakeMethod}).`,
+        400,
       );
     }
 
@@ -86,10 +76,7 @@ export async function POST(
       data: { status: ReportStatus.SUBMITTING },
     });
     if (claim.count !== 1) {
-      return NextResponse.json(
-        { error: "This report is already being submitted." },
-        { status: 409 },
-      );
+      return errorResponse("This report is already being submitted.", 409);
     }
 
     const config = parseOpen311Config(agency.requiredFields);
@@ -104,10 +91,7 @@ export async function POST(
         where: { id },
         data: { status: ReportStatus.CONFIRMED },
       });
-      return NextResponse.json(
-        { error: `Submission failed: ${result.message}` },
-        { status: 502 },
-      );
+      return errorResponse(`Submission failed: ${result.message}`, 502);
     }
 
     const updated = await prisma.report.update({
@@ -120,17 +104,13 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({
-      success: true,
+    return successResponse({
       reportId: updated.id,
       status: updated.status,
       externalTrackingId: updated.externalTrackingId,
     });
   } catch (error) {
     console.error("Report submission error:", error);
-    return NextResponse.json(
-      { error: "Failed to submit report. Please try again." },
-      { status: 500 },
-    );
+    return errorResponse("Failed to submit report. Please try again.", 500);
   }
 }

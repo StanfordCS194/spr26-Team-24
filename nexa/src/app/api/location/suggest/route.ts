@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getGoogleMapsApiKey } from "@/lib/config";
 import { fetchWithTimeout } from "@/lib/http";
+import { successResponse } from "@/lib/api/response";
 
 type NominatimSearchResult = {
   display_name?: string;
@@ -162,7 +163,7 @@ export async function GET(request: NextRequest) {
   try {
     const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
     if (query.length < 3) {
-      return NextResponse.json({ suggestions: [] });
+      return successResponse({ suggestions: [] });
     }
 
     const googleApiKey = getGoogleMapsApiKey();
@@ -176,9 +177,9 @@ export async function GET(request: NextRequest) {
       suggestions = await fetchNominatimSuggestions(query);
     }
 
-    return NextResponse.json({ suggestions });
+    return successResponse({ suggestions });
   } catch (error) {
     console.error("Location suggestion error:", error);
-    return NextResponse.json({ suggestions: [] });
+    return successResponse({ suggestions: [] });
   }
 }
