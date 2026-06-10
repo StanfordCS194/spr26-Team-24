@@ -91,6 +91,13 @@ export function ReviewStep({
     agencyCandidates.candidates.length === 0 &&
     !agencyCandidates.agencyId;
 
+  // Let the user adopt the AI's suggested description in one tap. Offered only
+  // when there's a suggestion to adopt and the editable field doesn't already
+  // match it — they can still edit the text after adopting.
+  const canAdoptAiDescription =
+    !!classification.aiDescription &&
+    description !== classification.aiDescription;
+
   return (
     <div className="flex flex-col gap-10">
       <div>
@@ -147,6 +154,9 @@ export function ReviewStep({
             {t("report.yourDescription")}
           </Label>
           <Pencil className="size-3 text-muted-foreground" />
+          <span className="font-mono text-xs lowercase tracking-wider text-muted-foreground">
+            ({t("report.descriptionOptional")})
+          </span>
         </div>
         <Textarea
           value={description}
@@ -154,6 +164,15 @@ export function ReviewStep({
           className="min-h-20 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           placeholder={t("report.describeIssue")}
         />
+        {canAdoptAiDescription && (
+          <button
+            type="button"
+            className="btn-cta btn-cta-outline mt-4 self-start"
+            onClick={() => onDescriptionChange(classification.aiDescription)}
+          >
+            {t("report.useAiDescription")}
+          </button>
+        )}
       </div>
 
       <div className="ep-card p-6">
