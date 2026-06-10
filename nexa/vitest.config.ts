@@ -32,7 +32,11 @@ export default defineConfig({
         test: {
           name: "node",
           environment: "node",
-          include: ["src/lib/**/*.test.{ts,tsx}", "src/app/**/*.test.{ts,tsx}"],
+          include: [
+            "src/*.test.{ts,tsx}",
+            "src/lib/**/*.test.{ts,tsx}",
+            "src/app/**/*.test.{ts,tsx}",
+          ],
           exclude: SHARED_EXCLUDE,
         },
       },
