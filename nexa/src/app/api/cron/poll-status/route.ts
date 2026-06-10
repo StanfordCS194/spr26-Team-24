@@ -32,6 +32,25 @@ const TRACKABLE_STATUSES: ReportStatus[] = [
 // Cap work per invocation so a backlog can't blow the cron timeout.
 const MAX_PER_RUN = 100;
 
+// Prefix every operational failure line with this token so an external log
+// monitor (Vercel log drains, Logflare, a grep-based alert, etc.) can match on
+// it and alert. Kept deliberately greppable — see the PR for the alerting hook.
+const ALERT_PREFIX = "[poll-status][ALERT]";
+
+// When at least this share of the reports we attempted fail, the run is treated
+// as unhealthy and the route returns 503 so Vercel Cron records a failure rather
+// than a silent partial success. Below the threshold we still report the count
+// but return 200, since a few transient per-report errors are expected.
+const ERROR_RATE_THRESHOLD = 0.5;
+
+// One structured failure record per report we couldn't poll.
+type ReportFailure = {
+  reportId: string;
+  serviceRequestId: string | null;
+  httpStatus: number | null;
+  reason: string;
+};
+
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
   // Fail closed: without a configured secret there is no way to authenticate the
@@ -61,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     let checked = 0;
     let updated = 0;
-    let errors = 0;
+    const failures: ReportFailure[] = [];
 
     for (const report of reports) {
       if (!report.agency || !report.externalTrackingId) continue;
@@ -74,7 +93,18 @@ export async function GET(request: NextRequest) {
       });
 
       if (result.status !== "ok" || !result.reportStatus) {
-        if (result.status === "error") errors++;
+        if (result.status === "error") {
+          // Structured, per-report failure log: report id + service request id
+          // + HTTP status + reason, so a failed poll is traceable from the logs.
+          const failure: ReportFailure = {
+            reportId: report.id,
+            serviceRequestId: report.externalTrackingId,
+            httpStatus: result.httpStatus,
+            reason: result.message,
+          };
+          failures.push(failure);
+          console.error(`${ALERT_PREFIX} report poll failed`, failure);
+        }
         continue;
       }
 
@@ -90,9 +120,26 @@ export async function GET(request: NextRequest) {
       updated++;
     }
 
-    return NextResponse.json({ checked, updated, errors });
+    const errors = failures.length;
+    // Treat the run as unhealthy when too large a share of attempts failed, so
+    // Vercel Cron sees a non-2xx and the failure is observable. The summary is
+    // always returned so callers can act on it regardless of status code.
+    const errorRate = checked === 0 ? 0 : errors / checked;
+    const ok = errorRate < ERROR_RATE_THRESHOLD;
+    const summary = { checked, updated, errors, failures, ok };
+
+    if (!ok) {
+      console.error(
+        `${ALERT_PREFIX} run unhealthy: ${errors}/${checked} reports failed`,
+      );
+      return NextResponse.json(summary, { status: 503 });
+    }
+
+    return NextResponse.json(summary);
   } catch (error) {
-    console.error("Status poll error:", error);
+    // Whole-run failure (e.g. DB unreachable): emit the alert prefix too so the
+    // same monitor catches a total outage, not just per-report failures.
+    console.error(`${ALERT_PREFIX} status poll crashed:`, error);
     return NextResponse.json(
       { error: "Status polling failed." },
       { status: 500 },

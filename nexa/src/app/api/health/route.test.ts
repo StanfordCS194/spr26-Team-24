@@ -1,35 +1,45 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { http, HttpResponse } from "@/test/msw/handlers";
-import { server } from "@/test/msw/server";
+import { prismaMock } from "@/test/prisma-mock";
 
 import { GET } from "./route";
 
-// Integration test (node project) for a route handler. The health route is the
-// simplest handler; this also proves the MSW server is live (an un-stubbed
-// outbound request would fail under onUnhandledRequest: "error").
+// Integration test (node project) for the health route with the Prisma
+// singleton deep-mocked. The route now probes the DB with `SELECT 1`, so these
+// tests stub `$queryRaw` to simulate a reachable / unreachable database.
 describe("GET /api/health", () => {
-  it("responds 200 with status ok", async () => {
-    // Arrange / Act
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("responds 200 with status ok when the DB probe succeeds", async () => {
+    // Arrange: SELECT 1 resolves.
+    prismaMock.$queryRaw.mockResolvedValue([{ "?column?": 1 }]);
+
+    // Act
     const response = await GET();
 
     // Assert
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ status: "ok" });
+    await expect(response.json()).resolves.toEqual({
+      status: "ok",
+      database: "ok",
+    });
   });
 
-  it("has a live MSW server that serves a stubbed handler", async () => {
-    // Arrange: register a per-test handler.
-    server.use(
-      http.get("https://example.test/ping", () =>
-        HttpResponse.json({ pong: true }),
-      ),
-    );
+  it("responds 503 when the DB probe throws", async () => {
+    // Arrange: silence the expected error log, make the probe reject.
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    prismaMock.$queryRaw.mockRejectedValue(new Error("connection refused"));
 
     // Act
-    const res = await fetch("https://example.test/ping");
+    const response = await GET();
 
     // Assert
-    await expect(res.json()).resolves.toEqual({ pong: true });
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      status: "error",
+      database: "unreachable",
+    });
   });
 });
