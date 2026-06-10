@@ -55,7 +55,6 @@ function baseProps() {
     descriptionIsAiSuggestion: false,
     canSubmit: false,
     onImageClick: vi.fn(),
-    onTakePhotoClick: vi.fn(),
     onDrop: vi.fn(),
     onClearImage: vi.fn(),
     onDescriptionChange: vi.fn(),
@@ -88,43 +87,18 @@ describe("DescribeStep", () => {
     expect(screen.queryByAltText("Issue preview")).not.toBeInTheDocument();
   });
 
-  it("renders both the Take Photo and Upload Photo controls", () => {
-    // Arrange / Act
-    renderWithProviders(<DescribeStep {...baseProps()} />);
-
-    // Assert: both explicit capture controls are always available.
-    expect(
-      screen.getByRole("button", { name: "Take Photo" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Upload Photo" }),
-    ).toBeInTheDocument();
-  });
-
-  it("opens the camera via onTakePhotoClick when Take Photo is clicked", async () => {
-    // Arrange
+  it("opens the photo chooser via onImageClick when the upload area is clicked", async () => {
+    // Arrange: a single unified control. On a phone the native chooser behind
+    // it offers both "Take Photo" and the photo library; on desktop it's the
+    // file picker. There is no separate second button.
     const props = baseProps();
     const { user } = renderWithProviders(<DescribeStep {...props} />);
 
     // Act
-    await user.click(screen.getByRole("button", { name: "Take Photo" }));
+    await user.click(screen.getByText("Upload a photo"));
 
-    // Assert: camera path fires, gallery path does not.
-    expect(props.onTakePhotoClick).toHaveBeenCalledTimes(1);
-    expect(props.onImageClick).not.toHaveBeenCalled();
-  });
-
-  it("opens the gallery via onImageClick when Upload Photo is clicked", async () => {
-    // Arrange
-    const props = baseProps();
-    const { user } = renderWithProviders(<DescribeStep {...props} />);
-
-    // Act
-    await user.click(screen.getByRole("button", { name: "Upload Photo" }));
-
-    // Assert: gallery path fires, camera path does not.
+    // Assert
     expect(props.onImageClick).toHaveBeenCalledTimes(1);
-    expect(props.onTakePhotoClick).not.toHaveBeenCalled();
   });
 
   it("shows a preview image and clear button when an image is set", () => {
