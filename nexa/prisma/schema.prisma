@@ -13,14 +13,34 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String?
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String?
   // bcrypt hash of the user's password — never store plain-text passwords
-  passwordHash String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  reports      Report[]
+  passwordHash      String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  reports           Report[]
+  pushSubscriptions PushSubscription[]
+}
+
+// A browser Web Push subscription (issue #38). One row per browser/device that
+// opted in to push notifications. `userId` is nullable so a guest can still
+// subscribe; when they later claim an account we can attach it. The `endpoint`
+// is the unique push-service URL — we upsert on it so re-subscribing the same
+// browser refreshes its keys instead of creating duplicates.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  // The keys the push service needs to encrypt payloads for this subscription.
+  p256dh    String
+  auth      String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Report {
