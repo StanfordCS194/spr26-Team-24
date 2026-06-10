@@ -8,6 +8,10 @@
 // left unset — the app tolerates their absence (PostHogProvider no-ops).
 
 process.env.JWT_SECRET ??= "test-secret-do-not-use-in-production";
+// Admin allowlist for the /admin analytics gate (issue #219). The proxy test
+// relies on this fixed value to exercise admin vs. non-admin; unit tests that
+// need a different allowlist mock @/lib/config's getAdminEmails (memoized).
+process.env.ADMIN_EMAILS ??= "admin@example.com";
 // NODE_ENV is typed read-only by @types/node; assign through a widened view.
 const env = process.env as Record<string, string | undefined>;
 env.NODE_ENV ??= "test";

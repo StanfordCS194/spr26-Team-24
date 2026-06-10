@@ -26,6 +26,11 @@ async function validToken(): Promise<string> {
   return createToken({ userId: "user_1", email: "a@example.com" });
 }
 
+// A token whose email IS on the test ADMIN_EMAILS allowlist (src/test/env.ts).
+async function adminToken(): Promise<string> {
+  return createToken({ userId: "admin_1", email: "admin@example.com" });
+}
+
 describe("proxy() middleware", () => {
   describe("protected routes", () => {
     it.each(["/dashboard", "/dashboard/reports/abc"])(
@@ -69,6 +74,36 @@ describe("proxy() middleware", () => {
       // Assert — NextResponse.next() carries no location and is not a redirect.
       expect(response.headers.get("location")).toBeNull();
       expect(response.status).toBe(200);
+      expect(response.headers.get("x-middleware-next")).toBe("1");
+    });
+  });
+
+  describe("admin route gating (/admin, issue #219)", () => {
+    it.each(["/admin", "/admin/anything"])(
+      "redirects %s with no session to /login (protected before admin check)",
+      async (path) => {
+        const request = makeRequest(path);
+        const response = await proxy(request);
+        const location = new URL(response.headers.get("location")!);
+        expect(response.status).toBe(307);
+        expect(location.pathname).toBe("/login");
+        expect(location.searchParams.get("redirect")).toBe(path);
+      },
+    );
+
+    it("redirects a logged-in non-admin away from /admin to / (never the data)", async () => {
+      // a@example.com is a valid user but NOT on the ADMIN_EMAILS allowlist.
+      const request = makeRequest("/admin", await validToken());
+      const response = await proxy(request);
+      const location = new URL(response.headers.get("location")!);
+      expect(response.status).toBe(307);
+      expect(location.pathname).toBe("/");
+    });
+
+    it("lets an allowlisted admin through to /admin", async () => {
+      const request = makeRequest("/admin", await adminToken());
+      const response = await proxy(request);
+      expect(response.headers.get("location")).toBeNull();
       expect(response.headers.get("x-middleware-next")).toBe("1");
     });
   });
