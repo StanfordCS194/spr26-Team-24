@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { z } from "zod";
 import { DEFAULT_LLM_TIMEOUT_MS } from "@/lib/http";
 import { extractJsonObject } from "./json";
 
@@ -9,6 +10,19 @@ export interface Observation {
   scene: string;
   latencyMs: number;
 }
+
+// Runtime contract for the stage-1 observation JSON. The prompt explicitly
+// permits empty arrays / an empty scene for a blurry-or-empty image, so missing
+// keys default to empty — that is a legitimate observation, not a failure. What
+// we will NOT do is silently coerce a wrong-shaped payload (e.g. objects: "nope"
+// or a non-object) into all-empty observations, which would mask an upstream
+// model failure; those mismatch the schema and throw traceably instead.
+const observationSchema = z.object({
+  objects: z.array(z.string()).default([]),
+  conditions: z.array(z.string()).default([]),
+  hazards: z.array(z.string()).default([]),
+  scene: z.string().default(""),
+});
 
 const OBSERVATION_PROMPT = `You are a visual observation assistant for a civic-issue reporting app. Your job is NOT to classify or label the issue — only to describe what is in the image as concretely as possible. A downstream classifier will use your observations.
 
@@ -29,16 +43,23 @@ function getClient() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 }
 
+/**
+ * Parse and validate a stage-1 observation response.
+ *
+ * @throws {SyntaxError} When no JSON object can be located in `raw`.
+ * @throws {Error} When the parsed object is the wrong shape (e.g. `objects` is
+ *   not a string array) — a malformed response fails traceably instead of being
+ *   silently coerced to all-empty observations that hide the real failure.
+ */
 function parseObservation(raw: string): Omit<Observation, "latencyMs"> {
-  const parsed = extractJsonObject<Record<string, unknown>>(raw, "observation");
-  return {
-    objects: Array.isArray(parsed.objects) ? parsed.objects.map(String) : [],
-    conditions: Array.isArray(parsed.conditions)
-      ? parsed.conditions.map(String)
-      : [],
-    hazards: Array.isArray(parsed.hazards) ? parsed.hazards.map(String) : [],
-    scene: typeof parsed.scene === "string" ? parsed.scene : "",
-  };
+  const parsed = extractJsonObject<unknown>(raw, "observation");
+  const result = observationSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error(
+      `Invalid observation response: ${z.prettifyError(result.error)}`,
+    );
+  }
+  return result.data;
 }
 
 /**

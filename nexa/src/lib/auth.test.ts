@@ -1,8 +1,21 @@
+import { SignJWT } from "jose";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MissingEnvError } from "@/lib/config";
 
 import { createToken, verifyToken, type SessionPayload } from "./auth";
+
+// Sign an arbitrary (possibly malformed) payload under the active test secret so
+// we can exercise verifyToken's runtime claim validation on a signature-valid
+// but wrong-shaped token.
+async function signRaw(claims: Record<string, unknown>): Promise<string> {
+  const secret = new TextEncoder().encode("unit-test-secret");
+  return new SignJWT(claims)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(secret);
+}
 
 // auth.ts reads the JWT secret via @/lib/config's getJwtSecret (cached/memoized
 // in the real module). We mock that one getter so each test controls the secret
@@ -84,6 +97,60 @@ describe("createToken / verifyToken", () => {
 
     // Assert
     expect(decoded).toBeNull();
+  });
+
+  it("returns null for a signature-valid token whose payload is missing userId", async () => {
+    // Arrange: a properly signed token that lacks userId — previously this was
+    // cast straight through as a SessionPayload with userId === undefined.
+    const token = await signRaw({ email: "person@example.com" });
+
+    // Act
+    const decoded = await verifyToken(token);
+
+    // Assert
+    expect(decoded).toBeNull();
+  });
+
+  it("returns null for a signature-valid token whose payload is missing email", async () => {
+    // Arrange
+    const token = await signRaw({ userId: "user-123" });
+
+    // Act / Assert
+    expect(await verifyToken(token)).toBeNull();
+  });
+
+  it("returns null when userId/email are present but the wrong type", async () => {
+    // Arrange: userId is a number, email is null — not a usable session.
+    const token = await signRaw({ userId: 7, email: null });
+
+    // Act / Assert
+    expect(await verifyToken(token)).toBeNull();
+  });
+
+  it("returns null when userId/email are empty strings", async () => {
+    // Arrange: present but empty — there is no real user to identify.
+    const token = await signRaw({ userId: "", email: "" });
+
+    // Act / Assert
+    expect(await verifyToken(token)).toBeNull();
+  });
+
+  it("returns only userId/email, dropping extra claims from the token", async () => {
+    // Arrange: a valid session plus an unexpected extra claim and jose's iat/exp.
+    const token = await signRaw({
+      userId: "user-123",
+      email: "person@example.com",
+      role: "admin",
+    });
+
+    // Act
+    const decoded = await verifyToken(token);
+
+    // Assert: the returned payload is exactly the SessionPayload shape.
+    expect(decoded).toEqual({
+      userId: "user-123",
+      email: "person@example.com",
+    });
   });
 
   it("throws when the JWT secret is missing (observed through createToken)", async () => {

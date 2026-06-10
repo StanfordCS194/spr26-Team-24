@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { extractJsonObject } from "./json";
 
 export const ISSUE_TYPES = [
@@ -8,8 +9,10 @@ export const ISSUE_TYPES = [
   "OTHER",
 ] as const;
 
+export const SEVERITIES = ["low", "medium", "high"] as const;
+
 export type IssueType = (typeof ISSUE_TYPES)[number];
-export type Severity = "low" | "medium" | "high";
+export type Severity = (typeof SEVERITIES)[number];
 
 export interface ClassificationResult {
   issueType: IssueType;
@@ -17,6 +20,17 @@ export interface ClassificationResult {
   severity: Severity;
   confidence: number;
 }
+
+// Runtime contract for a model's classification JSON. The provider is an
+// external, untrusted boundary: a model returning e.g. `{ issueType: 123 }` must
+// fail here, traceably, rather than be cast through as a ClassificationResult
+// and crash some unrelated consumer downstream.
+const classificationResultSchema = z.object({
+  issueType: z.enum(ISSUE_TYPES),
+  aiDescription: z.string(),
+  severity: z.enum(SEVERITIES),
+  confidence: z.number(),
+}) satisfies z.ZodType<ClassificationResult>;
 
 export interface ProviderResult extends ClassificationResult {
   provider: string;
@@ -99,7 +113,22 @@ export function buildClassificationPrompt(
   return sections.join("\n");
 }
 
-/** Parse model JSON even when wrapped in markdown fences or extra prose. */
+/**
+ * Parse and validate a model's classification JSON, even when wrapped in
+ * markdown fences or extra prose.
+ *
+ * @throws {SyntaxError} When no JSON object can be located in `raw`.
+ * @throws {Error} When the parsed object does not match the classification
+ *   schema (bad `issueType`/`severity` enum, missing/mistyped fields) — the
+ *   message names the offending fields so the failure is traceable.
+ */
 export function parseClassificationResponse(raw: string): ClassificationResult {
-  return extractJsonObject<ClassificationResult>(raw);
+  const parsed = extractJsonObject<unknown>(raw);
+  const result = classificationResultSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error(
+      `Invalid classification response: ${z.prettifyError(result.error)}`,
+    );
+  }
+  return result.data;
 }
