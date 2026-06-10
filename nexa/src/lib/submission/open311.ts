@@ -81,8 +81,14 @@ export type Open311Config = {
  * should override these via `Open311Config.serviceCodes`. The strings here
  * mirror the human-readable codes used by the Open311 reference sandbox and the
  * widely-cloned SeeClickFix taxonomy.
+ *
+ * Partial by design: the taxonomy has more issue types than we have verified
+ * default service codes for. A type with no default here resolves to a null
+ * service code (see `resolveServiceCode`), so the report falls back to
+ * manual/no-agency handling rather than being filed under the wrong code.
+ * Filling in codes for the newer types is tracked as routing follow-up work.
  */
-const DEFAULT_SERVICE_CODES: Record<IssueType, string> = {
+const DEFAULT_SERVICE_CODES: Partial<Record<IssueType, string>> = {
   [IssueType.ROAD_DAMAGE]: "POTHOLES",
   [IssueType.STREETLIGHT_OUTAGE]: "STREETLIGHTS",
   [IssueType.ILLEGAL_DUMPING]: "ILLEGALDUMPING",

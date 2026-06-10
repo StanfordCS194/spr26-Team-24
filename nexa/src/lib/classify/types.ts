@@ -6,6 +6,19 @@ export const ISSUE_TYPES = [
   "STREETLIGHT_OUTAGE",
   "ILLEGAL_DUMPING",
   "VEHICLE_EMISSIONS",
+  "GRAFFITI",
+  "SIDEWALK_DAMAGE",
+  "TREE_MAINTENANCE",
+  "TRAFFIC_SIGNAL",
+  "PUBLIC_SIGNAGE",
+  "FLOODING_DRAINAGE",
+  "WATER_SYSTEM",
+  "PARKS_PLAYGROUNDS",
+  "WEED_ABATEMENT",
+  "ABANDONED_VEHICLE",
+  "PARKING",
+  "CODE_ENFORCEMENT",
+  "STREET_SWEEPING",
   "OTHER",
 ] as const;
 
@@ -56,23 +69,48 @@ Analyze the provided image and/or text description of a neighborhood issue.
 
 Respond with ONLY valid JSON matching this exact schema (no markdown, no code fences):
 {
-  "issueType": one of "ROAD_DAMAGE" | "STREETLIGHT_OUTAGE" | "ILLEGAL_DUMPING" | "VEHICLE_EMISSIONS" | "OTHER",
+  "issueType": one of "ROAD_DAMAGE" | "STREETLIGHT_OUTAGE" | "ILLEGAL_DUMPING" | "VEHICLE_EMISSIONS" | "GRAFFITI" | "SIDEWALK_DAMAGE" | "TREE_MAINTENANCE" | "TRAFFIC_SIGNAL" | "PUBLIC_SIGNAGE" | "FLOODING_DRAINAGE" | "WATER_SYSTEM" | "PARKS_PLAYGROUNDS" | "WEED_ABATEMENT" | "ABANDONED_VEHICLE" | "PARKING" | "CODE_ENFORCEMENT" | "STREET_SWEEPING" | "OTHER",
   "aiDescription": a 1-2 sentence professional description of the issue suitable for a government agency report,
   "severity": one of "low" | "medium" | "high",
   "confidence": a number 0-1 indicating classification confidence
 }
 
-Classification guidelines:
-- ROAD_DAMAGE: potholes, cracked pavement, raised sidewalks, road surface issues, damaged curbs
-- STREETLIGHT_OUTAGE: broken/dark streetlights, damaged light poles, flickering lights
-- ILLEGAL_DUMPING: abandoned furniture, trash piles, construction debris in public areas, littering
-- VEHICLE_EMISSIONS: visible exhaust smoke, idling vehicles, smog-producing vehicles
-- OTHER: anything that doesn't clearly fit the above categories
+Classification guidelines — pick the SINGLE best-fitting category. Each definition is one line; the disambiguation notes resolve the common overlaps:
+- ROAD_DAMAGE: potholes, cracked/broken pavement, road-surface defects, damaged curbs — the drivable roadway itself (NOT the pedestrian sidewalk, which is SIDEWALK_DAMAGE).
+- STREETLIGHT_OUTAGE: a street lamp that is out, dark, flickering, or has a damaged light pole — i.e. lighting, not traffic control (vs TRAFFIC_SIGNAL).
+- ILLEGAL_DUMPING: discarded trash, debris, bulky items, abandoned furniture, or construction waste dumped in a public area (NOT overgrown vegetation, which is WEED_ABATEMENT).
+- VEHICLE_EMISSIONS: a vehicle visibly emitting exhaust smoke or excessive smog — about air pollution from a running vehicle (vs ABANDONED_VEHICLE, which is a non-running car left in place).
+- GRAFFITI: unauthorized paint, spray, tagging, or markings on walls, signs, or other surfaces.
+- SIDEWALK_DAMAGE: cracked, uplifted, crumbling, or broken sidewalk or pedestrian walkway (the foot path, vs the roadway in ROAD_DAMAGE).
+- TREE_MAINTENANCE: a fallen, leaning, overgrown, dead, or hazardous tree or large limb on public land (a living tree/branch, vs cut WEED_ABATEMENT brush or ILLEGAL_DUMPING debris).
+- TRAFFIC_SIGNAL: a malfunctioning traffic control signal — red/green/yellow lights at an intersection that are dark, stuck, or out of sync (a traffic signal, NOT a street lamp, which is STREETLIGHT_OUTAGE).
+- PUBLIC_SIGNAGE: a damaged, missing, faded, or knocked-down street, regulatory, or traffic sign (stop/yield/street-name signs — the sign itself, vs the light in TRAFFIC_SIGNAL).
+- FLOODING_DRAINAGE: standing water, flooding, a clogged or overflowing storm drain, or poor drainage (rainwater/surface water, vs a pressurized pipe in WATER_SYSTEM).
+- WATER_SYSTEM: a water-main break, pipe or hydrant leak, gushing or spraying potable water, or low/no water pressure (the supply system, vs surface stormwater in FLOODING_DRAINAGE).
+- PARKS_PLAYGROUNDS: damaged or unsafe park or playground equipment, benches, or park facilities.
+- WEED_ABATEMENT: overgrown weeds, tall grass, or brush on public land or rights-of-way (living vegetation, vs a tree in TREE_MAINTENANCE).
+- ABANDONED_VEHICLE: a vehicle that appears abandoned, inoperable, or left long-term on a public street or right-of-way (a stationary car, vs a smoking running one in VEHICLE_EMISSIONS).
+- PARKING: parking meters, parking enforcement, blocked or illegal parking, or other on-street parking problems.
+- CODE_ENFORCEMENT: property blight, illegal construction, unpermitted work, or other building/property code violations.
+- STREET_SWEEPING: requests for street sweeping or removal of accumulated dirt, leaves, or debris in the gutter or roadway.
+- OTHER: choose this ONLY when the issue genuinely does not fit any category above.
 
 Severity guidelines:
 - high: immediate safety hazard or environmental contamination
 - medium: significant inconvenience or moderate risk
-- low: minor issue or cosmetic concern`;
+- low: minor issue or cosmetic concern
+
+Disambiguation examples (issueType only — apply the same judgment to the real report):
+- "Spray-painted tag on the underpass wall" -> GRAFFITI (markings on a surface), not ILLEGAL_DUMPING.
+- "Pile of old mattresses and trash bags left on the corner" -> ILLEGAL_DUMPING (discarded items), not WEED_ABATEMENT.
+- "The walk signal and lights at the intersection are all dark" -> TRAFFIC_SIGNAL (traffic control), not STREETLIGHT_OUTAGE.
+- "Street lamp on the block has been out for a week" -> STREETLIGHT_OUTAGE (a lamp), not TRAFFIC_SIGNAL.
+- "The sidewalk slab is buckled and people keep tripping" -> SIDEWALK_DAMAGE (foot path), not ROAD_DAMAGE.
+- "Knocked-over stop sign at the corner" -> PUBLIC_SIGNAGE (the sign), not TRAFFIC_SIGNAL.
+- "Water gushing up from a broken main into the street" -> WATER_SYSTEM (pressurized supply), not FLOODING_DRAINAGE.
+- "Storm drain is clogged and the corner is flooded after rain" -> FLOODING_DRAINAGE (stormwater), not WATER_SYSTEM.
+- "Large tree limb fell and is blocking the path" -> TREE_MAINTENANCE (a tree), not ILLEGAL_DUMPING.
+- "Old sedan with flat tires hasn't moved in a month" -> ABANDONED_VEHICLE (left in place), not VEHICLE_EMISSIONS.`;
 
 /** Backward-compatible export — the original single-stage prompt. */
 export const CLASSIFICATION_PROMPT = BASE_CLASSIFICATION_PROMPT;
