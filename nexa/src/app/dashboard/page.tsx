@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2, Clock3, ClipboardList } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { shortenAddress } from "@/lib/constants";
+import { buildReportMapPoints } from "@/lib/dashboard/map-points";
 import { formatFullDateTime, formatRelativeTime } from "@/lib/utils";
 import { ReportCard } from "@/components/dashboard/report-card";
 import {
@@ -50,28 +50,9 @@ export default async function DashboardPage() {
   ).length;
   const latestReport = reports[0];
 
-  const mappableReports = reports.filter(
-    (
-      report,
-    ): report is typeof report & { latitude: number; longitude: number } =>
-      typeof report.latitude === "number" &&
-      Number.isFinite(report.latitude) &&
-      typeof report.longitude === "number" &&
-      Number.isFinite(report.longitude),
-  );
-  // Pins are numbered in the order the reports were filed: #1 is the earliest.
-  // `reports` is ordered newest-first, so the last item is the earliest — hence
-  // `length - index`.
-  const mapPoints: ReportMapPoint[] = mappableReports.map((report, index) => ({
-    id: report.id,
-    latitude: report.latitude,
-    longitude: report.longitude,
-    issueType: report.issueType,
-    shortLocation: shortenAddress(report.address),
-    status: report.status,
-    relativeTime: formatRelativeTime(report.createdAt),
-    order: mappableReports.length - index,
-  }));
+  // Pins are numbered by filing order (#1 = earliest), recomputed from the
+  // current reports, so deleting one re-sequences the rest contiguously.
+  const mapPoints: ReportMapPoint[] = buildReportMapPoints(reports);
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
