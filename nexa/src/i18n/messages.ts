@@ -49,6 +49,7 @@ const enMessages = {
   "home.step3Description":
     "Review, confirm, done. The whole process takes under 30 seconds.",
   "home.tryNow": "Try It Now",
+  "home.demoCaption": "Watch the full flow — from photo to a filed report.",
   "home.statsLabel": "/ By The Numbers",
   "home.statsTitle": "Reporting made radically simpler.",
   "home.statAverage": "Average report time",
@@ -378,6 +379,8 @@ export const messages = {
     "home.step3Description":
       "Revisa, confirma y listo. Todo toma menos de 30 segundos.",
     "home.tryNow": "Pruébalo ahora",
+    "home.demoCaption":
+      "Mira el flujo completo: de la foto al reporte presentado.",
     "home.statsLabel": "/ En números",
     "home.statsTitle": "Reportar es radicalmente más simple.",
     "home.statAverage": "Tiempo promedio de reporte",
@@ -699,6 +702,7 @@ export const messages = {
     "home.step3Title": "报告已提交",
     "home.step3Description": "检查、确认、完成。整个流程不到 30 秒。",
     "home.tryNow": "立即试用",
+    "home.demoCaption": "观看完整流程——从拍照到提交报告。",
     "home.statsLabel": "/ 数据概览",
     "home.statsTitle": "让报告变得极其简单。",
     "home.statAverage": "平均报告时间",
@@ -1014,6 +1018,8 @@ export const messages = {
     "home.step3Description":
       "Relisez, confirmez, terminé. Le tout prend moins de 30 secondes.",
     "home.tryNow": "Essayer maintenant",
+    "home.demoCaption":
+      "Découvrez le parcours complet : de la photo au signalement déposé.",
     "home.statsLabel": "/ En chiffres",
     "home.statsTitle": "Le signalement rendu radicalement plus simple.",
     "home.statAverage": "Temps moyen de signalement",
