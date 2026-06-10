@@ -230,4 +230,51 @@ describe("preprocessImage — EXIF GPS", () => {
     expect(result.exifGps).toBeNull();
     expect(result.dataUrl.startsWith("data:image/jpeg;base64,")).toBe(true);
   });
+
+  it("rejects a latitude with no longitude (lat-without-lon guard)", async () => {
+    // Arrange: some photos carry a GPSLatitude but no GPSLongitude. A half pair
+    // is not a usable point, so the guard must drop it rather than emit a
+    // coordinate with an undefined lon.
+    gpsMock.mockResolvedValue({ latitude: 37.4419 });
+
+    // Act
+    const result = await preprocessImage("Zm9v");
+
+    // Assert
+    expect(result.exifGps).toBeNull();
+  });
+
+  it("rejects a longitude with no latitude (lon-without-lat guard)", async () => {
+    // Arrange: the mirror of the above — lon present, lat missing.
+    gpsMock.mockResolvedValue({ longitude: -122.143 });
+
+    // Act
+    const result = await preprocessImage("Zm9v");
+
+    // Assert
+    expect(result.exifGps).toBeNull();
+  });
+
+  it("rejects a half pair where the other coordinate is explicitly null", async () => {
+    // Arrange: exifr can hand back an explicit null for a missing half.
+    gpsMock.mockResolvedValue({ latitude: 37.4419, longitude: null });
+
+    // Act
+    const result = await preprocessImage("Zm9v");
+
+    // Assert: null fails the `typeof === "number"` half of the guard.
+    expect(result.exifGps).toBeNull();
+  });
+
+  it("accepts a valid pair that sits on a real jurisdiction point", async () => {
+    // Arrange: a Palo Alto coordinate (the same point the agency-routing tests
+    // resolve) survives the guard intact — both halves finite numbers.
+    gpsMock.mockResolvedValue({ latitude: 37.4419, longitude: -122.143 });
+
+    // Act
+    const result = await preprocessImage("Zm9v");
+
+    // Assert
+    expect(result.exifGps).toEqual({ latitude: 37.4419, longitude: -122.143 });
+  });
 });
