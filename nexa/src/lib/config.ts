@@ -103,6 +103,45 @@ export const getGoogleMapsApiKey = cached(() =>
   optionalEnv("GOOGLE_MAPS_API_KEY"),
 );
 
+// --- Object storage (S3 / Cloudflare R2) for image uploads (see src/lib/storage.ts) ---
+//
+// All optional: when unset the upload pipeline degrades gracefully to the
+// existing inline base64/data-URL behaviour, so the app runs with no creds.
+// The same vars drive both AWS S3 and S3-compatible providers (R2): point
+// `S3_ENDPOINT` at the R2 gateway and the rest of the config is identical.
+
+/** Target bucket name. Required for storage to be considered configured. */
+export const getS3Bucket = cached(() => optionalEnv("S3_BUCKET"));
+
+/**
+ * Region. AWS needs the bucket's real region; R2 ignores it but the SDK still
+ * requires a non-empty value, so callers default to `auto` when unset.
+ */
+export const getS3Region = cached(() => optionalEnv("S3_REGION"));
+
+/**
+ * Custom S3 endpoint. Omit for AWS S3; set to the R2 (or other S3-compatible)
+ * gateway, e.g. `https://<account>.r2.cloudflarestorage.com`.
+ */
+export const getS3Endpoint = cached(() => optionalEnv("S3_ENDPOINT"));
+
+/** Access key id for the upload credentials. Required for storage. */
+export const getS3AccessKeyId = cached(() => optionalEnv("S3_ACCESS_KEY_ID"));
+
+/** Secret access key for the upload credentials. Required for storage. */
+export const getS3SecretAccessKey = cached(() =>
+  optionalEnv("S3_SECRET_ACCESS_KEY"),
+);
+
+/**
+ * Public base URL under which uploaded objects are served (e.g. an R2 public
+ * bucket domain or a CloudFront distribution). The stored `imageUrl` becomes
+ * `${S3_PUBLIC_BASE_URL}/${key}`. Required for storage.
+ */
+export const getS3PublicBaseUrl = cached(() =>
+  optionalEnv("S3_PUBLIC_BASE_URL"),
+);
+
 // --- Duplicate-report detection (see src/lib/reports/dedup.ts) ---
 
 /** Default radius (metres) within which a same-type report counts as a dup. */

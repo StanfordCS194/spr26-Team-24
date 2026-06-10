@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { queueReport } from "@/lib/offline-queue";
+import { uploadImageViaPresign } from "@/lib/upload-image";
 import type { ApiResponse } from "@/lib/api/response";
 import type {
   ClassificationResult,
@@ -143,7 +144,9 @@ export function useReportSubmission() {
       setSubmitting(true);
       setSubmitError(null);
 
-      const payload = {
+      // Offline-queue payload keeps the inline base64 so a parked report can be
+      // replayed without re-running the (online-only) presigned upload.
+      const queuePayload = {
         description: input.description,
         aiDescription: input.classification.aiDescription,
         issueType: input.classification.issueType,
@@ -154,10 +157,20 @@ export function useReportSubmission() {
       };
 
       try {
+        // When object storage is configured, upload the (already client-resized)
+        // image to a presigned URL and store its public URL instead of the
+        // bytes. `uploadImageViaPresign` returns null when storage is not
+        // configured or anything fails, so we fall back to the inline base64.
+        let imageUrl = input.imageBase64;
+        if (input.imageBase64) {
+          const objectUrl = await uploadImageViaPresign(input.imageBase64);
+          if (objectUrl) imageUrl = objectUrl;
+        }
+
         const res = await fetch("/api/reports", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...queuePayload, imageUrl }),
         });
 
         const result = (await res.json()) as ApiResponse<CreatedReport>;
@@ -176,7 +189,7 @@ export function useReportSubmission() {
         // No connectivity: park the report locally and confirm optimistically.
         // PwaSetup replays the queue once the browser is back online.
         if (typeof navigator !== "undefined" && !navigator.onLine) {
-          queueReport(payload);
+          queueReport(queuePayload);
           const queued: CreatedReport = {
             id: "Pending sync",
             issueType: input.classification.issueType,
