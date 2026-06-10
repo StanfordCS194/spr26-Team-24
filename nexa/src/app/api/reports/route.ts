@@ -11,6 +11,7 @@ import {
   parseErrorResponse,
 } from "@/lib/api/request-parser";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { ReportStatus } from "@/generated/prisma/enums";
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,7 +87,13 @@ export async function POST(request: NextRequest) {
         imageUrl,
         agencyId,
         issueGroupId,
-        status: "CONFIRMED",
+        // A report row is only created once the user has reviewed the AI
+        // classification and confirmed it client-side (the `/api/reports/classify`
+        // endpoint is stateless and persists nothing). So the report is born
+        // CONFIRMED — the DRAFT / CLASSIFYING enum values model the pre-creation
+        // stages that live in the client and are never persisted on this path.
+        // This is the start state of the lifecycle in src/lib/reports/status-machine.ts.
+        status: ReportStatus.CONFIRMED,
       },
     });
 

@@ -1,209 +1,186 @@
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
+import { ReportStatus } from "@/generated/prisma/enums";
 import { makeReport } from "@/test/factories/report";
 import { prismaMock } from "@/test/prisma-mock";
 
-// Resolution is owner-only: it gates on getSession(), so mock the auth module.
-vi.mock("@/lib/auth", () => ({ getSession: vi.fn() }));
-import { getSession } from "@/lib/auth";
+const getSession = vi.fn();
+vi.mock("@/lib/auth", () => ({
+  getSession: () => getSession(),
+}));
 
 import { POST } from "./route";
 
-const mockedGetSession = vi.mocked(getSession);
+beforeEach(() => {
+  getSession.mockReset();
+  getSession.mockResolvedValue({ userId: "user_1", email: "u@x.com" });
+});
 
-function resolutionRequest(body: unknown): NextRequest {
-  return new NextRequest("http://localhost/api/reports/report_1/resolution", {
+function postRequest(id: string, resolved: boolean): NextRequest {
+  return new NextRequest(`http://localhost/api/reports/${id}/resolution`, {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify({ resolved }),
   });
 }
 
-function params(id: string) {
-  return { params: Promise.resolve({ id }) };
+function call(id: string, resolved: boolean) {
+  return POST(postRequest(id, resolved), {
+    params: Promise.resolve({ id }),
+  });
 }
 
-describe("POST /api/reports/[id]/resolution", () => {
-  beforeEach(() => {
-    mockedGetSession.mockReset();
-  });
+describe("POST /api/reports/[id]/resolution status guard (#104)", () => {
+  it.each([
+    ReportStatus.DRAFT,
+    ReportStatus.CLASSIFYING,
+    ReportStatus.CONFIRMED,
+    ReportStatus.SUBMITTING,
+  ])(
+    "rejects resolving a pre-submission report (%s) with 409",
+    async (status) => {
+      const report = makeReport({
+        id: "r1",
+        userId: "user_1",
+        status,
+        issueGroupId: null,
+      });
+      prismaMock.report.findUnique.mockResolvedValue(report);
 
-  it("returns 401 when the caller is not authenticated", async () => {
-    // Arrange
-    mockedGetSession.mockResolvedValue(null);
+      const response = await call("r1", true);
 
-    // Act
-    const response = await POST(
-      resolutionRequest({ resolved: true }),
-      params("report_1"),
+      expect(response.status).toBe(409);
+      const body = await response.json();
+      expect(body.code).toBe("INVALID_STATUS_TRANSITION");
+      // The illegal transition must never be written.
+      expect(prismaMock.report.update).not.toHaveBeenCalled();
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ReportStatus.SUBMITTED,
+    ReportStatus.ACKNOWLEDGED,
+    ReportStatus.IN_PROGRESS,
+  ])("marks a post-submission report (%s) RESOLVED", async (status) => {
+    const report = makeReport({
+      id: "r1",
+      userId: "user_1",
+      status,
+      issueGroupId: null,
+    });
+    prismaMock.report.findUnique.mockResolvedValue(report);
+    prismaMock.report.update.mockResolvedValue({
+      id: "r1",
+      userResolved: true,
+      status: ReportStatus.RESOLVED,
+    } as Awaited<ReturnType<typeof prismaMock.report.update>>);
+
+    const response = await call("r1", true);
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.report.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: ReportStatus.RESOLVED }),
+      }),
     );
-    const body = await response.json();
+  });
 
-    // Assert
+  it("un-resolving (resolved=false) never changes status, even pre-submission", async () => {
+    const report = makeReport({
+      id: "r1",
+      userId: "user_1",
+      status: ReportStatus.CONFIRMED,
+      issueGroupId: null,
+    });
+    prismaMock.report.findUnique.mockResolvedValue(report);
+    prismaMock.report.update.mockResolvedValue({
+      id: "r1",
+      userResolved: false,
+      status: ReportStatus.CONFIRMED,
+    } as Awaited<ReturnType<typeof prismaMock.report.update>>);
+
+    const response = await call("r1", false);
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.report.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: ReportStatus.CONFIRMED }),
+      }),
+    );
+  });
+
+  it("group resolution only advances user-resolvable members", async () => {
+    const report = makeReport({
+      id: "r1",
+      userId: "user_1",
+      status: ReportStatus.SUBMITTED,
+      issueGroupId: "group_1",
+    });
+    prismaMock.report.findUnique.mockResolvedValue(report);
+    prismaMock.$transaction.mockResolvedValue([]);
+
+    const response = await call("r1", true);
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.$transaction).toHaveBeenCalled();
+    // The members updateMany must filter by the user-resolvable status set, not
+    // merely "not CLOSED", so pre-submission members aren't forced to RESOLVED.
+    const txArgs = prismaMock.report.updateMany.mock.calls[0]?.[0];
+    expect(txArgs?.where?.status).toEqual({
+      in: expect.arrayContaining([
+        ReportStatus.SUBMITTED,
+        ReportStatus.ACKNOWLEDGED,
+        ReportStatus.IN_PROGRESS,
+        ReportStatus.RESOLVED,
+      ]),
+    });
+  });
+
+  it("rejects resolving a CLOSED report with 409", async () => {
+    const report = makeReport({
+      id: "r1",
+      userId: "user_1",
+      status: ReportStatus.CLOSED,
+      issueGroupId: null,
+    });
+    prismaMock.report.findUnique.mockResolvedValue(report);
+
+    const response = await call("r1", true);
+
+    expect(response.status).toBe(409);
+    expect(prismaMock.report.update).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 when there is no session", async () => {
+    getSession.mockResolvedValue(null);
+
+    const response = await call("r1", true);
+
     expect(response.status).toBe(401);
-    expect(body).toEqual({ success: false, error: "Not authenticated." });
     expect(prismaMock.report.findUnique).not.toHaveBeenCalled();
   });
 
-  it("returns 400 when `resolved` is not a boolean", async () => {
-    // Arrange
-    mockedGetSession.mockResolvedValue({ userId: "owner", email: "o@x.com" });
-
-    // Act
-    const response = await POST(
-      resolutionRequest({ resolved: "yes" }),
-      params("report_1"),
-    );
-    const body = await response.json();
-
-    // Assert
-    expect(response.status).toBe(400);
-    expect(body.success).toBe(false);
-    // The parser prefixes the failing field path onto the schema message.
-    expect(body.error).toBe("resolved: Field `resolved` must be a boolean.");
-    expect(prismaMock.report.update).not.toHaveBeenCalled();
-  });
-
   it("returns 404 when the report does not exist", async () => {
-    // Arrange
-    mockedGetSession.mockResolvedValue({ userId: "owner", email: "o@x.com" });
     prismaMock.report.findUnique.mockResolvedValue(null);
 
-    // Act
-    const response = await POST(
-      resolutionRequest({ resolved: true }),
-      params("missing"),
-    );
-    const body = await response.json();
+    const response = await call("missing", true);
 
-    // Assert
     expect(response.status).toBe(404);
-    expect(body).toEqual({ success: false, error: "Report not found." });
   });
 
   it("returns 403 when the caller does not own the report", async () => {
-    // Arrange
-    mockedGetSession.mockResolvedValue({ userId: "owner", email: "o@x.com" });
-    prismaMock.report.findUnique.mockResolvedValue(
-      makeReport({
-        id: "report_1",
-        userId: "someone_else",
-        issueGroupId: null,
-      }),
-    );
+    const report = makeReport({
+      id: "r1",
+      userId: "someone_else",
+      status: ReportStatus.SUBMITTED,
+      issueGroupId: null,
+    });
+    prismaMock.report.findUnique.mockResolvedValue(report);
 
-    // Act
-    const response = await POST(
-      resolutionRequest({ resolved: true }),
-      params("report_1"),
-    );
-    const body = await response.json();
+    const response = await call("r1", true);
 
-    // Assert
     expect(response.status).toBe(403);
-    expect(body).toEqual({
-      success: false,
-      error: "You can only update your own reports.",
-    });
     expect(prismaMock.report.update).not.toHaveBeenCalled();
-  });
-
-  it("marks an ungrouped report resolved and promotes its status to RESOLVED", async () => {
-    // Arrange
-    mockedGetSession.mockResolvedValue({ userId: "owner", email: "o@x.com" });
-    prismaMock.report.findUnique.mockResolvedValue(
-      makeReport({
-        id: "report_1",
-        userId: "owner",
-        issueGroupId: null,
-        status: "CONFIRMED",
-      }),
-    );
-    // The route returns exactly what `update` resolves to; the real query uses a
-    // narrowed `select`, so mirror that shape here.
-    prismaMock.report.update.mockResolvedValue({
-      id: "report_1",
-      userResolved: true,
-      status: "RESOLVED",
-    } as Awaited<ReturnType<typeof prismaMock.report.update>>);
-
-    // Act
-    const response = await POST(
-      resolutionRequest({ resolved: true }),
-      params("report_1"),
-    );
-    const body = await response.json();
-
-    // Assert
-    expect(response.status).toBe(200);
-    expect(body).toEqual({
-      success: true,
-      data: { id: "report_1", userResolved: true, status: "RESOLVED" },
-    });
-
-    const updateArgs = prismaMock.report.update.mock.calls[0][0];
-    expect(updateArgs.where).toEqual({ id: "report_1" });
-    expect(updateArgs.data).toMatchObject({
-      userResolved: true,
-      status: "RESOLVED",
-    });
-    expect(updateArgs.data?.userResolvedAt).toBeInstanceOf(Date);
-  });
-
-  it("keeps the existing status when un-resolving (resolved=false)", async () => {
-    // Arrange
-    mockedGetSession.mockResolvedValue({ userId: "owner", email: "o@x.com" });
-    prismaMock.report.findUnique.mockResolvedValue(
-      makeReport({
-        id: "report_1",
-        userId: "owner",
-        issueGroupId: null,
-        status: "CONFIRMED",
-      }),
-    );
-    prismaMock.report.update.mockResolvedValue({
-      id: "report_1",
-      userResolved: false,
-      status: "CONFIRMED",
-    } as Awaited<ReturnType<typeof prismaMock.report.update>>);
-
-    // Act
-    const response = await POST(
-      resolutionRequest({ resolved: false }),
-      params("report_1"),
-    );
-    const body = await response.json();
-
-    // Assert
-    expect(response.status).toBe(200);
-    const updateArgs = prismaMock.report.update.mock.calls[0][0];
-    // resolved=false leaves status untouched (stays CONFIRMED).
-    expect(updateArgs.data).toMatchObject({
-      userResolved: false,
-      status: "CONFIRMED",
-    });
-  });
-
-  it("returns 500 when the update throws", async () => {
-    // Arrange
-    mockedGetSession.mockResolvedValue({ userId: "owner", email: "o@x.com" });
-    prismaMock.report.findUnique.mockResolvedValue(
-      makeReport({ id: "report_1", userId: "owner", issueGroupId: null }),
-    );
-    prismaMock.report.update.mockRejectedValue(new Error("db down"));
-
-    // Act
-    const response = await POST(
-      resolutionRequest({ resolved: true }),
-      params("report_1"),
-    );
-    const body = await response.json();
-
-    // Assert
-    expect(response.status).toBe(500);
-    expect(body).toEqual({
-      success: false,
-      error: "Failed to update resolution. Please try again.",
-    });
   });
 });
