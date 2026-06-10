@@ -51,7 +51,6 @@ export default defineConfig({
         /full-workflow\.spec\.ts/,
         /k2-measure\.spec\.ts/,
         /demo-human\.spec\.ts/,
-        /demo-workflow\.spec\.ts/,
       ],
     },
     {

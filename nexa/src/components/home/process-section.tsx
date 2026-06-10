@@ -63,23 +63,6 @@ export function ProcessSection() {
         </div>
 
         <div className="mt-10">
-          <video
-            data-testid="demo-video"
-            className="w-full rounded-xl border border-border shadow-sm"
-            src="/demo-workflow.mp4"
-            poster="/demo-workflow-poster.jpg"
-            controls
-            loop
-            muted
-            autoPlay
-            playsInline
-          />
-          <p className="mt-3 text-center text-sm text-muted-foreground">
-            {t("home.demoCaption")}
-          </p>
-        </div>
-
-        <div className="mt-10">
           <Link href="/report" className="btn-cta btn-cta-purple w-fit">
             {t("home.tryNow")}
             <ArrowRight className="size-4" />
