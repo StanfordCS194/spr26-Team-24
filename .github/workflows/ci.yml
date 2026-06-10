@@ -56,8 +56,42 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Run tests
-        run: npm run test
+      # Runs the suite WITH coverage. `npm run test:coverage` exits non-zero when
+      # any global or per-directory threshold in nexa/vitest.config.ts is unmet,
+      # so this step is the CI coverage gate (ratchet floor). This replaces the
+      # plain `npm run test` — coverage runs the same suite plus enforcement.
+      # `tee` keeps the human-readable report in the live log while we capture the
+      # text-summary block for the job summary below.
+      - name: Run tests with coverage gate
+        # `pipefail` is essential: without it the step's exit code is tee's (0),
+        # which would silently swallow a coverage-threshold failure.
+        run: |
+          set -o pipefail
+          npm run test:coverage 2>&1 | tee coverage-run.log
+        shell: bash
+
+      # Publish the v8 text-summary to the GitHub Actions job summary so coverage
+      # is visible on every PR without any paid/3rd-party service. Self-contained:
+      # no Codecov token required (built-in threshold failure is the gate).
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          {
+            echo "## Coverage summary"
+            echo '```'
+            sed -n '/Coverage summary/,/=====/p' coverage-run.log | grep -E "Statements|Branches|Functions|Lines" || echo "no coverage summary captured"
+            echo '```'
+            echo "_Gate: thresholds enforced via vitest (nexa/vitest.config.ts); ratchet floor — see nexa/src/test/README.md._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Upload lcov + HTML report as an artifact for inspection on the PR.
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: nexa/coverage
+          if-no-files-found: warn
 
   eval:
     runs-on: ubuntu-latest
