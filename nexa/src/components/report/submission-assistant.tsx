@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import {
   Check,
   CheckCircle2,
@@ -49,6 +50,24 @@ interface SubmitResponse {
 
 interface SubmissionAssistantProps {
   reportId: string;
+  /**
+   * The report's issue type, surfaced on the K2 `report_submitted` event for
+   * parity with the offline-replay and (former) create-time emits.
+   */
+  issueType?: string | null;
+  /**
+   * The report page's first-capture timestamp (`flowStartedAt`) — the K2 clock
+   * start. When a real agency submission succeeds (API/EMAIL, submitted=true),
+   * `report_submitted` is emitted with `time_to_submit_ms = now - captureStart`,
+   * so the metric measures the full capture -> SUBMITTED loop instead of
+   * capture -> CONFIRMED (#240). Omitted/0 means the clock never started; we
+   * then fall back to the moment the submission is observed (defensive only).
+   */
+  captureStartedAt?: number;
+  /** Whether the report carried a photo — a K2 event dimension. */
+  hasImage?: boolean;
+  /** Whether the report carried a location — a K2 event dimension. */
+  hasLocation?: boolean;
 }
 
 // What the orchestrator told us to do with this report.
@@ -72,10 +91,22 @@ type Outcome =
  *     returns a `manualAssist` result and we fall back to the copy-over guide:
  *     the official form/address plus each field pre-filled.
  */
-export function SubmissionAssistant({ reportId }: SubmissionAssistantProps) {
+export function SubmissionAssistant({
+  reportId,
+  issueType,
+  captureStartedAt,
+  hasImage,
+  hasLocation,
+}: SubmissionAssistantProps) {
+  const posthog = usePostHog();
   const [outcome, setOutcome] = useState<Outcome>({ kind: "loading" });
   const [fields, setFields] = useState<SubmissionFieldsResponse | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // K2 `report_submitted` is the moment the report is ACTUALLY filed with the
+  // agency. Guard so a retry or a remount (which re-runs the submit POST) can't
+  // double-count the same report into the metric — it fires once per assistant.
+  const emittedSubmitted = useRef(false);
 
   // Attempt submission once on mount. The orchestrator decides — automated for
   // API intake, manual-assist otherwise — so we don't need to know the agency's
@@ -92,6 +123,24 @@ export function SubmissionAssistant({ reportId }: SubmissionAssistantProps) {
         const payload = (await res.json()) as ApiResponse<SubmitResponse>;
 
         if (payload.success && payload.data.submitted) {
+          // A real agency submission just succeeded (API/EMAIL). Emit the timed
+          // K2 event here — NOT at report creation — so `time_to_submit_ms`
+          // measures capture -> SUBMITTED. Manual-assist (WEB_FORM/PHONE) leaves
+          // the report CONFIRMED and `submitted=false`, so it never reaches this
+          // branch and is correctly excluded (#240). Same PostHog event and
+          // properties the online create path used to emit and the offline
+          // replay emits (lib/offline-queue.ts) — not a parallel path.
+          if (!emittedSubmitted.current) {
+            emittedSubmitted.current = true;
+            const captureStart = captureStartedAt || Date.now();
+            posthog?.capture("report_submitted", {
+              report_id: reportId,
+              ...(issueType ? { issue_type: issueType } : {}),
+              time_to_submit_ms: Date.now() - captureStart,
+              has_image: !!hasImage,
+              has_location: !!hasLocation,
+            });
+          }
           next = {
             kind: "submitted",
             trackingId: payload.data.externalTrackingId,
@@ -118,7 +167,7 @@ export function SubmissionAssistant({ reportId }: SubmissionAssistantProps) {
     return () => {
       cancelled = true;
     };
-  }, [reportId]);
+  }, [reportId, posthog, issueType, captureStartedAt, hasImage, hasLocation]);
 
   // Lazily load the copy-over fields only when we're in the manual-assist path.
   useEffect(() => {

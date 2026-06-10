@@ -35,6 +35,13 @@ export default function ReportPage() {
   const [step, setStep] = useState<ReportStep>("describe");
   const [description, setDescription] = useState("");
 
+  // Snapshot of `flowStartedAt` taken when the report row is created/CONFIRMED.
+  // Held in state (not read off the ref during render) so it can be threaded to
+  // the confirmed step's SubmissionAssistant, which emits the timed K2
+  // `report_submitted` on the real agency submission (#240). React forbids
+  // reading a ref's value during render, hence the snapshot here.
+  const [submitCaptureStart, setSubmitCaptureStart] = useState(0);
+
   // When routing is ambiguous (more than one agency covers the location + issue
   // type), the review step lets the user pick one; we hold their choice here and
   // pass it to the create route, which validates it server-side.
@@ -179,14 +186,25 @@ export default function ReportPage() {
           if (isLoggedIn === false) {
             addPendingReportId(report.id);
           }
-          // Guard against an unstarted clock (0) so we never emit an
-          // epoch-sized interval; in practice a submit always follows a
-          // capture, so the fallback is defensive only.
+          // Creation/CONFIRMED — NOT the K2 submit event. The timed
+          // `report_submitted` (with `time_to_submit_ms`) is emitted later, by
+          // SubmissionAssistant, only when the report is ACTUALLY filed with the
+          // agency (API/EMAIL submit returns submitted=true). Emitting it here
+          // would measure capture -> CONFIRMED and fire even for WEB_FORM/PHONE
+          // agencies that never auto-submit (#240). We keep a creation event for
+          // funnel analytics — without `time_to_submit_ms` — and record
+          // `time_to_confirm_ms` (capture -> CONFIRMED) as a separate, distinctly
+          // named metric. Guard against an unstarted clock (0) so we never emit an
+          // epoch-sized interval; in practice a submit always follows a capture,
+          // so the fallback is defensive only.
           const captureStart = flowStartedAt.current || Date.now();
-          posthog?.capture("report_submitted", {
+          // Hand the clock-start to the confirmed step so SubmissionAssistant can
+          // emit the timed `report_submitted` from the same first-capture anchor.
+          setSubmitCaptureStart(captureStart);
+          posthog?.capture("report_created", {
             report_id: report.id,
             issue_type: classification.issueType,
-            time_to_submit_ms: Date.now() - captureStart,
+            time_to_confirm_ms: Date.now() - captureStart,
             has_image: !!image.imageBase64,
             has_location: !!geo.latitude,
           });
@@ -221,6 +239,7 @@ export default function ReportPage() {
   const resetForm = () => {
     // Re-arm the clock: the next capture action starts a fresh interval.
     flowStartedAt.current = 0;
+    setSubmitCaptureStart(0);
     setStep("describe");
     setDescription("");
     image.clearImage();
@@ -361,6 +380,14 @@ export default function ReportPage() {
             report={submission.createdReport}
             offline={submission.submittedOffline}
             isLoggedIn={isLoggedIn}
+            // First-capture timestamp (the K2 clock start) plus the capture
+            // context. Threaded down to SubmissionAssistant so the timed
+            // `report_submitted` it emits on a real agency submission measures
+            // capture -> SUBMITTED and carries the same has_image/has_location
+            // dimensions as the online/offline emits (#240).
+            captureStartedAt={submitCaptureStart}
+            hasImage={!!image.imageBase64}
+            hasLocation={!!geo.latitude}
             onReportAnother={resetForm}
           />
         )}

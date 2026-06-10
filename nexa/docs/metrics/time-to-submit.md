@@ -7,21 +7,35 @@ O1.KR2 / K2 service-level objectives.
 
 - **Source event:** `report_submitted` (PostHog), property `time_to_submit_ms`.
 - **Interval:** from the user's first capture action (first photo, or first
-  keystroke of the description) through a successful submit. This span
-  **includes** classification latency, matching the OKR definition of
-  capture → submitted.
-- **Stage event:** `report_classified` fires when classification completes, so
-  the capture → classify and classify → submit sub-stages remain queryable.
+  keystroke of the description) through the report being **actually filed with
+  the agency** (a real API/EMAIL submission). This span **includes**
+  classification latency, matching the OKR definition of capture → submitted.
+- **Emit point (#240):** `report_submitted` fires when the agency submission
+  succeeds — `SubmissionAssistant` (`src/components/report/submission-assistant.tsx`)
+  observes the `POST /api/reports/[id]/submit` response with `submitted=true`.
+  It does **not** fire at report creation/CONFIRMED, and it does **not** fire for
+  manual-assist (WEB_FORM/PHONE) agencies, whose reports stay CONFIRMED and are
+  never auto-submitted. Earlier the timed event was emitted in the report-page
+  create `onSuccess`, which measured capture → CONFIRMED and over-counted
+  manual-assist reports; that path now emits `report_created` instead.
+- **Stage events:** `report_classified` fires when classification completes and
+  `report_created` fires when the report row is created/CONFIRMED, so the
+  capture → classify, classify → create, and create → submit sub-stages remain
+  queryable. `report_created` carries `time_to_confirm_ms` (capture → CONFIRMED)
+  but is intentionally NOT the timed K2 event.
 
 These event names and property keys are the ones actually emitted by the app —
-see `src/app/report/page.tsx` (`posthog?.capture("report_classified", …)` and
-`posthog?.capture("report_submitted", { … time_to_submit_ms … })`). The clock
+see `src/app/report/page.tsx` (`report_classified`, `report_created`) and
+`src/components/report/submission-assistant.tsx`
+(`posthog?.capture("report_submitted", { … time_to_submit_ms … })`). The clock
 (`flowStartedAt`) is started by `markCaptureStart()` on the first photo or first
-description keystroke. The event payloads are:
+description keystroke and threaded through to the submission assistant. The event
+payloads are:
 
 | Event               | Properties                                                                             |
 | ------------------- | -------------------------------------------------------------------------------------- |
 | `report_submitted`  | `report_id`, `issue_type`, `time_to_submit_ms`, `has_image`, `has_location`, `offline` |
+| `report_created`    | `report_id`, `issue_type`, `time_to_confirm_ms`, `has_image`, `has_location`           |
 | `report_classified` | `issue_type`, `severity`, `has_image`, `has_location`                                  |
 
 ### Offline submissions (#237)
