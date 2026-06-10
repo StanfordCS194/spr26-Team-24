@@ -180,6 +180,57 @@ function resolveEndpoint(
   return raw.replace(/\/+$/, "");
 }
 
+// Multi-tenant Open311 hosts serve many cities behind one base endpoint and key
+// every write on a `jurisdiction_id`; POSTing without one 404s. SeeClickFix is
+// the canonical example (and the provider behind every seeded API agency). We
+// match its hostname so we can tell, BEFORE attempting the POST, whether an
+// agency's config is complete enough to actually auto-file. Single-tenant
+// endpoints (e.g. a city's own GeoReport server) don't need a jurisdiction_id,
+// so they remain auto-fileable without one.
+const MULTI_TENANT_OPEN311_HOSTS = new Set([
+  "seeclickfix.com",
+  "int.seeclickfix.com",
+]);
+
+function endpointRequiresJurisdictionId(endpoint: string): boolean {
+  try {
+    return MULTI_TENANT_OPEN311_HOSTS.has(new URL(endpoint).hostname);
+  } catch {
+    // An unparseable endpoint can't be matched to a known multi-tenant host;
+    // treat it as not-requiring (submitToOpen311 will surface any real failure).
+    return false;
+  }
+}
+
+/**
+ * Whether an API agency's Open311 config is complete enough to actually auto-
+ * file a request, used by the orchestrator to short-circuit un-fileable agencies
+ * straight to manual-assist instead of attempting a doomed POST (issue #250).
+ *
+ * "Can auto-file" means BOTH:
+ *   1. a usable base endpoint resolves (from `config.endpoint` or the agency's
+ *      `intakeUrl`), and
+ *   2. if that endpoint is a multi-tenant host (SeeClickFix) whose write path
+ *      keys on `jurisdiction_id`, the config supplies a `jurisdictionId`.
+ *
+ * Most seeded SeeClickFix agencies omit `jurisdictionId` (it's an internal org
+ * id not available via the public API — see issue #239), so they return false
+ * here and the orchestrator degrades them to manual-assist with their intakeUrl.
+ * A single-tenant endpoint, or a SeeClickFix agency that has been given a real
+ * `jurisdictionId`, returns true and still auto-files.
+ */
+export function canAutoFileOpen311(
+  config: Open311Config | undefined,
+  intakeUrl: string | null | undefined,
+): boolean {
+  const endpoint = resolveEndpoint(config, intakeUrl);
+  if (!endpoint) return false;
+  if (endpointRequiresJurisdictionId(endpoint)) {
+    return Boolean(config?.jurisdictionId);
+  }
+  return true;
+}
+
 /**
  * Files a new service request with an Open311 GeoReport v2 endpoint.
  *
@@ -425,16 +476,35 @@ export async function fetchOpen311Status(
 }
 
 /**
- * Maps a GeoReport v2 status onto our ReportStatus lifecycle. The spec only
- * guarantees "open" and "closed"; some endpoints emit richer notes, but we
- * stay conservative and treat anything non-closed as acknowledged-but-open.
- * Returns null for an unrecognized value so callers leave the record untouched.
+ * Maps a GeoReport v2 / SeeClickFix status onto our ReportStatus lifecycle.
+ *
+ * The GeoReport spec only guarantees "open" and "closed", but SeeClickFix (the
+ * provider behind every seeded API agency) and other vendors emit a richer set
+ * of intermediate states. We fold the common ones into our lifecycle:
+ *   - open / received          -> ACKNOWLEDGED (filed, agency aware, not started)
+ *   - acknowledged             -> ACKNOWLEDGED (agency has acknowledged it)
+ *   - in_progress / started    -> IN_PROGRESS  (agency is actively working it)
+ *   - closed / resolved        -> RESOLVED     (issue resolved)
+ *
+ * The returned status is only ever *applied* through the poller's monotonic
+ * STATUS_RANK + isForwardTransition guard (see the poll-status route), so a
+ * vendor reporting an earlier state (e.g. "open" after a human moved the report
+ * to IN_PROGRESS) can never demote it; this function just normalizes the vendor
+ * vocabulary. Returns null for an unrecognized value so callers leave the
+ * record untouched.
  */
 export function mapOpen311Status(open311Status: string): ReportStatus | null {
   switch (open311Status.trim().toLowerCase()) {
     case "open":
+    case "received":
+    case "acknowledged":
       return ReportStatus.ACKNOWLEDGED;
+    case "in_progress":
+    case "in progress":
+    case "started":
+      return ReportStatus.IN_PROGRESS;
     case "closed":
+    case "resolved":
       return ReportStatus.RESOLVED;
     default:
       return null;

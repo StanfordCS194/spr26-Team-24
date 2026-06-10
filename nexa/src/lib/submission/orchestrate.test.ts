@@ -177,6 +177,91 @@ describe("orchestrateSubmission — API intake (automated)", () => {
   });
 });
 
+describe("orchestrateSubmission — un-fileable API agency (short-circuit, #250)", () => {
+  it("short-circuits to manual_assist with the intake link, never POSTing or claiming", async () => {
+    // Arrange: a SeeClickFix API agency with no jurisdictionId — its multi-tenant
+    // write path can't accept a POST (issue #239), so it cannot auto-file.
+    const { reportId } = stubReportWithAgency(
+      { userId: null },
+      {
+        intakeMethod: IntakeMethod.API,
+        name: "Menlo Park SeeClickFix (Open311)",
+        intakeUrl: "https://seeclickfix.com/open311/v2",
+        intakeEmail: null,
+        requiredFields: {
+          open311: {
+            endpoint: "https://seeclickfix.com/open311/v2",
+            serviceCodes: { ROAD_DAMAGE: "94213" },
+          },
+        },
+      },
+    );
+
+    // Act
+    const result = await orchestrateSubmission(reportId, {});
+
+    // Assert: immediate manual-assist carrying the SeeClickFix city report page.
+    expect(result).toEqual({
+      status: "manual_assist",
+      reportId,
+      intakeMethod: IntakeMethod.API,
+      agencyName: "Menlo Park SeeClickFix (Open311)",
+      intakeUrl: "https://seeclickfix.com/open311/v2",
+      intakeEmail: null,
+      intakePhone: null,
+    });
+    // No doomed POST, and the report is never claimed (stays CONFIRMED — not lost).
+    expect(submitToOpen311).not.toHaveBeenCalled();
+    expect(prismaMock.report.updateMany).not.toHaveBeenCalled();
+    expect(prismaMock.report.update).not.toHaveBeenCalled();
+  });
+
+  it("still auto-files an API agency whose config CAN auto-file (jurisdictionId present)", async () => {
+    // Arrange: a SeeClickFix agency that HAS a jurisdictionId can auto-file.
+    const { reportId } = stubReportWithAgency(
+      { userId: null },
+      {
+        intakeMethod: IntakeMethod.API,
+        intakeUrl: "https://seeclickfix.com/open311/v2",
+        requiredFields: {
+          open311: {
+            endpoint: "https://seeclickfix.com/open311/v2",
+            jurisdictionId: "org-12345",
+            serviceCodes: { ROAD_DAMAGE: "94213" },
+          },
+        },
+      },
+    );
+    prismaMock.report.updateMany.mockResolvedValue({ count: 1 } as never);
+    submitToOpen311.mockResolvedValue({
+      status: "submitted",
+      serviceRequestId: "SR-juris",
+      token: null,
+    });
+    prismaMock.report.update.mockResolvedValue(
+      makeReport({
+        id: reportId,
+        status: ReportStatus.SUBMITTED,
+        externalTrackingId: "SR-juris",
+      }) as never,
+    );
+
+    // Act
+    const result = await orchestrateSubmission(reportId, {});
+
+    // Assert: claimed, filed, and advanced — unchanged behaviour.
+    expect(result).toMatchObject({
+      status: "submitted",
+      externalTrackingId: "SR-juris",
+    });
+    expect(submitToOpen311).toHaveBeenCalledOnce();
+    expect(prismaMock.report.updateMany).toHaveBeenCalledWith({
+      where: { id: reportId, status: ReportStatus.CONFIRMED },
+      data: { status: ReportStatus.SUBMITTING },
+    });
+  });
+});
+
 describe("orchestrateSubmission — non-automated intake (graceful fallback)", () => {
   it.each([IntakeMethod.WEB_FORM, IntakeMethod.PHONE])(
     "returns manual_assist (not an error) for %s intake",

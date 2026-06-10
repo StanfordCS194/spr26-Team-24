@@ -6,6 +6,7 @@ import { TimeoutError } from "@/lib/http";
 
 import {
   buildRequestParams,
+  canAutoFileOpen311,
   fetchOpen311Status,
   mapOpen311Status,
   parseOpen311Config,
@@ -330,6 +331,58 @@ describe("parseOpen311Config", () => {
   });
 });
 
+describe("canAutoFileOpen311", () => {
+  it("is false for a multi-tenant SeeClickFix endpoint without a jurisdictionId", () => {
+    // The seeded SeeClickFix agencies omit jurisdictionId (issue #239), so a
+    // POST would 404 — they cannot auto-file.
+    expect(
+      canAutoFileOpen311(
+        { endpoint: "https://seeclickfix.com/open311/v2" },
+        "https://seeclickfix.com/open311/v2",
+      ),
+    ).toBe(false);
+  });
+
+  it("falls back to the agency intakeUrl to detect the SeeClickFix host", () => {
+    // No config endpoint, but the agency intakeUrl is the multi-tenant host.
+    expect(
+      canAutoFileOpen311(undefined, "https://seeclickfix.com/open311/v2"),
+    ).toBe(false);
+    // Trailing slash still resolves to the same host.
+    expect(
+      canAutoFileOpen311(undefined, "https://int.seeclickfix.com/open311/v2/"),
+    ).toBe(false);
+  });
+
+  it("is true for a SeeClickFix endpoint that has been given a jurisdictionId", () => {
+    expect(
+      canAutoFileOpen311(
+        {
+          endpoint: "https://seeclickfix.com/open311/v2",
+          jurisdictionId: "org-12345",
+        },
+        "https://seeclickfix.com/open311/v2",
+      ),
+    ).toBe(true);
+  });
+
+  it("is true for a single-tenant endpoint without a jurisdictionId", () => {
+    // A city's own GeoReport server doesn't multiplex jurisdictions, so it can
+    // auto-file without a jurisdiction_id.
+    expect(
+      canAutoFileOpen311(
+        { endpoint: "https://sandbox.open311.org/v2" },
+        "https://sandbox.open311.org/v2",
+      ),
+    ).toBe(true);
+  });
+
+  it("is false when no endpoint resolves at all", () => {
+    expect(canAutoFileOpen311(undefined, null)).toBe(false);
+    expect(canAutoFileOpen311({}, undefined)).toBe(false);
+  });
+});
+
 describe("mapOpen311Status", () => {
   it("maps open to ACKNOWLEDGED", () => {
     expect(mapOpen311Status("open")).toBe(ReportStatus.ACKNOWLEDGED);
@@ -339,10 +392,39 @@ describe("mapOpen311Status", () => {
     expect(mapOpen311Status("closed")).toBe(ReportStatus.RESOLVED);
   });
 
+  it("maps acknowledged and received to ACKNOWLEDGED", () => {
+    expect(mapOpen311Status("acknowledged")).toBe(ReportStatus.ACKNOWLEDGED);
+    expect(mapOpen311Status("received")).toBe(ReportStatus.ACKNOWLEDGED);
+  });
+
+  it("maps in_progress / in progress / started to IN_PROGRESS", () => {
+    expect(mapOpen311Status("in_progress")).toBe(ReportStatus.IN_PROGRESS);
+    expect(mapOpen311Status("in progress")).toBe(ReportStatus.IN_PROGRESS);
+    expect(mapOpen311Status("started")).toBe(ReportStatus.IN_PROGRESS);
+  });
+
+  it("maps resolved (a SeeClickFix synonym for closed) to RESOLVED", () => {
+    expect(mapOpen311Status("resolved")).toBe(ReportStatus.RESOLVED);
+  });
+
   it("is case-insensitive and trims surrounding whitespace", () => {
     // Arrange / Act / Assert
     expect(mapOpen311Status("  OPEN  ")).toBe(ReportStatus.ACKNOWLEDGED);
     expect(mapOpen311Status("Closed")).toBe(ReportStatus.RESOLVED);
+    expect(mapOpen311Status("  In_Progress ")).toBe(ReportStatus.IN_PROGRESS);
+    expect(mapOpen311Status("ACKNOWLEDGED")).toBe(ReportStatus.ACKNOWLEDGED);
+  });
+
+  it("returns the new mappings in monotonically non-decreasing rank order", () => {
+    // The poller only applies a mapped status through the STATUS_RANK /
+    // isForwardTransition guard; these mappings must sit in the right order so a
+    // later vendor state never ranks below an earlier one.
+    expect(STATUS_RANK[mapOpen311Status("acknowledged")!]).toBeLessThan(
+      STATUS_RANK[mapOpen311Status("in_progress")!],
+    );
+    expect(STATUS_RANK[mapOpen311Status("in_progress")!]).toBeLessThan(
+      STATUS_RANK[mapOpen311Status("resolved")!],
+    );
   });
 
   it("returns null for an unrecognized status", () => {
