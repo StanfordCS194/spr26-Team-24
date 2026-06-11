@@ -1,8 +1,8 @@
 {
   "mode": "readiness",
-  "datasetSize": 20,
+  "datasetSize": 34,
   "target": 0.9,
-  "ranAt": "2026-06-10T09:36:52.013Z",
+  "ranAt": "2026-06-11T01:59:39.593Z",
   "results": [
     {
       "caseId": "road-pa-01",
@@ -12,6 +12,11 @@
       "agencyId": "city-palo-alto::Palo Alto 311",
       "agencyName": "Palo Alto 311",
       "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -27,6 +32,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "web form intake resolvable; all required fields filled."
     },
     {
@@ -37,6 +43,11 @@
       "agencyId": "city-mountain-view::Mountain View Public Works",
       "agencyName": "Mountain View Public Works",
       "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.mountainview.gov/our-city/departments/public-works",
+      "candidateNames": [
+        "Mountain View Public Works"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -52,6 +63,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "web form intake resolvable; all required fields filled."
     },
     {
@@ -62,6 +74,11 @@
       "agencyId": "county-santa-clara-unincorporated::Santa Clara County Public Works",
       "agencyName": "Santa Clara County Public Works",
       "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://roads.santaclaracounty.gov/services/service-requests",
+      "candidateNames": [
+        "Santa Clara County Public Works"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -77,6 +94,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "web form intake resolvable; all required fields filled."
     },
     {
@@ -87,6 +105,12 @@
       "agencyId": "city-menlo-park::Menlo Park SeeClickFix (Open311)",
       "agencyName": "Menlo Park SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Menlo Park ACT",
+        "Menlo Park SeeClickFix (Open311)"
+      ],
+      "disambiguation": "More than one office handles this here. Which should we file your report with?",
       "serviceCode": "94213",
       "missingFields": [],
       "fieldChecks": [
@@ -107,6 +131,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "[ambiguous routing -> chose Menlo Park SeeClickFix (Open311)] API intake reached; GeoReport v2 body fully populated."
     },
     {
@@ -117,6 +142,11 @@
       "agencyId": "city-palo-alto::Palo Alto 311",
       "agencyName": "Palo Alto 311",
       "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -132,6 +162,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "web form intake resolvable; all required fields filled."
     },
     {
@@ -142,6 +173,11 @@
       "agencyId": "city-palo-alto::Palo Alto 311",
       "agencyName": "Palo Alto 311",
       "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -157,6 +193,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "web form intake resolvable; all required fields filled."
     },
     {
@@ -167,6 +204,11 @@
       "agencyId": "city-mountain-view::Mountain View Public Works",
       "agencyName": "Mountain View Public Works",
       "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.mountainview.gov/our-city/departments/public-works",
+      "candidateNames": [
+        "Mountain View Public Works"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -182,6 +224,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "web form intake resolvable; all required fields filled."
     },
     {
@@ -192,6 +235,12 @@
       "agencyId": "city-menlo-park::Menlo Park SeeClickFix (Open311)",
       "agencyName": "Menlo Park SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Menlo Park ACT",
+        "Menlo Park SeeClickFix (Open311)"
+      ],
+      "disambiguation": "More than one office handles this here. Which should we file your report with?",
       "serviceCode": "94210",
       "missingFields": [],
       "fieldChecks": [
@@ -212,6 +261,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "[ambiguous routing -> chose Menlo Park SeeClickFix (Open311)] API intake reached; GeoReport v2 body fully populated."
     },
     {
@@ -222,6 +272,11 @@
       "agencyId": "city-palo-alto::Palo Alto 311",
       "agencyName": "Palo Alto 311",
       "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -237,6 +292,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "web form intake resolvable; all required fields filled."
     },
     {
@@ -247,6 +303,11 @@
       "agencyId": "city-palo-alto::CARB Smoking Vehicle Complaint",
       "agencyName": "CARB Smoking Vehicle Complaint",
       "intakeMethod": "PHONE",
+      "intakeTarget": "(800) 242-4450",
+      "candidateNames": [
+        "CARB Smoking Vehicle Complaint"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -272,6 +333,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "phone hotline intake resolvable; all required fields filled."
     },
     {
@@ -282,6 +344,11 @@
       "agencyId": "city-palo-alto::CARB Smoking Vehicle Complaint",
       "agencyName": "CARB Smoking Vehicle Complaint",
       "intakeMethod": "PHONE",
+      "intakeTarget": "(800) 242-4450",
+      "candidateNames": [
+        "CARB Smoking Vehicle Complaint"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -307,6 +374,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "phone hotline intake resolvable; all required fields filled."
     },
     {
@@ -317,6 +385,11 @@
       "agencyId": "city-palo-alto::CARB Smoking Vehicle Complaint",
       "agencyName": "CARB Smoking Vehicle Complaint",
       "intakeMethod": "PHONE",
+      "intakeTarget": "(800) 242-4450",
+      "candidateNames": [
+        "CARB Smoking Vehicle Complaint"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [
         "license_plate"
@@ -344,6 +417,7 @@
         }
       ],
       "ready": false,
+      "excludedFromRate": false,
       "reason": "Required field(s) not populated from report."
     },
     {
@@ -354,6 +428,11 @@
       "agencyId": "city-east-palo-alto::East Palo Alto Public Works",
       "agencyName": "East Palo Alto Public Works",
       "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.cityofepa.org/contact",
+      "candidateNames": [
+        "East Palo Alto Public Works"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -369,6 +448,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "web form intake resolvable; all required fields filled."
     },
     {
@@ -379,6 +459,11 @@
       "agencyId": "city-east-palo-alto::East Palo Alto Clean City",
       "agencyName": "East Palo Alto Clean City",
       "intakeMethod": "EMAIL",
+      "intakeTarget": "cleancity@cityofepa.org",
+      "candidateNames": [
+        "East Palo Alto Clean City"
+      ],
+      "disambiguation": null,
       "serviceCode": null,
       "missingFields": [],
       "fieldChecks": [
@@ -394,6 +479,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "email intake resolvable; all required fields filled."
     },
     {
@@ -404,6 +490,11 @@
       "agencyId": "city-milpitas::Milpitas SeeClickFix (Open311)",
       "agencyName": "Milpitas SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Milpitas SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
       "serviceCode": "26652",
       "missingFields": [],
       "fieldChecks": [
@@ -424,6 +515,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "API intake reached; GeoReport v2 body fully populated."
     },
     {
@@ -434,6 +526,11 @@
       "agencyId": "city-morgan-hill::Morgan Hill SeeClickFix (Open311)",
       "agencyName": "Morgan Hill SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Morgan Hill SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
       "serviceCode": "38127",
       "missingFields": [],
       "fieldChecks": [
@@ -454,6 +551,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "API intake reached; GeoReport v2 body fully populated."
     },
     {
@@ -464,6 +562,11 @@
       "agencyId": "city-gilroy::Gilroy SeeClickFix (Open311)",
       "agencyName": "Gilroy SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Gilroy SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
       "serviceCode": "57748",
       "missingFields": [],
       "fieldChecks": [
@@ -484,6 +587,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "API intake reached; GeoReport v2 body fully populated."
     },
     {
@@ -494,6 +598,11 @@
       "agencyId": "city-watsonville::Watsonville SeeClickFix (Open311)",
       "agencyName": "Watsonville SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Watsonville SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
       "serviceCode": "50064",
       "missingFields": [],
       "fieldChecks": [
@@ -514,6 +623,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "API intake reached; GeoReport v2 body fully populated."
     },
     {
@@ -524,6 +634,11 @@
       "agencyId": "city-vallejo::Vallejo SeeClickFix (Open311)",
       "agencyName": "Vallejo SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Vallejo SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
       "serviceCode": "3613",
       "missingFields": [],
       "fieldChecks": [
@@ -544,6 +659,7 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "API intake reached; GeoReport v2 body fully populated."
     },
     {
@@ -554,6 +670,11 @@
       "agencyId": "city-san-leandro::San Leandro SeeClickFix (Open311)",
       "agencyName": "San Leandro SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "San Leandro SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
       "serviceCode": "53607",
       "missingFields": [],
       "fieldChecks": [
@@ -574,19 +695,481 @@
         }
       ],
       "ready": true,
+      "excludedFromRate": false,
       "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "graffiti-mp-act-21-webform",
+      "issueType": "GRAFFITI",
+      "resolved": true,
+      "disambiguated": true,
+      "agencyId": "city-menlo-park::Menlo Park ACT",
+      "agencyName": "Menlo Park ACT",
+      "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.menlopark.gov/Services/ACT-Menlo-Park",
+      "candidateNames": [
+        "Menlo Park ACT",
+        "Menlo Park SeeClickFix (Open311)"
+      ],
+      "disambiguation": "More than one office handles this here. Which should we file your report with?",
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "[ambiguous routing -> chose Menlo Park ACT] web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "light-mv-22-webform",
+      "issueType": "STREETLIGHT_OUTAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-mountain-view::Mountain View Public Works",
+      "agencyName": "Mountain View Public Works",
+      "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.mountainview.gov/our-city/departments/public-works",
+      "candidateNames": [
+        "Mountain View Public Works"
+      ],
+      "disambiguation": null,
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "signal-scc-23-webform",
+      "issueType": "TRAFFIC_SIGNAL",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "county-santa-clara-unincorporated::Santa Clara County Public Works",
+      "agencyName": "Santa Clara County Public Works",
+      "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://roads.santaclaracounty.gov/services/service-requests",
+      "candidateNames": [
+        "Santa Clara County Public Works"
+      ],
+      "disambiguation": null,
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "sidewalk-epa-pw-24-webform",
+      "issueType": "SIDEWALK_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-east-palo-alto::East Palo Alto Public Works",
+      "agencyName": "East Palo Alto Public Works",
+      "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.cityofepa.org/contact",
+      "candidateNames": [
+        "East Palo Alto Public Works"
+      ],
+      "disambiguation": null,
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "flood-mil-25-api",
+      "issueType": "FLOODING_DRAINAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-milpitas::Milpitas SeeClickFix (Open311)",
+      "agencyName": "Milpitas SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Milpitas SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
+      "serviceCode": "26645",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "vehicle-mil-26-api",
+      "issueType": "ABANDONED_VEHICLE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-milpitas::Milpitas SeeClickFix (Open311)",
+      "agencyName": "Milpitas SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Milpitas SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
+      "serviceCode": "26639",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "road-mh-27-api",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-morgan-hill::Morgan Hill SeeClickFix (Open311)",
+      "agencyName": "Morgan Hill SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Morgan Hill SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
+      "serviceCode": "38109",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "park-gil-28-api",
+      "issueType": "PARKING",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-gilroy::Gilroy SeeClickFix (Open311)",
+      "agencyName": "Gilroy SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Gilroy SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
+      "serviceCode": "64773",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "sidewalk-wat-29-api",
+      "issueType": "SIDEWALK_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-watsonville::Watsonville SeeClickFix (Open311)",
+      "agencyName": "Watsonville SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Watsonville SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
+      "serviceCode": "50066",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "code-val-30-api",
+      "issueType": "CODE_ENFORCEMENT",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-vallejo::Vallejo SeeClickFix (Open311)",
+      "agencyName": "Vallejo SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "Vallejo SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
+      "serviceCode": "4718",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "tree-sl-31-api",
+      "issueType": "TREE_MAINTENANCE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-san-leandro::San Leandro SeeClickFix (Open311)",
+      "agencyName": "San Leandro SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "intakeTarget": "https://seeclickfix.com/open311/v2",
+      "candidateNames": [
+        "San Leandro SeeClickFix (Open311)"
+      ],
+      "disambiguation": null,
+      "serviceCode": "53558",
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "service_code",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location(lat+long|address_string)",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "API intake reached; GeoReport v2 body fully populated."
+    },
+    {
+      "caseId": "road-boundary-pa-vs-epa-32",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::Palo Alto 311",
+      "agencyName": "Palo Alto 311",
+      "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "disambiguation": null,
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": true
+        }
+      ],
+      "ready": true,
+      "excludedFromRate": false,
+      "reason": "web form intake resolvable; all required fields filled."
+    },
+    {
+      "caseId": "graffiti-pa-33-missing-required",
+      "issueType": "GRAFFITI",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::Palo Alto 311",
+      "agencyName": "Palo Alto 311",
+      "intakeMethod": "WEB_FORM",
+      "intakeTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "disambiguation": null,
+      "serviceCode": null,
+      "missingFields": [
+        "location_address"
+      ],
+      "fieldChecks": [
+        {
+          "field": "description",
+          "required": true,
+          "satisfied": true
+        },
+        {
+          "field": "location_address",
+          "required": true,
+          "satisfied": false
+        }
+      ],
+      "ready": false,
+      "excludedFromRate": false,
+      "reason": "Required field(s) not populated from report."
+    },
+    {
+      "caseId": "road-outside-all-34",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": false,
+      "disambiguated": false,
+      "agencyId": null,
+      "agencyName": null,
+      "intakeMethod": null,
+      "intakeTarget": null,
+      "candidateNames": [],
+      "disambiguation": null,
+      "serviceCode": null,
+      "missingFields": [],
+      "fieldChecks": [],
+      "ready": false,
+      "excludedFromRate": true,
+      "reason": "Outside all served jurisdictions; resolved to no agency and handled gracefully (manual-assist)."
     }
   ],
   "metrics": {
-    "total": 20,
-    "ready": 19,
-    "readiness": 0.95,
-    "resolved": 20,
-    "coverage": 1,
+    "total": 34,
+    "scored": 33,
+    "ready": 31,
+    "readiness": 0.9393939393939394,
+    "resolved": 33,
+    "coverage": 0.9705882352941176,
+    "excluded": 1,
     "perCategory": {
       "ROAD_DAMAGE": {
-        "support": 8,
-        "ready": 8,
+        "support": 10,
+        "ready": 10,
         "readiness": 1
       },
       "ILLEGAL_DUMPING": {
@@ -600,20 +1183,60 @@
         "readiness": 0.6666666666666666
       },
       "STREETLIGHT_OUTAGE": {
+        "support": 3,
+        "ready": 3,
+        "readiness": 1
+      },
+      "GRAFFITI": {
+        "support": 2,
+        "ready": 1,
+        "readiness": 0.5
+      },
+      "TRAFFIC_SIGNAL": {
+        "support": 1,
+        "ready": 1,
+        "readiness": 1
+      },
+      "SIDEWALK_DAMAGE": {
         "support": 2,
         "ready": 2,
+        "readiness": 1
+      },
+      "FLOODING_DRAINAGE": {
+        "support": 1,
+        "ready": 1,
+        "readiness": 1
+      },
+      "ABANDONED_VEHICLE": {
+        "support": 1,
+        "ready": 1,
+        "readiness": 1
+      },
+      "PARKING": {
+        "support": 1,
+        "ready": 1,
+        "readiness": 1
+      },
+      "CODE_ENFORCEMENT": {
+        "support": 1,
+        "ready": 1,
+        "readiness": 1
+      },
+      "TREE_MAINTENANCE": {
+        "support": 1,
+        "ready": 1,
         "readiness": 1
       }
     },
     "perIntakeMethod": {
       "WEB_FORM": {
-        "support": 8,
-        "ready": 8,
-        "readiness": 1
+        "support": 14,
+        "ready": 13,
+        "readiness": 0.9285714285714286
       },
       "API": {
-        "support": 8,
-        "ready": 8,
+        "support": 15,
+        "ready": 15,
         "readiness": 1
       },
       "PHONE": {

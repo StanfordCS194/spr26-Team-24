@@ -82,12 +82,18 @@ const AGENCY_ROWS: AgencyRow[] = AGENCIES.map((a) => ({
 
 const agencyById = new Map(AGENCY_ROWS.map((a) => [a.id, a]));
 
+// `resolveAgencyId` queries by { jurisdiction, issueTypes: { has } }, selecting
+// only `id`. `resolveAgencyCandidates` (the disambiguation robustness path)
+// queries the SAME table by { id: { in: candidates } }, ordering by name. The
+// stub answers both shapes off `AGENCY_ROWS` so the harness can drive either
+// production function without a live DB.
 type FindManyArgs = {
   where?: {
     jurisdiction?: string;
     issueTypes?: { has?: string };
+    id?: { in?: string[] };
   };
-  orderBy?: { id?: "asc" | "desc" };
+  orderBy?: { id?: "asc" | "desc" } | { name?: "asc" | "desc" };
 };
 
 const prismaStub = {
@@ -95,21 +101,42 @@ const prismaStub = {
     async findMany(args: FindManyArgs) {
       const jurisdiction = args.where?.jurisdiction;
       const issueType = args.where?.issueTypes?.has;
+      const idIn = args.where?.id?.in;
       let rows = AGENCY_ROWS.filter(
         (a) =>
           (jurisdiction === undefined || a.jurisdiction === jurisdiction) &&
           (issueType === undefined ||
             a.issueTypes.includes(
               issueType as AgencySeed["issueTypes"][number],
-            )),
+            )) &&
+          (idIn === undefined || idIn.includes(a.id)),
       );
-      const dir = args.orderBy?.id ?? "asc";
-      rows = rows
-        .slice()
-        .sort((a, b) =>
-          dir === "desc" ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id),
-        );
-      return rows.map((a) => ({ id: a.id }));
+      const order = args.orderBy ?? { id: "asc" };
+      if ("name" in order && order.name) {
+        const dir = order.name;
+        rows = rows
+          .slice()
+          .sort((a, b) =>
+            dir === "desc"
+              ? b.name.localeCompare(a.name)
+              : a.name.localeCompare(b.name),
+          );
+      } else {
+        const dir = ("id" in order && order.id) || "asc";
+        rows = rows
+          .slice()
+          .sort((a, b) =>
+            dir === "desc"
+              ? b.id.localeCompare(a.id)
+              : a.id.localeCompare(b.id),
+          );
+      }
+      return rows.map((a) => ({
+        id: a.id,
+        name: a.name,
+        jurisdiction: a.jurisdiction,
+        intakeMethod: a.intakeMethod,
+      }));
     },
   },
 };
@@ -123,7 +150,10 @@ const prismaStub = {
 type AgencyModule = typeof import("../src/lib/jurisdictions/agency");
 type Open311Module = typeof import("../src/lib/submission/open311");
 type EmailModule = typeof import("../src/lib/submission/email");
-let resolveAgencyId: AgencyModule["resolveAgencyId"];
+// `resolveAgencyCandidates` internally calls the production `resolveAgencyId`
+// (which our Prisma stub backs), so we drive the candidate resolver directly and
+// get both the routing decision and the ambiguity candidate set from one call.
+let resolveAgencyCandidates: AgencyModule["resolveAgencyCandidates"];
 let parseOpen311Config: Open311Module["parseOpen311Config"];
 let canAutoFileOpen311: Open311Module["canAutoFileOpen311"];
 let submitToOpen311: Open311Module["submitToOpen311"];
@@ -133,7 +163,7 @@ async function loadDeps(): Promise<void> {
   const agency = await import("../src/lib/jurisdictions/agency");
   const open311 = await import("../src/lib/submission/open311");
   const email = await import("../src/lib/submission/email");
-  resolveAgencyId = agency.resolveAgencyId;
+  resolveAgencyCandidates = agency.resolveAgencyCandidates;
   parseOpen311Config = open311.parseOpen311Config;
   canAutoFileOpen311 = open311.canAutoFileOpen311;
   submitToOpen311 = open311.submitToOpen311;
@@ -170,6 +200,22 @@ interface SubmissionCase {
   issueType: IssueType;
   note?: string;
   report: SubmissionReport;
+  /**
+   * Optional routing assertion (mirrors eval/readiness.ts). When set, the case
+   * resolves to (or has among its ambiguity candidates) an agency with this
+   * exact `name`, and that agency is the one filed/handed-off with. Pins the
+   * filing path to a SPECIFIC agency that the default API-preferred
+   * disambiguation would otherwise skip (e.g. the Menlo Park ACT WEB_FORM desk).
+   */
+  expectAgencyName?: string;
+  /**
+   * Robustness case: the location is OUTSIDE all served jurisdictions, so it
+   * MUST resolve to no agency. The harness asserts no agency resolves and
+   * records a "no_agency" handled outcome — NOT a filing failure (so it does not
+   * trip the 100%-of-auto-fileable gate). Proves out-of-area reports degrade
+   * gracefully instead of crashing.
+   */
+  expectNoAgency?: boolean;
 }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -223,7 +269,7 @@ function makeResendStub(caseId: string) {
 // Per-case filing
 // ---------------------------------------------------------------------------
 
-type Outcome = "filed" | "manual_assist" | "failed";
+type Outcome = "filed" | "manual_assist" | "no_agency" | "failed";
 
 interface CaseResult {
   caseId: string;
@@ -236,6 +282,12 @@ interface CaseResult {
   intakeMethod: string | null;
   /** The channel the filing agent actually used, when it filed. */
   channel: "API" | "EMAIL" | null;
+  /**
+   * For a manual_assist handoff: the intake target the user is pointed at — the
+   * agency's form URL, intake email, or hotline phone. Asserted non-null, so the
+   * dataset proves every un-fileable channel still surfaces a real destination.
+   */
+  manualAssistTarget: string | null;
   outcome: Outcome;
   trackingId: string | null;
   reason: string;
@@ -247,10 +299,13 @@ interface CaseResult {
  * otherwise (ambiguous routing: `agencyId` null with multiple `candidates`) we
  * prefer an API agency (the machine-submittable channel), else the first by id.
  */
-function chooseAgency(resolution: {
-  agencyId: string | null;
-  candidates: string[];
-}): { agency: AgencyRow | undefined; disambiguated: boolean } {
+function chooseAgency(
+  resolution: {
+    agencyId: string | null;
+    candidates: string[];
+  },
+  expectAgencyName?: string,
+): { agency: AgencyRow | undefined; disambiguated: boolean } {
   if (resolution.agencyId) {
     return {
       agency: agencyById.get(resolution.agencyId),
@@ -263,18 +318,76 @@ function chooseAgency(resolution: {
   const rows = resolution.candidates
     .map((id) => agencyById.get(id))
     .filter((a): a is AgencyRow => a !== undefined);
+  // A case may PIN filing to a specific covering agency the default
+  // API-preferred disambiguation would otherwise skip (e.g. Menlo Park ACT).
+  if (expectAgencyName) {
+    const pinned = rows.find((a) => a.name === expectAgencyName);
+    if (pinned) return { agency: pinned, disambiguated: true };
+  }
   const api = rows.find((a) => a.intakeMethod === "API");
   return { agency: api ?? rows[0], disambiguated: true };
 }
 
+/** Resolves an agency's usable manual-assist target (URL, email, or hotline). */
+function manualAssistTargetOf(agency: AgencyRow): string | null {
+  if (agency.intakeUrl) return agency.intakeUrl;
+  if (agency.intakeEmail) return agency.intakeEmail;
+  const rf = agency.requiredFields;
+  if (rf && typeof rf === "object") {
+    const phone = (rf as { contact_phone?: unknown }).contact_phone;
+    if (phone && typeof phone === "object") {
+      const value = (phone as { value?: unknown }).value;
+      if (typeof value === "string" && value.trim()) return value.trim();
+    }
+  }
+  return null;
+}
+
 async function fileCase(c: SubmissionCase): Promise<CaseResult> {
-  const resolution = await resolveAgencyId({
+  // Reuse the production candidate resolver (same call drives both the routing
+  // decision and the ambiguity candidate set), mirroring eval/readiness.ts.
+  const disambig = await resolveAgencyCandidates({
     latitude: c.report.latitude,
     longitude: c.report.longitude,
     issueType: c.issueType,
   });
+  const resolution = {
+    agencyId: disambig.agencyId,
+    candidates: disambig.candidates.map((d) => d.id),
+  };
 
-  const { agency, disambiguated } = chooseAgency(resolution);
+  // Robustness: an outside-all-jurisdictions location MUST resolve to no agency.
+  // Record a handled "no_agency" outcome — never "failed" — so out-of-area
+  // reports degrade gracefully and do not trip the auto-fileable filing gate.
+  if (c.expectNoAgency) {
+    if (disambig.candidates.length > 0) {
+      throw new Error(
+        `[${c.id}] expected NO agency (outside all jurisdictions) but resolved candidates [${disambig.candidates
+          .map((d) => d.name)
+          .join(", ")}].`,
+      );
+    }
+    return {
+      caseId: c.id,
+      issueType: c.issueType,
+      resolved: false,
+      disambiguated: false,
+      agencyId: null,
+      agencyName: null,
+      intakeMethod: null,
+      channel: null,
+      manualAssistTarget: null,
+      outcome: "no_agency",
+      reason:
+        "Outside all served jurisdictions; no agency resolved — handled gracefully (manual-assist), not a filing failure.",
+      trackingId: null,
+    };
+  }
+
+  const { agency, disambiguated } = chooseAgency(
+    resolution,
+    c.expectAgencyName,
+  );
   if (!agency) {
     return {
       caseId: c.id,
@@ -285,12 +398,21 @@ async function fileCase(c: SubmissionCase): Promise<CaseResult> {
       agencyName: null,
       intakeMethod: null,
       channel: null,
+      manualAssistTarget: null,
       outcome: "failed",
       reason: "No agency covers this jurisdiction + issue type.",
       trackingId: null,
     };
   }
 
+  // Assert the pinned-agency expectation when set.
+  if (c.expectAgencyName && agency.name !== c.expectAgencyName) {
+    throw new Error(
+      `[${c.id}] expected agency "${c.expectAgencyName}" but filed/handed-off with "${agency.name}".`,
+    );
+  }
+
+  const manualAssistTarget = manualAssistTargetOf(agency);
   const base = {
     caseId: c.id,
     issueType: c.issueType,
@@ -299,6 +421,9 @@ async function fileCase(c: SubmissionCase): Promise<CaseResult> {
     agencyId: agency.id,
     agencyName: agency.name,
     intakeMethod: agency.intakeMethod,
+    // The intake destination a manual handoff would point at. Always resolvable
+    // for a submittable agency; asserted non-null on every manual_assist below.
+    manualAssistTarget,
   };
 
   const tag = (reason: string): string =>
@@ -313,13 +438,14 @@ async function fileCase(c: SubmissionCase): Promise<CaseResult> {
     // jurisdiction_id on a multi-tenant SeeClickFix endpoint — #239/#250) degrade
     // to manual-assist BEFORE any POST. That is the correct, honest outcome.
     if (!canAutoFileOpen311(config, agency.intakeUrl)) {
+      assertManualAssistTarget(c.id, agency.name, manualAssistTarget);
       return {
         ...base,
         channel: null,
         outcome: "manual_assist",
         trackingId: null,
         reason: tag(
-          "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist.",
+          `Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at ${manualAssistTarget}.`,
         ),
       };
     }
@@ -426,15 +552,33 @@ async function fileCase(c: SubmissionCase): Promise<CaseResult> {
   }
 
   // --- WEB_FORM / PHONE: no automated agent — correct manual-assist handoff. --
+  assertManualAssistTarget(c.id, agency.name, manualAssistTarget);
   return {
     ...base,
     channel: null,
     outcome: "manual_assist",
     trackingId: null,
     reason: tag(
-      `${agency.intakeMethod} intake has no automated filing agent; handed off to manual-assist.`,
+      `${agency.intakeMethod} intake has no automated filing agent; handed off to manual-assist at ${manualAssistTarget}.`,
     ),
   };
+}
+
+/**
+ * A manual-assist handoff is only useful if it names WHERE to file. Every
+ * submittable agency exposes a web-form URL, an intake email, or a published
+ * hotline (PHONE intake), so a null target means the seed is broken — fail loud.
+ */
+function assertManualAssistTarget(
+  caseId: string,
+  agencyName: string,
+  target: string | null,
+): void {
+  if (!target) {
+    throw new Error(
+      `[${caseId}] manual-assist handoff to "${agencyName}" has no intake target (URL/email/phone).`,
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -444,6 +588,7 @@ async function fileCase(c: SubmissionCase): Promise<CaseResult> {
 interface ChannelBreakdown {
   filed: number;
   manualAssist: number;
+  noAgency: number;
   failed: number;
 }
 
@@ -451,9 +596,11 @@ interface SubmissionMetrics {
   total: number;
   filed: number;
   manualAssist: number;
+  /** Outside-all-jurisdictions cases handled gracefully (no agency, not a failure). */
+  noAgency: number;
   failed: number;
   autoFileable: number;
-  /** filed / (filed + failed) — manual_assist excluded from the denominator. */
+  /** filed / (filed + failed) — manual_assist and no_agency excluded from the denominator. */
   filingSuccessRate: number;
   /** Per intake method: how each channel resolved. */
   perChannel: Record<string, ChannelBreakdown>;
@@ -464,15 +611,22 @@ function aggregate(results: CaseResult[]): SubmissionMetrics {
   const manualAssist = results.filter(
     (r) => r.outcome === "manual_assist",
   ).length;
+  const noAgency = results.filter((r) => r.outcome === "no_agency").length;
   const failed = results.filter((r) => r.outcome === "failed").length;
   const autoFileable = filed + failed;
 
   const perChannel: Record<string, ChannelBreakdown> = {};
   for (const r of results) {
     const key = r.intakeMethod ?? "<unrouted>";
-    const c = perChannel[key] ?? { filed: 0, manualAssist: 0, failed: 0 };
+    const c = perChannel[key] ?? {
+      filed: 0,
+      manualAssist: 0,
+      noAgency: 0,
+      failed: 0,
+    };
     if (r.outcome === "filed") c.filed++;
     else if (r.outcome === "manual_assist") c.manualAssist++;
+    else if (r.outcome === "no_agency") c.noAgency++;
     else c.failed++;
     perChannel[key] = c;
   }
@@ -481,6 +635,7 @@ function aggregate(results: CaseResult[]): SubmissionMetrics {
     total: results.length,
     filed,
     manualAssist,
+    noAgency,
     failed,
     autoFileable,
     filingSuccessRate: autoFileable === 0 ? 0 : filed / autoFileable,
@@ -495,14 +650,14 @@ function renderReport(metrics: SubmissionMetrics): string {
     `Filing success (auto-fileable): ${(metrics.filingSuccessRate * 100).toFixed(1)}%  (${metrics.filed}/${metrics.autoFileable})  target 100%`,
   );
   lines.push(
-    `Outcomes: ${metrics.filed} filed · ${metrics.manualAssist} manual-assist · ${metrics.failed} failed  (n=${metrics.total})`,
+    `Outcomes: ${metrics.filed} filed · ${metrics.manualAssist} manual-assist · ${metrics.noAgency} no-agency(out-of-area) · ${metrics.failed} failed  (n=${metrics.total})`,
   );
 
   lines.push("\nPer-intake-method breakdown:");
   for (const m of Object.keys(metrics.perChannel).sort()) {
     const v = metrics.perChannel[m];
     lines.push(
-      `  ${m.padEnd(12)} filed=${v.filed}  manual_assist=${v.manualAssist}  failed=${v.failed}`,
+      `  ${m.padEnd(12)} filed=${v.filed}  manual_assist=${v.manualAssist}  no_agency=${v.noAgency}  failed=${v.failed}`,
     );
   }
 
@@ -533,7 +688,11 @@ async function main() {
     const r = await fileCase(cases[i]);
     results.push(r);
     const mark =
-      r.outcome === "filed" ? "✓" : r.outcome === "manual_assist" ? "↪" : "✗";
+      r.outcome === "filed"
+        ? "✓"
+        : r.outcome === "manual_assist" || r.outcome === "no_agency"
+          ? "↪"
+          : "✗";
     const where = r.agencyName ?? "<unrouted>";
     const idPart = r.trackingId ? ` id=${r.trackingId}` : "";
     console.log(

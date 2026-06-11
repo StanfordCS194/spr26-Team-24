@@ -1,8 +1,8 @@
 {
   "mode": "submission",
-  "datasetSize": 20,
+  "datasetSize": 34,
   "target": 1,
-  "ranAt": "2026-06-10T21:59:10.122Z",
+  "ranAt": "2026-06-11T01:59:40.343Z",
   "results": [
     {
       "caseId": "road-pa-01",
@@ -12,10 +12,11 @@
       "agencyId": "city-palo-alto::Palo Alto 311",
       "agencyName": "Palo Alto 311",
       "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist."
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311."
     },
     {
       "caseId": "road-mv-02",
@@ -25,10 +26,11 @@
       "agencyId": "city-mountain-view::Mountain View Public Works",
       "agencyName": "Mountain View Public Works",
       "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.mountainview.gov/our-city/departments/public-works",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist."
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.mountainview.gov/our-city/departments/public-works."
     },
     {
       "caseId": "road-scc-03",
@@ -38,10 +40,11 @@
       "agencyId": "county-santa-clara-unincorporated::Santa Clara County Public Works",
       "agencyName": "Santa Clara County Public Works",
       "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://roads.santaclaracounty.gov/services/service-requests",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist."
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://roads.santaclaracounty.gov/services/service-requests."
     },
     {
       "caseId": "road-mp-04-api",
@@ -51,10 +54,11 @@
       "agencyId": "city-menlo-park::Menlo Park SeeClickFix (Open311)",
       "agencyName": "Menlo Park SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "[ambiguous routing -> chose Menlo Park SeeClickFix (Open311)] Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist."
+      "reason": "[ambiguous routing -> chose Menlo Park SeeClickFix (Open311)] Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
     },
     {
       "caseId": "road-pa-05-aifallback",
@@ -64,10 +68,11 @@
       "agencyId": "city-palo-alto::Palo Alto 311",
       "agencyName": "Palo Alto 311",
       "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist."
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311."
     },
     {
       "caseId": "dump-pa-06",
@@ -77,10 +82,11 @@
       "agencyId": "city-palo-alto::Palo Alto 311",
       "agencyName": "Palo Alto 311",
       "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist."
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311."
     },
     {
       "caseId": "dump-mv-07",
@@ -90,10 +96,11 @@
       "agencyId": "city-mountain-view::Mountain View Public Works",
       "agencyName": "Mountain View Public Works",
       "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.mountainview.gov/our-city/departments/public-works",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist."
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.mountainview.gov/our-city/departments/public-works."
     },
     {
       "caseId": "dump-mp-08-api",
@@ -103,10 +110,11 @@
       "agencyId": "city-menlo-park::Menlo Park SeeClickFix (Open311)",
       "agencyName": "Menlo Park SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "[ambiguous routing -> chose Menlo Park SeeClickFix (Open311)] Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist."
+      "reason": "[ambiguous routing -> chose Menlo Park SeeClickFix (Open311)] Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
     },
     {
       "caseId": "dump-pa-09-nophoto",
@@ -116,10 +124,11 @@
       "agencyId": "city-palo-alto::Palo Alto 311",
       "agencyName": "Palo Alto 311",
       "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist."
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311."
     },
     {
       "caseId": "emit-pa-10",
@@ -129,10 +138,11 @@
       "agencyId": "city-palo-alto::CARB Smoking Vehicle Complaint",
       "agencyName": "CARB Smoking Vehicle Complaint",
       "intakeMethod": "PHONE",
+      "manualAssistTarget": "(800) 242-4450",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "PHONE intake has no automated filing agent; handed off to manual-assist."
+      "reason": "PHONE intake has no automated filing agent; handed off to manual-assist at (800) 242-4450."
     },
     {
       "caseId": "emit-pa-11",
@@ -142,10 +152,11 @@
       "agencyId": "city-palo-alto::CARB Smoking Vehicle Complaint",
       "agencyName": "CARB Smoking Vehicle Complaint",
       "intakeMethod": "PHONE",
+      "manualAssistTarget": "(800) 242-4450",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "PHONE intake has no automated filing agent; handed off to manual-assist."
+      "reason": "PHONE intake has no automated filing agent; handed off to manual-assist at (800) 242-4450."
     },
     {
       "caseId": "emit-pa-12-incomplete",
@@ -155,10 +166,11 @@
       "agencyId": "city-palo-alto::CARB Smoking Vehicle Complaint",
       "agencyName": "CARB Smoking Vehicle Complaint",
       "intakeMethod": "PHONE",
+      "manualAssistTarget": "(800) 242-4450",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "PHONE intake has no automated filing agent; handed off to manual-assist."
+      "reason": "PHONE intake has no automated filing agent; handed off to manual-assist at (800) 242-4450."
     },
     {
       "caseId": "road-epa-13",
@@ -168,10 +180,11 @@
       "agencyId": "city-east-palo-alto::East Palo Alto Public Works",
       "agencyName": "East Palo Alto Public Works",
       "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.cityofepa.org/contact",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist."
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.cityofepa.org/contact."
     },
     {
       "caseId": "dump-epa-14",
@@ -181,6 +194,7 @@
       "agencyId": "city-east-palo-alto::East Palo Alto Clean City",
       "agencyName": "East Palo Alto Clean City",
       "intakeMethod": "EMAIL",
+      "manualAssistTarget": "cleancity@cityofepa.org",
       "channel": "EMAIL",
       "outcome": "filed",
       "trackingId": "email-dump-epa-14",
@@ -194,10 +208,11 @@
       "agencyId": "city-milpitas::Milpitas SeeClickFix (Open311)",
       "agencyName": "Milpitas SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist."
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
     },
     {
       "caseId": "dump-mh-16-api",
@@ -207,10 +222,11 @@
       "agencyId": "city-morgan-hill::Morgan Hill SeeClickFix (Open311)",
       "agencyName": "Morgan Hill SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist."
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
     },
     {
       "caseId": "light-gil-17-api",
@@ -220,10 +236,11 @@
       "agencyId": "city-gilroy::Gilroy SeeClickFix (Open311)",
       "agencyName": "Gilroy SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist."
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
     },
     {
       "caseId": "road-wat-18-api",
@@ -233,10 +250,11 @@
       "agencyId": "city-watsonville::Watsonville SeeClickFix (Open311)",
       "agencyName": "Watsonville SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist."
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
     },
     {
       "caseId": "dump-val-19-api",
@@ -246,10 +264,11 @@
       "agencyId": "city-vallejo::Vallejo SeeClickFix (Open311)",
       "agencyName": "Vallejo SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist."
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
     },
     {
       "caseId": "light-sl-20-api",
@@ -259,38 +278,246 @@
       "agencyId": "city-san-leandro::San Leandro SeeClickFix (Open311)",
       "agencyName": "San Leandro SeeClickFix (Open311)",
       "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
       "channel": null,
       "outcome": "manual_assist",
       "trackingId": null,
-      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist."
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
+    },
+    {
+      "caseId": "graffiti-mp-act-21-webform",
+      "issueType": "GRAFFITI",
+      "resolved": true,
+      "disambiguated": true,
+      "agencyId": "city-menlo-park::Menlo Park ACT",
+      "agencyName": "Menlo Park ACT",
+      "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.menlopark.gov/Services/ACT-Menlo-Park",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "[ambiguous routing -> chose Menlo Park ACT] WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.menlopark.gov/Services/ACT-Menlo-Park."
+    },
+    {
+      "caseId": "light-mv-22-webform",
+      "issueType": "STREETLIGHT_OUTAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-mountain-view::Mountain View Public Works",
+      "agencyName": "Mountain View Public Works",
+      "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.mountainview.gov/our-city/departments/public-works",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.mountainview.gov/our-city/departments/public-works."
+    },
+    {
+      "caseId": "signal-scc-23-webform",
+      "issueType": "TRAFFIC_SIGNAL",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "county-santa-clara-unincorporated::Santa Clara County Public Works",
+      "agencyName": "Santa Clara County Public Works",
+      "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://roads.santaclaracounty.gov/services/service-requests",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://roads.santaclaracounty.gov/services/service-requests."
+    },
+    {
+      "caseId": "sidewalk-epa-pw-24-webform",
+      "issueType": "SIDEWALK_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-east-palo-alto::East Palo Alto Public Works",
+      "agencyName": "East Palo Alto Public Works",
+      "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.cityofepa.org/contact",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.cityofepa.org/contact."
+    },
+    {
+      "caseId": "flood-mil-25-api",
+      "issueType": "FLOODING_DRAINAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-milpitas::Milpitas SeeClickFix (Open311)",
+      "agencyName": "Milpitas SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
+    },
+    {
+      "caseId": "vehicle-mil-26-api",
+      "issueType": "ABANDONED_VEHICLE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-milpitas::Milpitas SeeClickFix (Open311)",
+      "agencyName": "Milpitas SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
+    },
+    {
+      "caseId": "road-mh-27-api",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-morgan-hill::Morgan Hill SeeClickFix (Open311)",
+      "agencyName": "Morgan Hill SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
+    },
+    {
+      "caseId": "park-gil-28-api",
+      "issueType": "PARKING",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-gilroy::Gilroy SeeClickFix (Open311)",
+      "agencyName": "Gilroy SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
+    },
+    {
+      "caseId": "sidewalk-wat-29-api",
+      "issueType": "SIDEWALK_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-watsonville::Watsonville SeeClickFix (Open311)",
+      "agencyName": "Watsonville SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
+    },
+    {
+      "caseId": "code-val-30-api",
+      "issueType": "CODE_ENFORCEMENT",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-vallejo::Vallejo SeeClickFix (Open311)",
+      "agencyName": "Vallejo SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
+    },
+    {
+      "caseId": "tree-sl-31-api",
+      "issueType": "TREE_MAINTENANCE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-san-leandro::San Leandro SeeClickFix (Open311)",
+      "agencyName": "San Leandro SeeClickFix (Open311)",
+      "intakeMethod": "API",
+      "manualAssistTarget": "https://seeclickfix.com/open311/v2",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "Open311 config cannot auto-file (no usable jurisdiction_id for multi-tenant endpoint); handed off to manual-assist at https://seeclickfix.com/open311/v2."
+    },
+    {
+      "caseId": "road-boundary-pa-vs-epa-32",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::Palo Alto 311",
+      "agencyName": "Palo Alto 311",
+      "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311."
+    },
+    {
+      "caseId": "graffiti-pa-33-missing-required",
+      "issueType": "GRAFFITI",
+      "resolved": true,
+      "disambiguated": false,
+      "agencyId": "city-palo-alto::Palo Alto 311",
+      "agencyName": "Palo Alto 311",
+      "intakeMethod": "WEB_FORM",
+      "manualAssistTarget": "https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311",
+      "channel": null,
+      "outcome": "manual_assist",
+      "trackingId": null,
+      "reason": "WEB_FORM intake has no automated filing agent; handed off to manual-assist at https://www.paloalto.gov/Residents/Services/Report-an-Issue/Palo-Alto-311."
+    },
+    {
+      "caseId": "road-outside-all-34",
+      "issueType": "ROAD_DAMAGE",
+      "resolved": false,
+      "disambiguated": false,
+      "agencyId": null,
+      "agencyName": null,
+      "intakeMethod": null,
+      "channel": null,
+      "manualAssistTarget": null,
+      "outcome": "no_agency",
+      "reason": "Outside all served jurisdictions; no agency resolved — handled gracefully (manual-assist), not a filing failure.",
+      "trackingId": null
     }
   ],
   "metrics": {
-    "total": 20,
+    "total": 34,
     "filed": 1,
-    "manualAssist": 19,
+    "manualAssist": 32,
+    "noAgency": 1,
     "failed": 0,
     "autoFileable": 1,
     "filingSuccessRate": 1,
     "perChannel": {
       "WEB_FORM": {
         "filed": 0,
-        "manualAssist": 8,
+        "manualAssist": 14,
+        "noAgency": 0,
         "failed": 0
       },
       "API": {
         "filed": 0,
-        "manualAssist": 8,
+        "manualAssist": 15,
+        "noAgency": 0,
         "failed": 0
       },
       "PHONE": {
         "filed": 0,
         "manualAssist": 3,
+        "noAgency": 0,
         "failed": 0
       },
       "EMAIL": {
         "filed": 1,
         "manualAssist": 0,
+        "noAgency": 0,
+        "failed": 0
+      },
+      "<unrouted>": {
+        "filed": 0,
+        "manualAssist": 0,
+        "noAgency": 1,
         "failed": 0
       }
     }

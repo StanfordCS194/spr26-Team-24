@@ -200,28 +200,44 @@ The harness exits non-zero when readiness falls below the **≥90% K3 target**
 regressions. CI now runs this step and a committed baseline lives at
 `eval/results/readiness.json` (un-ignored via `nexa/.gitignore`).
 
-### Baseline
+### Baseline (after the 11-municipality e2e-coverage expansion)
+
+The dataset was expanded so every one of the 11 served municipalities has each
+of its agencies exercised for required-field filling, plus robustness cases
+(boundary side-of-seam, missing-required negative controls, and an
+outside-all-jurisdictions case). The outside-jurisdiction case is **excluded
+from the readiness rate** (there is no intake to fill) but still runs to prove
+graceful no-agency handling.
 
 | Metric                  | Value         |
 | ----------------------- | ------------- |
-| Submission readiness    | **91.7%** (11/12) — PASS vs ≥90% |
-| Routed (reached agency) | 100.0% (12/12) |
+| Submission readiness    | **93.9%** (31/33) — PASS vs ≥90% |
+| Routed (reached agency) | 97.1% (33/34) |
+| Excluded (out-of-area)  | 1 (outside all jurisdictions) |
 
-| Issue type        | Support | Readiness |
-| ----------------- | ------- | --------- |
-| ROAD_DAMAGE       | 5       | 100.0%    |
-| ILLEGAL_DUMPING   | 4       | 100.0%    |
-| VEHICLE_EMISSIONS | 3       | 66.7%     |
+| Issue type         | Support | Readiness |
+| ------------------ | ------- | --------- |
+| ROAD_DAMAGE        | 10      | 100.0%    |
+| ILLEGAL_DUMPING    | 7       | 100.0%    |
+| STREETLIGHT_OUTAGE | 3       | 100.0%    |
+| SIDEWALK_DAMAGE    | 2       | 100.0%    |
+| GRAFFITI           | 2       | 50.0%     |
+| VEHICLE_EMISSIONS  | 3       | 66.7%     |
+| ABANDONED_VEHICLE / CODE_ENFORCEMENT / FLOODING_DRAINAGE / PARKING / TRAFFIC_SIGNAL / TREE_MAINTENANCE | 1 each | 100.0% |
 
 | Intake method | Support | Readiness |
 | ------------- | ------- | --------- |
-| API           | 2       | 100.0%    |
-| WEB_FORM      | 7       | 100.0%    |
+| API           | 15      | 100.0%    |
+| WEB_FORM      | 14      | 92.9%     |
+| EMAIL         | 1       | 100.0%    |
 | PHONE         | 3       | 66.7%     |
 
-The single not-ready case (`emit-pa-12-incomplete`) is an intentionally
-incomplete CARB smoking-vehicle report missing required vehicle fields — it
-keeps the dataset honest about the floor. Above the 90% gate.
+The not-ready cases are intentional negative controls that keep the dataset
+honest about the floor: `emit-pa-12-incomplete` (CARB smoking-vehicle report
+missing required vehicle fields, PHONE) and `graffiti-pa-33-missing-required`
+(Palo Alto 311 report with no `location_address`, WEB_FORM) — each proves the
+required-field gate actually fails when a required value is absent. Above the
+90% gate.
 
 ### How to reproduce
 
@@ -250,19 +266,28 @@ and there must be ≥1 auto-fileable case; the harness exits non-zero otherwise,
 the CI `eval` job fails on a regression. A committed baseline lives at
 `eval/results/submission.json` (un-ignored via `nexa/.gitignore`).
 
-### Baseline
+### Baseline (after the 11-municipality e2e-coverage expansion)
 
 | Metric                              | Value                          |
 | ----------------------------------- | ------------------------------ |
 | Filing success (auto-fileable)      | **100.0%** (1/1) — PASS         |
-| Outcomes                            | 1 filed · 19 manual-assist · 0 failed (n=20) |
+| Outcomes                            | 1 filed · 32 manual-assist · 1 no-agency(out-of-area) · 0 failed (n=34) |
 
-| Intake method | filed | manual_assist | failed |
-| ------------- | ----- | ------------- | ------ |
-| API           | 0     | 8             | 0      |
-| EMAIL         | 1     | 0             | 0      |
-| PHONE         | 0     | 3             | 0      |
-| WEB_FORM      | 0     | 8             | 0      |
+| Intake method | filed | manual_assist | no_agency | failed |
+| ------------- | ----- | ------------- | --------- | ------ |
+| API           | 0     | 15            | 0         | 0      |
+| EMAIL         | 1     | 0             | 0         | 0      |
+| PHONE         | 0     | 3             | 0         | 0      |
+| WEB_FORM      | 0     | 14            | 0         | 0      |
+| (unrouted)    | 0     | 0             | 1         | 0      |
+
+Every `manual_assist` handoff is now asserted to carry a non-null intake target
+(the agency's form URL, intake email, or hotline phone), so the dataset proves
+each un-fileable channel still surfaces a real destination to file at. The
+`no_agency` case is the outside-all-jurisdictions robustness report (Pacific
+Ocean off the California coast): it resolves to no agency and is handled
+gracefully — counted separately, NOT as a filing failure, so it does not trip
+the 100%-of-auto-fileable gate.
 
 Honest channel breakdown: **EMAIL is the only channel that auto-files today** —
 East Palo Alto Clean City files via Resend (`dump-epa-14`). Every seeded
