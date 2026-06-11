@@ -28,6 +28,8 @@ interface SubmissionFieldsResponse {
     intakeMethod: string;
   } | null;
   formUrl?: string | null;
+  /** The user's own override link, when they provided one (#289). */
+  customAgencyUrl?: string | null;
   fields: PrefillField[];
 }
 
@@ -267,33 +269,47 @@ export function SubmissionAssistant({
     );
   }
 
-  if (!fields.agency || fields.fields.length === 0) {
+  // Render the guide when we have fields and somewhere to send the user: either
+  // a matched agency or the user's own override link.
+  if (
+    fields.fields.length === 0 ||
+    (!fields.agency && !fields.customAgencyUrl)
+  ) {
     return null;
   }
 
   // PHONE-intake agencies (e.g. the CARB smoking-vehicle hotline) have no online
   // form — the user calls the number surfaced below — so the copy adapts. (#193)
-  const isPhone = fields.agency.intakeMethod === "PHONE";
+  const isPhone = fields.agency?.intakeMethod === "PHONE";
+  const usingCustomLink = !!fields.customAgencyUrl;
+  // Where to send the user: their own link wins (the route already prefers it
+  // for `formUrl`, but be explicit so the label stays correct).
+  const destinationUrl = fields.customAgencyUrl ?? fields.formUrl ?? null;
+  const destinationName = fields.agency?.name ?? "the agency you linked";
 
   return (
     <div className="ep-card w-full max-w-md p-6 text-left">
       <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-        File with {fields.agency.name}
+        File with {destinationName}
       </span>
       <p className="mt-2 text-sm text-muted-foreground">
-        {isPhone
-          ? "Nexa doesn't submit for you. Call the number below and read off each value to file your report."
-          : "Nexa doesn't submit for you. Open the official form and copy each value below into the matching field."}
+        {usingCustomLink
+          ? "Nexa doesn't submit for you. Open the link you provided and copy each value below into the matching field."
+          : isPhone
+            ? "Nexa doesn't submit for you. Call the number below and read off each value to file your report."
+            : "Nexa doesn't submit for you. Open the official form and copy each value below into the matching field."}
       </p>
 
-      {fields.formUrl && (
+      {destinationUrl && (
         <a
-          href={fields.formUrl}
+          href={destinationUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-3 inline-flex items-center gap-1.5 text-sm text-ep-purple underline-offset-4 hover:underline"
         >
-          Open {fields.agency.name} form
+          {usingCustomLink
+            ? "Open the link you provided"
+            : `Open ${destinationName} form`}
           <ExternalLink className="size-3.5" />
         </a>
       )}
