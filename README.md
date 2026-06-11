@@ -1,32 +1,45 @@
 # Nexa
 
-A full-stack Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, etc.). AI-powered classification compares results across multiple LLMs to make the best judgment, and an official city form lookup surfaces the correct 311 / Report-an-Issue page for the user's location.
+A full-stack Next.js application for reporting and tracking civic issues (road damage, streetlight outages, illegal dumping, graffiti, and more). A resident photographs a problem, Nexa classifies it with a multi-LLM consensus engine, routes it to the responsible city agency, and either files it automatically (Open311 / email) or hands the resident a pre-filled submission assistant for the official city portal — then tracks the report's status to resolution.
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui
 - **Backend**: Next.js API Routes (under `src/app/api/`)
 - **AI Classification**: Multi-provider consensus engine (OpenAI GPT-4o-mini, Anthropic Claude Haiku 4.5, Google Gemini 2.5 Flash)
 - **Database**: PostgreSQL (Neon on Vercel, Docker for local dev), Prisma ORM
-- **Address Autocomplete**: Google Places API (with Nominatim fallback)
-- **Civic Form Lookup**: OpenAI Responses API with `web_search_preview` tool
-- **Telemetry**: PostHog (passive event tracking, session replays)
-- **Auth**: JWT-based sessions (jose)
-- **Deployment**: Vercel (auto-deploys from `main`)
-- **CI**: GitHub Actions (lint, type-check, format check on PRs)
+- **Submission**: Open311 GeoReport v2 client, email submission agent (Resend), and a manual-assist / submission-assistant fallback for web-form & phone intake
+- **Routing**: Polygon-based jurisdiction registry + agency resolver, with an LLM web-search fallback for official city form lookup
+- **Maps**: Leaflet (community issue map + dashboard pins)
+- **Auth**: JWT sessions (jose); optional "Continue with Google" OAuth; optional anonymous reporting with account upgrade
+- **i18n**: 4 languages — English, Español, 中文, Français
+- **Notifications**: Brevo (citizen email), optional Web Push (VAPID)
+- **Storage**: optional S3 / Cloudflare R2 image pipeline (base64 fallback)
+- **Telemetry**: PostHog; optional Sentry error tracking
+- **PWA**: installable, with an offline report queue + service worker
+- **Testing**: Vitest (unit/integration), Playwright (e2e), custom offline eval harnesses
+- **Deployment**: Vercel (auto-deploys from `main`), Vercel Cron for status polling
+- **CI**: GitHub Actions (lint, type-check, format, tests + coverage gate, eval gates, production build, e2e)
 
 ## Features
 
-- **Report submission wizard** — describe an issue with text, photo, or both; detect GPS location or type an address with autocomplete suggestions
-- **Multi-LLM AI classification** — three providers classify in parallel; a consensus engine picks the best result; the review step shows a comparison panel
-- **Official city form lookup** — after classification, Nexa finds the official 311 / Report-an-Issue page for the user's city and surfaces a direct link (Nexa never sends data to the external site)
-- **Dashboard** — personal history of submitted reports with status tracking, category labels, and two-step report deletion
-- **Auth** — register, login, and session-aware navbar
-- **Address autocomplete** — Google Places suggestions (falls back to Nominatim when `GOOGLE_MAPS_API_KEY` is unset)
+- **Report submission wizard** — describe an issue with text, photo, or both; detect GPS location, type an address with autocomplete, or pull location from a photo's EXIF GPS
+- **Multi-LLM AI classification** — three providers classify in parallel and a consensus engine picks the best result; the review step shows a per-model comparison panel
+- **Auto issue detection** — uploading a photo pre-fills an editable AI-suggested description and detected issue type
+- **Jurisdiction routing** — coordinates are matched to the responsible agency via a polygon registry, so each report is addressed to the correct city/department
+- **Automated submission** — files reports to agencies via Open311 (GeoReport v2) or email where supported; falls back to a **submission assistant** that pre-fills every required field for the official city portal so the resident can copy them over (Nexa never silently submits where it can't)
+- **Custom agency link override** — if auto-routing is wrong, the resident can supply their own link; Nexa checks whether it points at a submittable form (SSRF-guarded)
+- **Status tracking** — a Vercel Cron job polls Open311 and advances report status (never regressing), plus a stale-report follow-up prompt
+- **Community issue map** — reported issues shown as status-colored pins, with duplicate detection (nearby same-type reports group into one case) and shared resolution (resolving one resolves it for everyone linked)
+- **Dashboard** — personal report history with status, category labels, map pins, and two-step deletion
+- **Admin analytics** — submission/failure-rate dashboard with breakdowns
+- **Auth** — register/login, optional Google sign-in, optional anonymous reporting that can later be claimed
+- **Multilingual UI** — full interface translations across four languages
+- **PWA + offline** — installable to a phone home screen; reports queued offline replay on reconnect
 
 ## AI Classification — How It Works
 
-When a user submits a report, the `/api/reports/classify` endpoint sends the image and description to **three LLM providers in parallel**:
+When a user submits a report, `/api/reports/classify` sends the image and description to **three LLM providers in parallel**:
 
 | Provider | Model | Strengths |
 |---|---|---|
@@ -39,167 +52,195 @@ A **consensus engine** then picks the best result:
 1. **Unanimous** — all 3 agree on the issue type → use the highest-confidence answer
 2. **Majority** — 2 of 3 agree → use the majority answer with highest confidence
 3. **Highest confidence** — all disagree → use the single most confident result
-4. **Fallback** — all providers fail → return "OTHER" for manual review
+4. **Fallback** — all providers fail → return `OTHER` for manual review
 
-The review step shows the user the winning classification **and** a comparison panel showing how each model responded, including latency and confidence scores.
+Classification spans **18 civic issue categories** (road damage, streetlight outage, illegal dumping, graffiti, flooding/drainage, abandoned vehicle, and more). The review step shows the winning classification **and** a comparison panel with each model's latency and confidence.
+
+## Routing & Submission — How It Works
+
+1. **Resolve jurisdiction** — the report's coordinates are tested against a curated polygon registry to find the responsible jurisdiction and agency (`src/lib/jurisdictions/`).
+2. **Pick an intake channel** — the orchestrator (`src/lib/submission/orchestrate.ts`) chooses how to file based on the agency's configured intake method:
+   - **Open311 API** → builds a GeoReport v2 request and submits, returning a tracking id.
+   - **Email** → composes a report email (photo attached) via Resend.
+   - **Web form / phone** → no automated path, so it hands off to the **submission assistant**, which pre-fills the official portal's required fields for the resident to copy over.
+3. **Track status** — `GET /api/cron/poll-status` (Vercel Cron, `CRON_SECRET`-guarded, fail-closed) polls Open311 for submitted reports and advances their status monotonically.
+
+External submission features are **env-gated**: with the relevant keys unset, the agent is a no-op and the flow degrades gracefully to manual-assist rather than failing.
 
 ## Project Structure
 
 ```
 spr26-Team-24/
-├── docker-compose.yml        # PostgreSQL database (local dev)
-├── .github/workflows/ci.yml  # CI pipeline
-└── nexa/                     # Next.js application
+├── docker-compose.yml          # PostgreSQL database (local dev)
+├── .github/workflows/ci.yml    # CI: lint/typecheck, tests+coverage, eval gates, build, e2e
+└── nexa/                       # Next.js application
     ├── src/
-    │   ├── app/              # Pages and API routes
+    │   ├── app/
     │   │   ├── api/
-    │   │   │   ├── auth/             # Login, register, logout, session
-    │   │   │   ├── health/           # Health check endpoint
-    │   │   │   ├── location/
-    │   │   │   │   └── suggest/      # Address autocomplete (Google Places / Nominatim)
-    │   │   │   └── reports/
-    │   │   │       ├── route.ts      # POST — create a report
-    │   │   │       ├── classify/     # POST — multi-LLM classification
-    │   │   │       ├── form-link/    # POST — official city form lookup
-    │   │   │       └── [id]/         # DELETE — remove a report (owner only)
-    │   │   ├── dashboard/    # Report tracking dashboard
-    │   │   ├── login/        # Login page
-    │   │   ├── register/     # Registration page
-    │   │   └── report/       # Report submission flow
-    │   ├── components/
-    │   │   ├── dashboard/
-    │   │   │   └── delete-report-button.tsx
-    │   │   ├── report/
-    │   │   │   ├── describe-step.tsx   # Step 1: description + photo + location
-    │   │   │   ├── review-step.tsx     # Step 2: AI result + form link + edit
-    │   │   │   ├── confirmed-step.tsx  # Step 3: confirmation
-    │   │   │   └── stepper.tsx         # Progress indicator
-    │   │   └── ui/           # shadcn/ui primitives
+    │   │   │   ├── auth/             # register, login, logout, me, claim, google
+    │   │   │   ├── cron/poll-status/ # Open311 status polling (cron, secret-gated)
+    │   │   │   ├── health/           # DB health probe
+    │   │   │   ├── issues/map/        # community map data
+    │   │   │   ├── location/suggest/  # address autocomplete (Google Places / Nominatim)
+    │   │   │   ├── push/              # web push subscribe / unsubscribe
+    │   │   │   ├── reports/
+    │   │   │   │   ├── route.ts            # create a report (+ dedup grouping)
+    │   │   │   │   ├── classify/           # multi-LLM classification
+    │   │   │   │   ├── form-link/          # official city form lookup
+    │   │   │   │   ├── check-link/         # custom-link submittable-form check (SSRF-guarded)
+    │   │   │   │   ├── agency-candidates/  # disambiguate ambiguous routing
+    │   │   │   │   └── [id]/               # delete / submit / resolution / submission-fields
+    │   │   │   └── uploads/presign/   # presigned S3/R2 upload
+    │   │   ├── (auth)/ login/ register/   # auth pages
+    │   │   ├── admin/                # analytics dashboard
+    │   │   ├── dashboard/            # report tracking
+    │   │   ├── map/                  # community issue map
+    │   │   └── report/               # submission wizard
+    │   ├── components/   # report wizard, dashboard, map, auth, ui primitives
     │   ├── lib/
-    │   │   ├── classify/     # Multi-LLM classification engine
-    │   │   │   ├── types.ts           # Shared types and prompt
-    │   │   │   ├── openai-provider.ts
-    │   │   │   ├── anthropic-provider.ts
-    │   │   │   ├── google-provider.ts
-    │   │   │   └── consensus.ts       # Voting / comparison logic
-    │   │   ├── auth.ts       # JWT session helpers
-    │   │   ├── prisma.ts     # Prisma client singleton
-    │   │   ├── openai.ts     # OpenAI client (lazy init)
-    │   │   └── constants.ts  # Issue type labels, etc.
-    │   ├── hooks/
-    │   │   ├── use-geolocation.ts  # GPS detect + reverse geocode + setCoordinates
-    │   │   └── use-image-upload.ts # Photo upload / drag-drop
-    │   └── types/            # TypeScript type definitions
-    └── prisma/
-        ├── schema.prisma     # Database schema
-        └── migrations/       # Database migrations
+    │   │   ├── classify/     # multi-LLM engine (providers + consensus)
+    │   │   ├── submission/   # orchestrate, open311, email, prefill, link-check
+    │   │   ├── jurisdictions/# polygon registry + agency resolver
+    │   │   ├── issues/       # dedup + community map data
+    │   │   ├── reports/      # status machine, follow-up, dedup window
+    │   │   ├── push/ email/ admin/ api/ dashboard/
+    │   │   ├── auth.ts prisma.ts openai.ts rate-limit.ts http.ts
+    │   ├── hooks/            # geolocation, image upload, reports, link-check, speech
+    │   └── i18n/             # 4-language message catalog + provider
+    ├── prisma/              # schema, migrations, agency seed data
+    ├── eval/                # offline eval harnesses (routing, readiness, submission, e2e)
+    └── e2e/                 # Playwright specs
 ```
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v22 or later
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (optional — only needed for local Postgres; production uses Neon)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (optional — only for local Postgres; production uses Neon)
 
 ## Getting Started
 
-### 1. Clone the repository
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/StanfordCS194/spr26-Team-24.git
-cd spr26-Team-24
-```
-
-### 2. Install dependencies
-
-```bash
-cd nexa
+cd spr26-Team-24/nexa
 npm install
 ```
 
-### 3. Set up environment variables
+### 2. Configure environment
 
 ```bash
 cp .env.example .env.local
 ```
 
-Open `.env.local` and fill in your API keys. The app can connect to the production Neon database directly for local development (recommended), or you can run Postgres locally via Docker.
+Fill in your keys (see the table below). `.env.example` documents every variable inline, including which features each one gates.
 
-| Key | Required | Purpose |
-|---|---|---|
-| `DATABASE_URL` | Yes | PostgreSQL connection string (Neon or local Docker) |
-| `JWT_SECRET` | Yes | Session token signing |
-| `OPENAI_API_KEY` | Yes | GPT-4o-mini classification + civic form lookup |
-| `ANTHROPIC_API_KEY` | Yes | Claude Haiku 4.5 classification |
-| `GOOGLE_API_KEY` | Yes | Gemini 2.5 Flash classification |
-| `GOOGLE_MAPS_API_KEY` | Optional | Google Places address autocomplete (falls back to Nominatim) |
-| `NEXT_PUBLIC_POSTHOG_KEY` | For telemetry | PostHog analytics |
-| `NEXT_PUBLIC_POSTHOG_HOST` | For telemetry | PostHog region host |
+### 3. Generate the Prisma client
 
-For production deployment, see [`nexa/VERCEL_SETUP.md`](nexa/VERCEL_SETUP.md).
+```bash
+npx prisma generate
+```
+
+> Run this after install (and after pulling schema changes) — `tsc` and the dev server depend on the generated client.
 
 ### 4. Set up the database
 
-**Option A — Use the production Neon database (recommended for demo):**
-
-Set `DATABASE_URL` in `.env.local` to the Neon connection string, then run:
+**Option A — Neon (recommended for demo):** set `DATABASE_URL` to the Neon string, then:
 
 ```bash
-cd nexa
 npx prisma migrate deploy
 ```
 
 **Option B — Local Postgres via Docker:**
 
 ```bash
-# From repo root
+# from repo root
 docker compose up -d
-cd nexa
+# from nexa/
 npx prisma migrate dev
 ```
 
-### 5. Start the development server
+### 5. Run the app
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Daily Startup Checklist
+## Environment Variables
 
-After initial setup is done, use these commands each time you come back to the project:
+Only `DATABASE_URL`, `JWT_SECRET`, and the LLM keys are needed to run the core flow; everything else is optional and **env-gated** (the related feature is a no-op until its keys are set). Full inline docs live in [`nexa/.env.example`](nexa/.env.example).
 
-1. (If using local Docker DB) start the database from repo root:
+| Key | Required | Purpose |
+|---|---|---|
+| `DATABASE_URL` | Yes | PostgreSQL connection string (Neon or local Docker) |
+| `JWT_SECRET` | Yes | Session token signing |
+| `OPENAI_API_KEY` | Yes | GPT-4o-mini classification + civic form lookup |
+| `ANTHROPIC_API_KEY` | Yes* | Claude Haiku 4.5 (consensus classification) |
+| `GOOGLE_API_KEY` | Yes* | Gemini 2.5 Flash (consensus classification) |
+| `GOOGLE_MAPS_API_KEY` | Optional | Google Places autocomplete (falls back to Nominatim) |
+| `GOOGLE_OAUTH_CLIENT_ID` / `_SECRET` | Optional | "Continue with Google" sign-in |
+| `BREVO_API_KEY` / `BREVO_SENDER_EMAIL` | Optional | Citizen notification emails |
+| `RESEND_API_KEY` / `SUBMISSION_FROM_EMAIL` | Optional | Automated email submission to EMAIL-intake agencies |
+| `SUBMISSION_OVERRIDE_EMAIL` | Optional | Redirect all submission emails to one inbox (demo safety) |
+| `CRON_SECRET` | Optional | Guards the Open311 status-polling cron (fails closed if unset) |
+| `FOLLOW_UP_REMINDER_SECRET` | Optional | Guards the follow-up reminder job |
+| `RATE_LIMIT_MAX` / `RATE_LIMIT_WINDOW_MS` | Optional | Per-IP rate limit for expensive routes (defaults 20 / 60000ms) |
+| `VAPID_*` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Optional | Web push notifications |
+| `S3_*` | Optional | S3 / Cloudflare R2 image upload (base64 fallback) |
+| `SENTRY_DSN` | Optional | Server error tracking |
+| `NEXT_PUBLIC_POSTHOG_KEY` / `_HOST` | Optional | PostHog analytics |
+| `NEXT_PUBLIC_APP_URL` | Optional | App origin (links, OAuth redirects) |
+
+\* OpenAI alone is enough to run classification; Anthropic + Google enable the full 3-way consensus and comparison panel.
+
+For production deployment, see [`nexa/VERCEL_SETUP.md`](nexa/VERCEL_SETUP.md).
+
+## Testing & Evaluation
 
 ```bash
-docker compose up -d
+npm test               # Vitest unit + integration suite
+npm run test:coverage  # same suite with the coverage-threshold gate
+npm run test:e2e       # Playwright end-to-end specs (Chromium)
 ```
 
-2. Start the app (from `nexa/`):
+**Eval harnesses** (offline, deterministic — no network/LLM/DB; they back the CI quality gates):
 
 ```bash
-cd nexa
-npm run dev
+npm run eval:routing             # jurisdiction routing accuracy (O2.KR1)
+npm run eval:validate-boundaries # boundary GeoJSON consistency
+npm run eval:readiness           # submission-readiness: reach intake + fill fields (K3)
+npm run eval:end-to-end          # correct-agency-first-try accuracy (O1.KR1)
+npm run eval:submission          # submission-filing: the agent actually files (stubbed transport)
 ```
 
-3. Open the app:
-   - Usually [http://localhost:3000](http://localhost:3000)
-   - If port 3000 is already in use, Next.js will auto-pick another port (for example `http://localhost:3001`)
+See [`nexa/eval/README.md`](nexa/eval/README.md), [`nexa/e2e/README.md`](nexa/e2e/README.md), and [`nexa/src/test/README.md`](nexa/src/test/README.md) for details.
+
+## Continuous Integration
+
+GitHub Actions runs on every PR and push to `main` (`.github/workflows/ci.yml`):
+
+- **lint-and-typecheck** — ESLint, `tsc --noEmit`, Prettier check
+- **test** — full Vitest suite with a coverage-threshold (ratchet) gate; coverage published to the job summary
+- **eval** — routing, boundary-validation, readiness, end-to-end, and submission-filing gates (each fails the build below target)
+- **build** — real `next build` to catch server/client-boundary and page-data errors pre-merge
+- **e2e** — Playwright specs (deterministic, network stubbed)
 
 ## Useful Commands
 
 | Command | Description |
 |---|---|
 | `npm run dev` | Start the dev server (from `nexa/`) |
-| `npm run build` | Build for production (from `nexa/`) |
-| `npm run lint` | Run ESLint (from `nexa/`) |
-| `npm run format` | Format code with Prettier (from `nexa/`) |
-| `npm run format:check` | Check formatting without writing (from `nexa/`) |
-| `npx prisma studio` | Open a visual database browser (from `nexa/`) |
-| `npx prisma migrate dev` | Create and apply migrations locally (from `nexa/`) |
-| `npx prisma migrate deploy` | Apply pending migrations to production (from `nexa/`) |
-| `docker compose up -d` | Start the local database (from repo root) |
-| `docker compose down` | Stop the local database (from repo root) |
+| `npm run build` | Production build (from `nexa/`) |
+| `npm run lint` | ESLint |
+| `npm run format` / `format:check` | Prettier write / check |
+| `npm test` / `test:coverage` / `test:e2e` | Unit / coverage-gated / e2e tests |
+| `npm run eval:*` | Offline eval harnesses (see Testing & Evaluation) |
+| `npx prisma generate` | Regenerate the Prisma client |
+| `npx prisma studio` | Visual database browser |
+| `npx prisma migrate dev` / `migrate deploy` | Apply migrations locally / to production |
+| `docker compose up -d` / `down` | Start / stop the local database (from repo root) |
 
 ## Wiki
 
