@@ -16,6 +16,8 @@ const NAV_LINKS = [
   { href: "/#stats", labelKey: "nav.impact" },
 ] as const;
 
+const APP_CHROME_Z_CLASS = "z-[1100]";
+
 interface AuthUser {
   id: string;
   email: string;
@@ -55,7 +57,9 @@ export function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <nav
+      className={`sticky top-0 ${APP_CHROME_Z_CLASS} border-b border-border bg-background/80 backdrop-blur-md`}
+    >
       <div className="mx-auto grid h-[72px] max-w-[1440px] grid-cols-[auto_1fr_auto] items-center gap-6 px-6">
         <div className="justify-self-start">
           <Logo />
@@ -83,7 +87,7 @@ export function Navbar() {
                 href="/map"
                 className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground ${pathname === "/map" ? "text-foreground" : "text-muted-foreground"}`}
               >
-                Map
+                {t("nav.map")}
               </Link>
             </>
           )}
@@ -161,7 +165,7 @@ function UserMenu({
           side="bottom"
           align="end"
           sideOffset={10}
-          className="z-50"
+          className={APP_CHROME_Z_CLASS}
         >
           <Menu.Popup className="min-w-64 origin-(--transform-origin) overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/[0.04] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
             <div className="flex items-center gap-3 border-b border-border px-3 py-3">

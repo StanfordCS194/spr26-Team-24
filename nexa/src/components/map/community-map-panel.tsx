@@ -69,10 +69,9 @@ export default function CommunityMapPanel({
           className="size-8 text-muted-foreground"
           aria-hidden="true"
         />
-        <p className="text-lg">No community issues yet.</p>
+        <p className="text-lg">{t("map.emptyTitle")}</p>
         <p className="max-w-sm text-sm text-muted-foreground">
-          Reported issues with a location will appear here as pins, grouped so
-          duplicates from different people share one case.
+          {t("map.emptyHint")}
         </p>
       </div>
     );

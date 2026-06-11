@@ -3,14 +3,18 @@
 import { useEffect, useRef } from "react";
 import type { LatLngTuple, Map as LeafletMap } from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useI18n } from "@/i18n/provider";
+import { formatRelativeTime } from "@/lib/utils";
 
 export interface IssueMapPoint {
   id: string;
   latitude: number;
   longitude: number;
+  issueType: string | null;
   issueLabel: string;
   status: string;
   reportCount: number;
+  createdAt: string;
   relativeTime: string;
   /** 1-based sequence in the order the issue was first filed (1 = earliest). */
   order: number;
@@ -37,7 +41,7 @@ function statusColor(status: string): string {
   }
 }
 
-function formatStatus(status: string): string {
+function formatStatusFallback(status: string): string {
   return status
     .toLowerCase()
     .split("_")
@@ -52,6 +56,15 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function translatedOrFallback(
+  translate: (key: string) => string,
+  key: string,
+  fallback: string,
+): string {
+  const translated = translate(key);
+  return translated === key ? fallback : translated;
 }
 
 // Teardrop pin with the issue's filing-order number rendered inside the head.
@@ -88,6 +101,7 @@ interface CommunityMapProps {
  * it is still open — a "Mark resolved" button that resolves it for everyone.
  */
 export default function CommunityMap({ points, onResolve }: CommunityMapProps) {
+  const { locale, t } = useI18n();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
 
@@ -130,6 +144,23 @@ export default function CommunityMap({ points, onResolve }: CommunityMapProps) {
       for (const point of points) {
         const color = statusColor(point.status);
         const isResolved = TERMINAL_STATUSES.has(point.status);
+        const issueLabel = point.issueType
+          ? translatedOrFallback(
+              t,
+              `issue.${point.issueType}`,
+              point.issueLabel,
+            )
+          : point.issueLabel;
+        const statusLabel = translatedOrFallback(
+          t,
+          `status.${point.status}`,
+          formatStatusFallback(point.status),
+        );
+        const relativeTime = formatRelativeTime(
+          point.createdAt,
+          locale,
+          t("time.justNow"),
+        );
 
         const icon = L.divIcon({
           className: "nexa-map-pin",
@@ -142,41 +173,43 @@ export default function CommunityMap({ points, onResolve }: CommunityMapProps) {
         const popup = document.createElement("div");
         popup.className = "nexa-map-popup";
 
-        const reportsLabel =
-          point.reportCount === 1 ? "1 report" : `${point.reportCount} reports`;
+        const reportsLabel = t(
+          point.reportCount === 1 ? "map.reportSingular" : "map.reportPlural",
+          { count: point.reportCount },
+        );
 
         popup.innerHTML = `
-          <p class="nexa-map-popup__label">${escapeHtml(point.issueLabel)}</p>
+          <p class="nexa-map-popup__label">${escapeHtml(issueLabel)}</p>
           <div class="nexa-map-popup__meta">
-            <span class="nexa-map-popup__status nexa-map-popup__status--${isResolved ? "confirmed" : "pending"}">${escapeHtml(formatStatus(point.status))}</span>
+            <span class="nexa-map-popup__status nexa-map-popup__status--${isResolved ? "confirmed" : "pending"}">${escapeHtml(statusLabel)}</span>
             <span class="nexa-map-popup__time">${escapeHtml(reportsLabel)}</span>
           </div>
-          <p class="nexa-map-popup__time">First reported ${escapeHtml(point.relativeTime)}</p>
+          <p class="nexa-map-popup__time">${escapeHtml(t("map.firstReported", { time: relativeTime }))}</p>
         `;
 
         if (point.myReportId && !isResolved) {
           const button = document.createElement("button");
           button.type = "button";
           button.className = "nexa-map-popup__resolve";
-          button.textContent = "Mark resolved";
+          button.textContent = t("map.markResolved");
           button.addEventListener("click", async () => {
             const reportId = point.myReportId;
             if (!reportId) return;
             button.disabled = true;
-            button.textContent = "Resolving…";
+            button.textContent = t("map.resolving");
             try {
               await onResolveRef.current(reportId);
               map.closePopup();
             } catch {
               button.disabled = false;
-              button.textContent = "Mark resolved";
+              button.textContent = t("map.markResolved");
             }
           });
           popup.appendChild(button);
         } else if (isResolved) {
           const note = document.createElement("p");
           note.className = "nexa-map-popup__resolved-note";
-          note.textContent = "Resolved";
+          note.textContent = t("status.RESOLVED");
           popup.appendChild(note);
         }
 
@@ -201,7 +234,7 @@ export default function CommunityMap({ points, onResolve }: CommunityMapProps) {
         mapRef.current = null;
       }
     };
-  }, [points]);
+  }, [locale, points, t]);
 
   return (
     <div
@@ -211,7 +244,11 @@ export default function CommunityMap({ points, onResolve }: CommunityMapProps) {
       // navbar's account dropdown.
       className="isolate h-[calc(100vh-72px)] w-full"
       role="img"
-      aria-label={`Map showing ${points.length} community ${points.length === 1 ? "issue" : "issues"}`}
+      aria-label={t("map.aria", {
+        count: points.length,
+        issues:
+          points.length === 1 ? t("map.issueSingular") : t("map.issuePlural"),
+      })}
     />
   );
 }
