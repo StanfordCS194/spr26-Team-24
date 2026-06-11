@@ -6,6 +6,7 @@ import { ReviewStep } from "./review-step";
 
 type OfficialForm = Parameters<typeof ReviewStep>[0]["officialForm"];
 type Candidates = Parameters<typeof ReviewStep>[0]["agencyCandidates"];
+type LinkCheck = Parameters<typeof ReviewStep>[0]["linkCheck"];
 
 function baseProps() {
   return {
@@ -30,6 +31,8 @@ function baseProps() {
     onSelectAgency: vi.fn(),
     customAgencyUrl: "",
     onCustomAgencyUrlChange: vi.fn(),
+    linkCheck: null as LinkCheck,
+    linkCheckLoading: false,
     onDescriptionChange: vi.fn(),
     onAddressChange: vi.fn(),
     onBack: vi.fn(),
@@ -414,6 +417,78 @@ describe("ReviewStep", () => {
     // Assert
     expect(props.onCustomAgencyUrlChange).toHaveBeenCalledWith("x");
   });
+
+  it("shows no link-check feedback until the user has typed a link", () => {
+    // Arrange / Act: a verdict exists but the field is empty (e.g. cleared).
+    renderWithProviders(
+      <ReviewStep
+        {...baseProps()}
+        customAgencyUrl=""
+        linkCheck={{ status: "form_found", confidence: "high", signals: [] }}
+      />,
+    );
+
+    // Assert: nothing rendered for an empty field.
+    expect(
+      screen.queryByText("Looks like a submittable form."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the checking spinner text while the link check is in flight", () => {
+    // Arrange / Act
+    renderWithProviders(
+      <ReviewStep
+        {...baseProps()}
+        customAgencyUrl="https://city.gov/report"
+        linkCheckLoading
+      />,
+    );
+
+    // Assert
+    expect(screen.getByText("Checking link...")).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      "form_found",
+      { status: "form_found", confidence: "high", signals: [] },
+      "Looks like a submittable form.",
+    ],
+    [
+      "no_form",
+      { status: "no_form", reason: "no form" },
+      "We couldn't find a form at that link — double-check it.",
+    ],
+    [
+      "unreachable",
+      { status: "unreachable", reason: "boom" },
+      "That link doesn't work — double-check it.",
+    ],
+    [
+      "invalid_url",
+      { status: "invalid_url" },
+      "That doesn't look like a valid web link.",
+    ],
+  ] as const)(
+    "renders advisory feedback for the %s verdict",
+    (_label, verdict, expected) => {
+      // Arrange / Act
+      renderWithProviders(
+        <ReviewStep
+          {...baseProps()}
+          customAgencyUrl="https://city.gov/report"
+          linkCheck={verdict as LinkCheck}
+        />,
+      );
+
+      // Assert: the matching advisory message renders, and submit stays enabled
+      // (the check is purely advisory — it never blocks submission).
+      expect(screen.getByText(expected)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Submit Report/ }),
+      ).not.toBeDisabled();
+    },
+  );
 
   it("shows an informative message when the candidate list is empty", () => {
     // Arrange / Act: fetch succeeded but no agency covers this spot.

@@ -12,6 +12,7 @@ import { useImageUpload } from "@/hooks/use-image-upload";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { useAddressLookup } from "@/hooks/use-address-lookup";
 import { useFormLookup } from "@/hooks/use-form-lookup";
+import { useLinkCheck } from "@/hooks/use-link-check";
 import { useAgencyCandidates } from "@/hooks/use-agency-candidates";
 import { useReportSubmission } from "@/hooks/use-report-submission";
 import { useI18n } from "@/i18n/provider";
@@ -108,7 +109,20 @@ export default function ReportPage() {
   const geo = useGeolocation();
   const addressLookup = useAddressLookup();
   const formLookup = useFormLookup();
+  const linkCheck = useLinkCheck();
   const agencyCandidates = useAgencyCandidates();
+
+  // Wrong-agency override: as the user types/pastes a link, run the advisory
+  // submittable-form check (debounced inside the hook). Purely informational —
+  // never gates submit; the override is always stored verbatim.
+  const checkLink = linkCheck.check;
+  const handleCustomAgencyUrlChange = useCallback(
+    (value: string) => {
+      setCustomAgencyUrl(value);
+      checkLink(value);
+    },
+    [checkLink],
+  );
   const submission = useReportSubmission();
 
   // Latest values the auto-suggest effect needs to read without re-firing on
@@ -413,6 +427,7 @@ export default function ReportPage() {
     addressLookup.reset();
     submission.reset();
     formLookup.reset();
+    linkCheck.reset();
     agencyCandidates.reset();
     setSelectedAgencyId(null);
     setCustomAgencyUrl("");
@@ -478,7 +493,9 @@ export default function ReportPage() {
               selectedAgencyId={selectedAgencyId}
               onSelectAgency={setSelectedAgencyId}
               customAgencyUrl={customAgencyUrl}
-              onCustomAgencyUrlChange={setCustomAgencyUrl}
+              onCustomAgencyUrlChange={handleCustomAgencyUrlChange}
+              linkCheck={linkCheck.result}
+              linkCheckLoading={linkCheck.loading}
               onDescriptionChange={handleDescriptionChange}
               onAddressChange={geo.setAddress}
               onBack={() => setStep("describe")}

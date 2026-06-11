@@ -100,6 +100,21 @@ export const FormLinkRequestSchema = z.object({
 });
 export type FormLinkRequestInput = z.infer<typeof FormLinkRequestSchema>;
 
+/**
+ * `POST /api/reports/check-link` — verify a user-supplied custom agency link
+ * points at a submittable form. The URL bound mirrors `customAgencyUrl` on
+ * {@link CreateReportSchema} (a real http(s) URL, capped at 2048 chars). A
+ * malformed/empty URL is rejected here with a 400 rather than fetched.
+ */
+export const CheckLinkRequestSchema = z.object({
+  url: z
+    .string()
+    .trim()
+    .url({ error: "Enter a valid URL." })
+    .max(2048, { error: "URL must be at most 2048 characters." }),
+});
+export type CheckLinkRequestInput = z.infer<typeof CheckLinkRequestSchema>;
+
 /** `POST /api/auth/register` — create an account. */
 export const RegisterSchema = z.object({
   name: z.string().optional(),
