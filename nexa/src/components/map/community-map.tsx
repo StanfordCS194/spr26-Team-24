@@ -206,7 +206,10 @@ export default function CommunityMap({ points, onResolve }: CommunityMapProps) {
   return (
     <div
       ref={containerRef}
-      className="h-[calc(100vh-72px)] w-full"
+      // `isolate` keeps Leaflet's internal pane/control z-indexes (up to ~1000)
+      // from leaking into the root stacking context and painting over the
+      // navbar's account dropdown.
+      className="isolate h-[calc(100vh-72px)] w-full"
       role="img"
       aria-label={`Map showing ${points.length} community ${points.length === 1 ? "issue" : "issues"}`}
     />
