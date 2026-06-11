@@ -67,6 +67,68 @@ export function parseHttpUrl(raw: string): URL | null {
   return url;
 }
 
+/**
+ * True when `ip` is a private, loopback, link-local, or otherwise non-public
+ * address — the targets an SSRF attacker would aim at (internal services, the
+ * cloud metadata endpoint 169.254.169.254, etc.). Covers IPv4 literals and the
+ * common IPv6 cases. Best-effort string matching (no DNS); the caller pairs it
+ * with a resolution check on the production path.
+ */
+export function isPrivateIp(ip: string): boolean {
+  const host = ip
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .trim();
+
+  // IPv6 loopback / link-local / unique-local, and IPv4-mapped IPv6.
+  if (host === "::1" || host === "::") return true;
+  if (
+    host.startsWith("fe80:") ||
+    host.startsWith("fc") ||
+    host.startsWith("fd")
+  )
+    return true;
+  const mapped = host.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  const v4 = mapped ? mapped[1] : host;
+
+  const parts = v4.split(".");
+  if (parts.length === 4 && parts.every((p) => /^\d+$/.test(p))) {
+    const [a, b] = parts.map(Number);
+    if ([a, b].some((n) => n > 255)) return true; // malformed -> reject
+    if (a === 0 || a === 127) return true; // 0.0.0.0/8, loopback
+    if (a === 10) return true; // 10/8
+    if (a === 169 && b === 254) return true; // link-local + metadata
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16/12
+    if (a === 192 && b === 168) return true; // 192.168/16
+    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT 100.64/10
+    if (a >= 224) return true; // multicast / reserved
+  }
+  return false;
+}
+
+/**
+ * True when we must NOT fetch this hostname server-side: localhost-ish names,
+ * internal-only TLDs, single-label hosts (no public TLD), or a literal private
+ * IP. Blocks the obvious SSRF vectors without a DNS lookup.
+ */
+export function isBlockedHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/\.$/, "");
+  if (!host) return true;
+  if (host === "localhost") return true;
+  if (
+    host.endsWith(".localhost") ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal")
+  )
+    return true;
+  // Single-label hosts (no dot) aren't public domains — they resolve to
+  // internal names. Allow IPv6 literals (which contain ':') to fall through to
+  // the IP check below.
+  if (!host.includes(".") && !host.includes(":")) return true;
+  if (isPrivateIp(host)) return true;
+  return false;
+}
+
 /** Known gov-ish TLDs whose bot-protection 403/401 we treat as "likely a real form". */
 function isLikelyGovHost(hostname: string): boolean {
   const host = hostname.toLowerCase();
@@ -220,7 +282,32 @@ export async function checkSubmittableLink(
   const parsed = parseHttpUrl(url);
   if (!parsed) return { status: "invalid_url" };
 
+  // SSRF guard: never let a user-supplied link make the server fetch an
+  // internal/loopback/link-local target (e.g. 127.0.0.1, 10.x, 192.168.x, or
+  // the cloud metadata endpoint 169.254.169.254). Treat such links as invalid.
+  if (isBlockedHostname(parsed.hostname)) return { status: "invalid_url" };
+
   const { fetchImpl, timeoutMs = DEFAULT_HTTP_TIMEOUT_MS } = options;
+
+  // On the real path (no injected fetch), resolve the host and reject if it
+  // points at a private address — blocks a public domain aimed at an internal
+  // IP. Tests inject `fetchImpl`, so they skip this real DNS lookup.
+  if (!fetchImpl) {
+    try {
+      const { lookup } = await import("node:dns/promises");
+      const resolved = await lookup(parsed.hostname, { all: true });
+      if (resolved.some((entry) => isPrivateIp(entry.address))) {
+        return { status: "invalid_url" };
+      }
+    } catch {
+      // DNS failure -> the host doesn't resolve; report it as unreachable
+      // rather than fetching.
+      return {
+        status: "unreachable",
+        reason: "The link could not be reached.",
+      };
+    }
+  }
 
   let response: Response;
   try {

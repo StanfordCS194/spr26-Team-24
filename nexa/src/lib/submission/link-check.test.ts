@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   checkSubmittableLink,
   parseHttpUrl,
+  isPrivateIp,
+  isBlockedHostname,
   MAX_BODY_BYTES,
 } from "./link-check";
 import { TimeoutError } from "@/lib/http";
@@ -47,6 +49,65 @@ describe("parseHttpUrl", () => {
     [""],
   ])("rejects %s", (raw) => {
     expect(parseHttpUrl(raw)).toBeNull();
+  });
+});
+
+describe("SSRF guard", () => {
+  it("flags private / loopback / link-local addresses", () => {
+    for (const ip of [
+      "127.0.0.1",
+      "0.0.0.0",
+      "10.0.0.5",
+      "172.16.0.1",
+      "172.31.255.255",
+      "192.168.1.1",
+      "169.254.169.254", // cloud metadata
+      "100.64.0.1", // CGNAT
+      "::1",
+      "fe80::1",
+      "fd00::1",
+      "::ffff:127.0.0.1",
+    ]) {
+      expect(isPrivateIp(ip)).toBe(true);
+    }
+    for (const ip of ["8.8.8.8", "1.1.1.1", "172.32.0.1", "192.169.0.1"]) {
+      expect(isPrivateIp(ip)).toBe(false);
+    }
+  });
+
+  it("blocks localhost-ish and single-label hosts, allows public domains", () => {
+    for (const host of [
+      "localhost",
+      "app.localhost",
+      "router.local",
+      "service.internal",
+      "intranet", // single label
+      "127.0.0.1",
+      "169.254.169.254",
+    ]) {
+      expect(isBlockedHostname(host)).toBe(true);
+    }
+    for (const host of ["paloalto.gov", "seeclickfix.com", "8.8.8.8"]) {
+      expect(isBlockedHostname(host)).toBe(false);
+    }
+  });
+
+  it("returns invalid_url for an internal-IP link WITHOUT fetching", async () => {
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    const result = await checkSubmittableLink("http://169.254.169.254/latest", {
+      fetchImpl,
+    });
+    expect(result).toEqual({ status: "invalid_url" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("returns invalid_url for a localhost link without fetching", async () => {
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    const result = await checkSubmittableLink("http://localhost:8080/admin", {
+      fetchImpl,
+    });
+    expect(result).toEqual({ status: "invalid_url" });
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 });
 
