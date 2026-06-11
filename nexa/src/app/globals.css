@@ -182,10 +182,22 @@
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  /* Keep the label on one line — a wrapped CTA (e.g. "REPORT ISSUE" -> two
+     lines) reads as an oversized button on a narrow navbar. */
+  white-space: nowrap;
   border-radius: 0.5rem;
   transition: all 150ms ease;
   cursor: pointer;
   text-decoration: none;
+}
+
+/* Tighten the in-navbar CTAs on small screens so the top bar stays compact. */
+@media (max-width: 639px) {
+  nav .btn-cta {
+    padding: 0.5rem 0.85rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+  }
 }
 
 .btn-cta-purple {

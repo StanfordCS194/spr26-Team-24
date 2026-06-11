@@ -165,7 +165,9 @@ export function ReportsMap({ points }: ReportsMapProps) {
       </div>
       <div
         ref={containerRef}
-        className="h-[360px] w-full"
+        // Isolate Leaflet's z-index stack so its panes never paint over
+        // overlays like the navbar dropdown.
+        className="isolate h-[360px] w-full"
         role="img"
         aria-label={t("dashboard.mapAria", {
           count: points.length,
