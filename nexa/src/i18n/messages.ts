@@ -201,6 +201,12 @@ const enMessages = {
   "report.customAgencyHelp":
     "If we routed to the wrong agency, paste the correct agency's link here.",
   "report.customAgencyPlaceholder": "https://city.gov/report",
+  "report.linkChecking": "Checking link...",
+  "report.linkFormFound": "Looks like a submittable form.",
+  "report.linkNoForm":
+    "We couldn't find a form at that link — double-check it.",
+  "report.linkUnreachable": "That link doesn't work — double-check it.",
+  "report.linkInvalid": "That doesn't look like a valid web link.",
   "report.submit": "Submit Report",
   "report.submitting": "Submitting...",
   "report.submitted": "Report submitted!",
@@ -536,6 +542,12 @@ export const messages = {
     "report.customAgencyHelp":
       "Si lo dirigimos a la agencia equivocada, pega aquí el enlace de la agencia correcta.",
     "report.customAgencyPlaceholder": "https://ciudad.gov/reportar",
+    "report.linkChecking": "Comprobando el enlace...",
+    "report.linkFormFound": "Parece un formulario que se puede enviar.",
+    "report.linkNoForm":
+      "No encontramos un formulario en ese enlace; verifícalo.",
+    "report.linkUnreachable": "Ese enlace no funciona; verifícalo.",
+    "report.linkInvalid": "Eso no parece un enlace web válido.",
     "report.submit": "Enviar reporte",
     "report.submitting": "Enviando...",
     "report.submitted": "¡Reporte enviado!",
@@ -857,6 +869,11 @@ export const messages = {
     "report.customAgencyHelp":
       "如果我们转交给了错误的机构，请在此粘贴正确机构的链接。",
     "report.customAgencyPlaceholder": "https://city.gov/report",
+    "report.linkChecking": "正在检查链接...",
+    "report.linkFormFound": "看起来是一个可提交的表单。",
+    "report.linkNoForm": "我们在该链接未找到表单，请再核对一下。",
+    "report.linkUnreachable": "该链接无法使用，请再核对一下。",
+    "report.linkInvalid": "这看起来不是有效的网页链接。",
     "report.submit": "提交报告",
     "report.submitting": "正在提交...",
     "report.submitted": "报告已提交！",
@@ -1184,6 +1201,13 @@ export const messages = {
     "report.customAgencyHelp":
       "Si nous avons acheminé vers la mauvaise agence, collez ici le lien de la bonne agence.",
     "report.customAgencyPlaceholder": "https://ville.gov/signaler",
+    "report.linkChecking": "Vérification du lien...",
+    "report.linkFormFound":
+      "Cela ressemble à un formulaire que l'on peut envoyer.",
+    "report.linkNoForm":
+      "Nous n'avons pas trouvé de formulaire à ce lien — vérifiez-le.",
+    "report.linkUnreachable": "Ce lien ne fonctionne pas — vérifiez-le.",
+    "report.linkInvalid": "Cela ne ressemble pas à un lien web valide.",
     "report.submit": "Envoyer le signalement",
     "report.submitting": "Envoi...",
     "report.submitted": "Signalement envoyé !",

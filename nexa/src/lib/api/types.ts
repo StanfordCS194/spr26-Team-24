@@ -64,3 +64,32 @@ export type OfficialFormLookupResult =
       message: string;
       reason?: string;
     };
+
+/**
+ * `POST /api/reports/check-link` response payload (the `data` of the success
+ * envelope). When a user overrides Nexa's auto-routing with their own agency
+ * link ("Filing somewhere else?"), this verdict tells the review step whether
+ * that link points at something a person could actually file a report at. It is
+ * purely advisory — submission is never blocked on it — so every failure mode
+ * resolves to one of these four states rather than an exception:
+ *
+ *   - `invalid_url`  — not a syntactically valid http(s) URL (bad scheme,
+ *                      missing host, `javascript:`/`data:`, etc.). Never fetched.
+ *   - `unreachable`  — DNS/connection failure, timeout, or a non-2xx/3xx HTTP
+ *                      status that does not look like bot-protection.
+ *   - `no_form`      — the page was reachable and returned HTML, but no
+ *                      submittable form / reporting portal was detected.
+ *   - `form_found`   — a submittable form or known reporting portal was
+ *                      detected (or a bot-protected gov domain we treat as
+ *                      likely-form), with a confidence band and the matched
+ *                      `signals` for transparency.
+ */
+export type LinkCheckResult =
+  | { status: "invalid_url" }
+  | { status: "unreachable"; reason: string }
+  | { status: "no_form"; reason: string }
+  | {
+      status: "form_found";
+      confidence: FormLookupConfidence;
+      signals: string[];
+    };

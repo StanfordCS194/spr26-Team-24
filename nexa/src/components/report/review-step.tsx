@@ -3,9 +3,11 @@
 import {
   ArrowLeft,
   ArrowRight,
+  CheckCircle2,
   ExternalLink,
   Loader2,
   Pencil,
+  XCircle,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +17,7 @@ import { useI18n } from "@/i18n/provider";
 import type { ClassificationResult } from "@/lib/classify/types";
 import type {
   AgencyCandidatesResult,
+  LinkCheckResult,
   OfficialFormLookupResult,
 } from "@/lib/api/types";
 
@@ -53,6 +56,14 @@ interface ReviewStepProps {
    */
   customAgencyUrl: string;
   onCustomAgencyUrlChange: (value: string) => void;
+  /**
+   * Advisory verdict on whether `customAgencyUrl` points at a submittable form,
+   * from `useLinkCheck`. Null until the user has typed a link. Purely advisory —
+   * submission is NEVER blocked on it, the field stays usable regardless.
+   */
+  linkCheck: LinkCheckResult | null;
+  /** Whether the link check is in flight (debounced fetch). */
+  linkCheckLoading: boolean;
   onDescriptionChange: (value: string) => void;
   onAddressChange: (value: string) => void;
   onBack: () => void;
@@ -76,6 +87,8 @@ export function ReviewStep({
   onSelectAgency,
   customAgencyUrl,
   onCustomAgencyUrlChange,
+  linkCheck,
+  linkCheckLoading,
   onDescriptionChange,
   onAddressChange,
   onBack,
@@ -346,7 +359,57 @@ export function ReviewStep({
           onChange={(e) => onCustomAgencyUrlChange(e.target.value)}
           className="mt-3"
           placeholder={t("report.customAgencyPlaceholder")}
+          aria-describedby="custom-agency-url-feedback"
         />
+        {/*
+          Advisory link-check feedback. Verdict colors: green = a submittable
+          form was found, amber = reachable but no form, red = broken/invalid
+          link. It NEVER blocks submit — the field stays usable regardless, the
+          override is always stored verbatim. Shows only once the user has typed
+          something (linkCheckLoading or a verdict is present).
+        */}
+        {customAgencyUrl.trim() &&
+          (linkCheckLoading ? (
+            <p
+              id="custom-agency-url-feedback"
+              className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"
+            >
+              <Loader2 className="size-3.5 animate-spin" />
+              {t("report.linkChecking")}
+            </p>
+          ) : linkCheck?.status === "form_found" ? (
+            <p
+              id="custom-agency-url-feedback"
+              className="mt-3 flex items-center gap-2 text-xs text-ep-green"
+            >
+              <CheckCircle2 className="size-3.5" />
+              {t("report.linkFormFound")}
+            </p>
+          ) : linkCheck?.status === "no_form" ? (
+            <p
+              id="custom-agency-url-feedback"
+              className="mt-3 flex items-center gap-2 text-xs text-yellow-600 dark:text-yellow-400"
+            >
+              <XCircle className="size-3.5" />
+              {t("report.linkNoForm")}
+            </p>
+          ) : linkCheck?.status === "invalid_url" ? (
+            <p
+              id="custom-agency-url-feedback"
+              className="mt-3 flex items-center gap-2 text-xs text-red-600 dark:text-red-400"
+            >
+              <XCircle className="size-3.5" />
+              {t("report.linkInvalid")}
+            </p>
+          ) : linkCheck?.status === "unreachable" ? (
+            <p
+              id="custom-agency-url-feedback"
+              className="mt-3 flex items-center gap-2 text-xs text-red-600 dark:text-red-400"
+            >
+              <XCircle className="size-3.5" />
+              {t("report.linkUnreachable")}
+            </p>
+          ) : null)}
       </div>
 
       {submitError && <ErrorBanner message={submitError} />}
