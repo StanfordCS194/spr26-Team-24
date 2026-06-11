@@ -1,8 +1,8 @@
 {
   "mode": "end-to-end",
-  "datasetSize": 63,
+  "datasetSize": 65,
   "target": 0.8,
-  "ranAt": "2026-06-10T09:37:04.849Z",
+  "ranAt": "2026-06-11T01:59:39.943Z",
   "results": [
     {
       "caseId": "palo-alto-road_damage-01",
@@ -765,13 +765,37 @@
       ],
       "correct": true,
       "reason": "Confident match reached San Leandro SeeClickFix (Open311)."
+    },
+    {
+      "caseId": "boundary-paloalto-vs-eastpaloalto-64",
+      "issueType": "ILLEGAL_DUMPING",
+      "expectedAgencyName": "Palo Alto 311",
+      "outcome": "confident",
+      "resolvedAgencyName": "Palo Alto 311",
+      "candidateNames": [
+        "Palo Alto 311"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Palo Alto 311."
+    },
+    {
+      "caseId": "boundary-menlo-vs-paloalto-65",
+      "issueType": "STREETLIGHT_OUTAGE",
+      "expectedAgencyName": "Menlo Park ACT",
+      "outcome": "confident",
+      "resolvedAgencyName": "Menlo Park ACT",
+      "candidateNames": [
+        "Menlo Park ACT"
+      ],
+      "correct": true,
+      "reason": "Confident match reached Menlo Park ACT."
     }
   ],
   "metrics": {
-    "total": 63,
-    "correct": 63,
+    "total": 65,
+    "correct": 65,
     "accuracy": 1,
-    "resolved": 63,
+    "resolved": 65,
     "coverage": 1,
     "ambiguous": 6,
     "perCategory": {
@@ -781,13 +805,18 @@
         "accuracy": 1
       },
       "ILLEGAL_DUMPING": {
-        "support": 27,
-        "correct": 27,
+        "support": 28,
+        "correct": 28,
         "accuracy": 1
       },
       "VEHICLE_EMISSIONS": {
         "support": 6,
         "correct": 6,
+        "accuracy": 1
+      },
+      "STREETLIGHT_OUTAGE": {
+        "support": 1,
+        "correct": 1,
         "accuracy": 1
       }
     }

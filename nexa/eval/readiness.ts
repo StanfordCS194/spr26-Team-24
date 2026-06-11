@@ -66,12 +66,19 @@ const AGENCY_ROWS: AgencyRow[] = AGENCIES.map((a) => ({
 
 const agencyById = new Map(AGENCY_ROWS.map((a) => [a.id, a]));
 
+// `resolveAgencyId` queries by { jurisdiction, issueTypes: { has } }, selecting
+// only `id`. `resolveAgencyCandidates` (used by the disambiguation robustness
+// path) queries the SAME table by { id: { in: candidates } }, selecting
+// id/name/jurisdiction/intakeMethod and ordering by name. The stub answers both
+// shapes off `AGENCY_ROWS` so the harness can drive either production function
+// without a live DB.
 type FindManyArgs = {
   where?: {
     jurisdiction?: string;
     issueTypes?: { has?: string };
+    id?: { in?: string[] };
   };
-  orderBy?: { id?: "asc" | "desc" };
+  orderBy?: { id?: "asc" | "desc" } | { name?: "asc" | "desc" };
 };
 
 const prismaStub = {
@@ -79,21 +86,44 @@ const prismaStub = {
     async findMany(args: FindManyArgs) {
       const jurisdiction = args.where?.jurisdiction;
       const issueType = args.where?.issueTypes?.has;
+      const idIn = args.where?.id?.in;
       let rows = AGENCY_ROWS.filter(
         (a) =>
           (jurisdiction === undefined || a.jurisdiction === jurisdiction) &&
           (issueType === undefined ||
             a.issueTypes.includes(
               issueType as AgencySeed["issueTypes"][number],
-            )),
+            )) &&
+          (idIn === undefined || idIn.includes(a.id)),
       );
-      const dir = args.orderBy?.id ?? "asc";
-      rows = rows
-        .slice()
-        .sort((a, b) =>
-          dir === "desc" ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id),
-        );
-      return rows.map((a) => ({ id: a.id }));
+      const order = args.orderBy ?? { id: "asc" };
+      if ("name" in order && order.name) {
+        const dir = order.name;
+        rows = rows
+          .slice()
+          .sort((a, b) =>
+            dir === "desc"
+              ? b.name.localeCompare(a.name)
+              : a.name.localeCompare(b.name),
+          );
+      } else {
+        const dir = ("id" in order && order.id) || "asc";
+        rows = rows
+          .slice()
+          .sort((a, b) =>
+            dir === "desc"
+              ? b.id.localeCompare(a.id)
+              : a.id.localeCompare(b.id),
+          );
+      }
+      // Return the full row; both callers `select` a subset, which is a no-op
+      // narrowing over a superset object.
+      return rows.map((a) => ({
+        id: a.id,
+        name: a.name,
+        jurisdiction: a.jurisdiction,
+        intakeMethod: a.intakeMethod,
+      }));
     },
   },
 };
@@ -106,7 +136,10 @@ const prismaStub = {
 // which the CJS eval transform rejects) deferred into async `main()`.
 type AgencyModule = typeof import("../src/lib/jurisdictions/agency");
 type Open311Module = typeof import("../src/lib/submission/open311");
-let resolveAgencyId: AgencyModule["resolveAgencyId"];
+// `resolveAgencyCandidates` internally calls the production `resolveAgencyId`
+// (which our Prisma stub backs), so one call yields BOTH the routing decision
+// and the ambiguity candidate set + disambiguating question.
+let resolveAgencyCandidates: AgencyModule["resolveAgencyCandidates"];
 let parseOpen311Config: Open311Module["parseOpen311Config"];
 let resolveServiceCode: Open311Module["resolveServiceCode"];
 let buildRequestParams: Open311Module["buildRequestParams"];
@@ -114,7 +147,7 @@ let buildRequestParams: Open311Module["buildRequestParams"];
 async function loadDeps(): Promise<void> {
   const agency = await import("../src/lib/jurisdictions/agency");
   const open311 = await import("../src/lib/submission/open311");
-  resolveAgencyId = agency.resolveAgencyId;
+  resolveAgencyCandidates = agency.resolveAgencyCandidates;
   parseOpen311Config = open311.parseOpen311Config;
   resolveServiceCode = open311.resolveServiceCode;
   buildRequestParams = open311.buildRequestParams;
@@ -149,6 +182,25 @@ interface ReadinessCase {
   issueType: IssueType;
   note?: string;
   report: ReadinessReport;
+  /**
+   * Optional routing assertion. When set, the harness asserts the report
+   * resolves to (confident match) OR has among its ambiguity candidates an
+   * agency with this exact `name`; the named agency is the one whose required
+   * fields are then assessed. This lets a case pin field-filling to a SPECIFIC
+   * agency that loses the default API-preferred disambiguation — e.g. asserting
+   * the Menlo Park ACT WEB_FORM desk (not just its Open311 sibling) can be
+   * reached and fully filled. A mismatch fails the run.
+   */
+  expectAgencyName?: string;
+  /**
+   * Robustness case: the report's location is OUTSIDE all served jurisdictions,
+   * so it MUST resolve to no agency. The harness asserts no agency resolves and
+   * treats that as the (correct) handled outcome — never a crash. Such a case is
+   * recorded as not-ready (there is no intake to fill) but is excluded from the
+   * readiness-rate denominator, since "no agency exists" is not a field-filling
+   * failure.
+   */
+  expectNoAgency?: boolean;
 }
 
 // Maps an agency `requiredFields` key onto the report value that fills it. This
@@ -216,10 +268,25 @@ interface CaseResult {
   agencyId: string | null;
   agencyName: string | null;
   intakeMethod: string | null;
+  /**
+   * The resolved intake channel target the manual/assist or filing step would
+   * use — a web-form URL, intake email, or hotline phone — so the dataset proves
+   * each agency exposes a usable channel, not just that fields are filled.
+   */
+  intakeTarget: string | null;
+  /** Every covering agency name (the candidate set) for ambiguous routing. */
+  candidateNames: string[];
+  /** The disambiguating question when routing is ambiguous (>1 candidate). */
+  disambiguation: string | null;
   serviceCode: string | null;
   missingFields: string[];
   fieldChecks: FieldCheck[];
   ready: boolean;
+  /**
+   * True when this case is excluded from the readiness-rate denominator (an
+   * outside-all-jurisdictions robustness case, where no agency exists to fill).
+   */
+  excludedFromRate: boolean;
   reason: string;
 }
 
@@ -230,10 +297,13 @@ interface CaseResult {
  * apply the disambiguation it defers to callers: prefer an API agency (the
  * machine-submittable channel), else the first candidate by id.
  */
-function chooseAgency(resolution: {
-  agencyId: string | null;
-  candidates: string[];
-}): { agency: AgencyRow | undefined; disambiguated: boolean } {
+function chooseAgency(
+  resolution: {
+    agencyId: string | null;
+    candidates: string[];
+  },
+  expectAgencyName?: string,
+): { agency: AgencyRow | undefined; disambiguated: boolean } {
   if (resolution.agencyId) {
     return {
       agency: agencyById.get(resolution.agencyId),
@@ -246,8 +316,21 @@ function chooseAgency(resolution: {
   const rows = resolution.candidates
     .map((id) => agencyById.get(id))
     .filter((a): a is AgencyRow => a !== undefined);
+  // A case may PIN assessment to a specific covering agency (e.g. the Menlo Park
+  // ACT WEB_FORM desk) that the default API-preferred disambiguation would skip.
+  if (expectAgencyName) {
+    const pinned = rows.find((a) => a.name === expectAgencyName);
+    if (pinned) return { agency: pinned, disambiguated: true };
+  }
   const api = rows.find((a) => a.intakeMethod === "API");
   return { agency: api ?? rows[0], disambiguated: true };
+}
+
+/** Resolves an agency's usable intake channel target (URL, email, or hotline). */
+function intakeTargetOf(agency: AgencyRow): string | null {
+  if (agency.intakeUrl) return agency.intakeUrl;
+  if (agency.intakeEmail) return agency.intakeEmail;
+  return intakePhone(agency.requiredFields);
 }
 
 /** Treats every `requiredFields` entry with `required: true` as a gate. */
@@ -392,13 +475,54 @@ function assessFormReadiness(
 }
 
 async function assessCase(c: ReadinessCase): Promise<CaseResult> {
-  const resolution = await resolveAgencyId({
+  // Reuse the production candidate resolver so the SAME call yields both the
+  // routing decision and (under ambiguity) the candidate set + disambiguating
+  // question the UI shows. Its `agencyId`/`candidates` mirror `resolveAgencyId`.
+  const disambig = await resolveAgencyCandidates({
     latitude: c.report.latitude,
     longitude: c.report.longitude,
     issueType: c.issueType,
   });
+  const resolution = {
+    agencyId: disambig.agencyId,
+    candidates: disambig.candidates.map((d) => d.id),
+  };
+  const candidateNames = disambig.candidates.map((d) => d.name);
 
-  const { agency, disambiguated } = chooseAgency(resolution);
+  // Robustness: an outside-all-jurisdictions location MUST resolve to no agency.
+  // This is the correct handled outcome (not a crash), and is excluded from the
+  // readiness denominator since there is no intake channel to fill.
+  if (c.expectNoAgency) {
+    if (disambig.candidates.length > 0) {
+      throw new Error(
+        `[${c.id}] expected NO agency (outside all jurisdictions) but resolved candidates [${candidateNames.join(", ")}].`,
+      );
+    }
+    return {
+      caseId: c.id,
+      issueType: c.issueType,
+      resolved: false,
+      disambiguated: false,
+      agencyId: null,
+      agencyName: null,
+      intakeMethod: null,
+      intakeTarget: null,
+      candidateNames: [],
+      disambiguation: null,
+      serviceCode: null,
+      missingFields: [],
+      fieldChecks: [],
+      ready: false,
+      excludedFromRate: true,
+      reason:
+        "Outside all served jurisdictions; resolved to no agency and handled gracefully (manual-assist).",
+    };
+  }
+
+  const { agency, disambiguated } = chooseAgency(
+    resolution,
+    c.expectAgencyName,
+  );
   if (!agency) {
     return {
       caseId: c.id,
@@ -408,12 +532,37 @@ async function assessCase(c: ReadinessCase): Promise<CaseResult> {
       agencyId: null,
       agencyName: null,
       intakeMethod: null,
+      intakeTarget: null,
+      candidateNames,
+      disambiguation: disambig.disambiguation,
       serviceCode: null,
       missingFields: [],
       fieldChecks: [],
       ready: false,
+      excludedFromRate: false,
       reason: "No agency covers this jurisdiction + issue type.",
     };
+  }
+
+  // Assert the pinned-agency expectation (when set): the named agency must be
+  // the one we resolved/assessed, otherwise the case is asserting nothing.
+  if (c.expectAgencyName && agency.name !== c.expectAgencyName) {
+    throw new Error(
+      `[${c.id}] expected agency "${c.expectAgencyName}" but assessed "${agency.name}" (candidates: [${candidateNames.join(", ")}]).`,
+    );
+  }
+
+  // Assert the disambiguation contract: ambiguous routing (more than one
+  // candidate) MUST carry a question; an unambiguous one MUST NOT.
+  if (disambig.candidates.length > 1 && !disambig.disambiguation) {
+    throw new Error(
+      `[${c.id}] ambiguous routing (${candidateNames.length} candidates) but no disambiguating question.`,
+    );
+  }
+  if (disambig.candidates.length === 1 && disambig.disambiguation) {
+    throw new Error(
+      `[${c.id}] single confident candidate but a disambiguating question was returned.`,
+    );
   }
 
   let checks: FieldCheck[];
@@ -448,10 +597,14 @@ async function assessCase(c: ReadinessCase): Promise<CaseResult> {
     agencyId: agency.id,
     agencyName: agency.name,
     intakeMethod: agency.intakeMethod,
+    intakeTarget: intakeTargetOf(agency),
+    candidateNames,
+    disambiguation: disambig.disambiguation,
     serviceCode,
     missingFields,
     fieldChecks: checks,
     ready,
+    excludedFromRate: false,
     reason,
   };
 }
@@ -462,10 +615,14 @@ async function assessCase(c: ReadinessCase): Promise<CaseResult> {
 
 interface ReadinessMetrics {
   total: number;
+  /** Cases counted toward the readiness rate (total minus excluded robustness cases). */
+  scored: number;
   ready: number;
   readiness: number;
   resolved: number;
   coverage: number;
+  /** Robustness cases excluded from the readiness denominator (outside-jurisdiction). */
+  excluded: number;
   perCategory: Record<
     string,
     { support: number; ready: number; readiness: number }
@@ -478,12 +635,16 @@ interface ReadinessMetrics {
 
 function aggregate(results: CaseResult[]): ReadinessMetrics {
   const total = results.length;
-  const ready = results.filter((r) => r.ready).length;
+  // Outside-all-jurisdictions robustness cases are excluded from the readiness
+  // RATE (there is no intake to fill), but still run to prove graceful handling.
+  const scoredResults = results.filter((r) => !r.excludedFromRate);
+  const scored = scoredResults.length;
+  const ready = scoredResults.filter((r) => r.ready).length;
   const resolved = results.filter((r) => r.resolved).length;
 
   const perCategory: ReadinessMetrics["perCategory"] = {};
   const perIntakeMethod: ReadinessMetrics["perIntakeMethod"] = {};
-  for (const r of results) {
+  for (const r of scoredResults) {
     const cat = perCategory[r.issueType] ?? {
       support: 0,
       ready: 0,
@@ -508,10 +669,12 @@ function aggregate(results: CaseResult[]): ReadinessMetrics {
 
   return {
     total,
+    scored,
     ready,
-    readiness: total === 0 ? 0 : ready / total,
+    readiness: scored === 0 ? 0 : ready / scored,
     resolved,
     coverage: total === 0 ? 0 : resolved / total,
+    excluded: total - scored,
     perCategory,
     perIntakeMethod,
   };
@@ -521,7 +684,10 @@ function renderReport(metrics: ReadinessMetrics): string {
   const lines: string[] = [];
   lines.push("\n=== Submission readiness (K3) ===");
   lines.push(
-    `Readiness: ${(metrics.readiness * 100).toFixed(1)}%  (${metrics.ready}/${metrics.total})  target >=${(TARGET_READINESS * 100).toFixed(0)}%`,
+    `Readiness: ${(metrics.readiness * 100).toFixed(1)}%  (${metrics.ready}/${metrics.scored})  target >=${(TARGET_READINESS * 100).toFixed(0)}%` +
+      (metrics.excluded > 0
+        ? `  [${metrics.excluded} outside-jurisdiction robustness case(s) excluded from rate]`
+        : ""),
   );
   lines.push(
     `Routed:    ${(metrics.coverage * 100).toFixed(1)}%  (${metrics.resolved}/${metrics.total} reached an agency)`,

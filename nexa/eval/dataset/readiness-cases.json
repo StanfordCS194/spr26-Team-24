@@ -398,5 +398,288 @@
       "vehicleColor": null,
       "observationDatetime": null
     }
+  },
+  {
+    "id": "graffiti-mp-act-21-webform",
+    "issueType": "GRAFFITI",
+    "note": "Menlo Park graffiti, PINNED to the Menlo Park ACT WEB_FORM desk (expectAgencyName). Routing here is ambiguous (ACT + SeeClickFix both cover graffiti); the default disambiguation prefers the Open311 API sibling, so this is the only case that proves the ACT web-form intake is itself reachable and every ACT required field (description, location_address) fills.",
+    "expectAgencyName": "Menlo Park ACT",
+    "report": {
+      "description": "Spray-paint tags across the underpass retaining wall.",
+      "aiDescription": "Graffiti on public underpass wall.",
+      "latitude": 37.44865,
+      "longitude": -122.17515,
+      "address": "Ravenswood Ave underpass, Menlo Park, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/graffiti-mp-act-21.jpg",
+      "contactEmail": "reporter21@example.com",
+      "contactName": "Casey Tan",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "light-mv-22-webform",
+    "issueType": "STREETLIGHT_OUTAGE",
+    "note": "Mountain View streetlight out -> Mountain View Public Works (WEB_FORM). Confident single match; exercises the contact_name/contact_email optional fields alongside the required description + location_address.",
+    "report": {
+      "description": "Whole block of streetlights dark for the past week.",
+      "aiDescription": "Streetlight outage on residential block.",
+      "latitude": 37.40875,
+      "longitude": -122.10304,
+      "address": "Rengstorff Ave & Latham St, Mountain View, CA",
+      "photoUrl": null,
+      "contactEmail": "reporter22@example.com",
+      "contactName": "Morgan Diaz",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "signal-scc-23-webform",
+    "issueType": "TRAFFIC_SIGNAL",
+    "note": "Unincorporated Santa Clara County traffic signal -> Santa Clara County Public Works (WEB_FORM). Confident single match on a county-only issue type.",
+    "report": {
+      "description": "Traffic signal stuck on flashing red at the rural intersection.",
+      "aiDescription": "Malfunctioning traffic signal on county road.",
+      "latitude": 37.28744,
+      "longitude": -122.13637,
+      "address": "Page Mill Rd & Moody Rd, unincorporated Santa Clara County, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/signal-scc-23.jpg",
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "sidewalk-epa-pw-24-webform",
+    "issueType": "SIDEWALK_DAMAGE",
+    "note": "East Palo Alto sidewalk -> East Palo Alto Public Works (WEB_FORM). Second EPA Public Works issue type beyond road damage; required description + location_address fill.",
+    "report": {
+      "description": "Buckled sidewalk slab lifting a tripping edge.",
+      "aiDescription": "Damaged sidewalk creating a trip hazard.",
+      "latitude": 37.46892,
+      "longitude": -122.15081,
+      "address": "Bay Rd & Clarke Ave, East Palo Alto, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/sidewalk-epa-24.jpg",
+      "contactEmail": "reporter24@example.com",
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "flood-mil-25-api",
+    "issueType": "FLOODING_DRAINAGE",
+    "note": "Milpitas flooding/drainage -> Milpitas SeeClickFix (Open311 API, service_code 26645). Confirms the GeoReport v2 body assembles for a new-taxonomy service_code. (Milpitas has no GRAFFITI service, so a covered type is used.)",
+    "report": {
+      "description": "Storm drain backing up and flooding the intersection.",
+      "aiDescription": "Blocked storm drain causing street flooding.",
+      "latitude": 37.41862,
+      "longitude": -121.9299,
+      "address": "Milpitas, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/flood-mil-25.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "vehicle-mil-26-api",
+    "issueType": "ABANDONED_VEHICLE",
+    "note": "Milpitas abandoned vehicle -> Milpitas SeeClickFix (Open311 API, service_code 26639). New-taxonomy API service code GeoReport assembly.",
+    "report": {
+      "description": "Car with flat tires parked unmoved for weeks.",
+      "aiDescription": "Abandoned vehicle on public street.",
+      "latitude": 37.41979,
+      "longitude": -121.9299,
+      "address": "Milpitas, CA",
+      "photoUrl": null,
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "road-mh-27-api",
+    "issueType": "ROAD_DAMAGE",
+    "note": "Morgan Hill pothole -> Morgan Hill SeeClickFix (Open311 API). Road-damage GeoReport assembly for Morgan Hill (only dumping was previously exercised).",
+    "report": {
+      "description": "Deep pothole in the southbound lane near the curve.",
+      "aiDescription": "Pothole in roadway lane.",
+      "latitude": 37.12387,
+      "longitude": -121.69618,
+      "address": "Morgan Hill, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-mh-27.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "park-gil-28-api",
+    "issueType": "PARKING",
+    "note": "Gilroy parking violation -> Gilroy SeeClickFix (Open311 API, service_code 64773). New-taxonomy API service code GeoReport assembly with description fallback to aiDescription (no citizen description).",
+    "report": {
+      "description": null,
+      "aiDescription": "Vehicle blocking a marked fire lane.",
+      "latitude": 36.99637,
+      "longitude": -121.64129,
+      "address": "Gilroy, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/park-gil-28.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "sidewalk-wat-29-api",
+    "issueType": "SIDEWALK_DAMAGE",
+    "note": "Watsonville sidewalk -> Watsonville SeeClickFix (Open311 API, service_code 50066). Second Watsonville issue type beyond road damage.",
+    "report": {
+      "description": "Cracked and heaving sidewalk outside the school.",
+      "aiDescription": "Damaged sidewalk near a school.",
+      "latitude": 36.91,
+      "longitude": -121.7681,
+      "address": "Watsonville, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/sidewalk-wat-29.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "code-val-30-api",
+    "issueType": "CODE_ENFORCEMENT",
+    "note": "Vallejo code enforcement -> Vallejo SeeClickFix (Open311 API, service_code 4718). New-taxonomy API service code GeoReport assembly.",
+    "report": {
+      "description": "Overgrown vacant lot with accumulating junk and blight.",
+      "aiDescription": "Property maintenance / code enforcement concern.",
+      "latitude": 38.12024,
+      "longitude": -122.38386,
+      "address": "Vallejo, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/code-val-30.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "tree-sl-31-api",
+    "issueType": "TREE_MAINTENANCE",
+    "note": "San Leandro tree maintenance -> San Leandro SeeClickFix (Open311 API, service_code 53558). Second San Leandro issue type beyond streetlight.",
+    "report": {
+      "description": "Large fallen tree limb blocking half the sidewalk.",
+      "aiDescription": "Fallen tree limb obstructing a sidewalk.",
+      "latitude": 37.70885,
+      "longitude": -122.20861,
+      "address": "San Leandro, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/tree-sl-31.jpg",
+      "contactEmail": "reporter@example.com",
+      "contactName": "Alex Kim",
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "road-boundary-pa-vs-epa-32",
+    "issueType": "ROAD_DAMAGE",
+    "note": "ROBUSTNESS — boundary coordinate on the Palo Alto / East Palo Alto seam. It falls inside Palo Alto's polygon (mirrors routing-cases contested-paloalto-vs-eastpaloalto), so it MUST route to Palo Alto 311 (not an EPA agency). expectAgencyName asserts the correct side.",
+    "expectAgencyName": "Palo Alto 311",
+    "report": {
+      "description": "Pothole right at the jurisdiction line on the shared street.",
+      "aiDescription": "Pothole in roadway near a city boundary.",
+      "latitude": 37.4515,
+      "longitude": -122.128,
+      "address": "Near the Palo Alto / East Palo Alto line, CA",
+      "photoUrl": "https://uploads.nexa.example/reports/road-boundary-32.jpg",
+      "contactEmail": "reporter32@example.com",
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "graffiti-pa-33-missing-required",
+    "issueType": "GRAFFITI",
+    "note": "NEGATIVE CONTROL — Palo Alto 311 (WEB_FORM) requires location_address, but this report has none. The field-validation gate must flag it NOT ready, proving required-field gating works for WEB_FORM intakes (the emit-pa-12 negative control only covers PHONE).",
+    "report": {
+      "description": "Graffiti on a utility box, but I am not sure of the exact address.",
+      "aiDescription": "Graffiti on public utility box.",
+      "latitude": 37.35109,
+      "longitude": -122.18512,
+      "address": null,
+      "photoUrl": "https://uploads.nexa.example/reports/graffiti-pa-33.jpg",
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
+  },
+  {
+    "id": "road-outside-all-34",
+    "issueType": "ROAD_DAMAGE",
+    "note": "ROBUSTNESS — a location OUTSIDE all 11 served jurisdictions (Pacific Ocean off the California coast). It MUST resolve to no agency and be handled gracefully (no crash, manual-assist). Excluded from the readiness rate since there is no intake to fill.",
+    "expectNoAgency": true,
+    "report": {
+      "description": "Reported coordinate is far offshore, outside any served city.",
+      "aiDescription": "Out-of-area report.",
+      "latitude": 36.0,
+      "longitude": -123.5,
+      "address": "Pacific Ocean off the California coast",
+      "photoUrl": null,
+      "contactEmail": null,
+      "contactName": null,
+      "licensePlate": null,
+      "vehicleMake": null,
+      "vehicleModel": null,
+      "vehicleColor": null,
+      "observationDatetime": null
+    }
   }
 ]

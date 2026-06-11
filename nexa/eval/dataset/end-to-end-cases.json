@@ -502,5 +502,21 @@
     "issueType": "ILLEGAL_DUMPING",
     "expectedAgencyName": "San Leandro SeeClickFix (Open311)",
     "note": "city-san-leandro interior point reused from routing-cases.json"
+  },
+  {
+    "id": "boundary-paloalto-vs-eastpaloalto-64",
+    "latitude": 37.4515,
+    "longitude": -122.128,
+    "issueType": "ILLEGAL_DUMPING",
+    "expectedAgencyName": "Palo Alto 311",
+    "note": "ROBUSTNESS — boundary point on the Palo Alto / East Palo Alto seam (reused from routing-cases contested-paloalto-vs-eastpaloalto). It must resolve to the Palo Alto side, so the correct agency is Palo Alto 311, NOT an EPA agency. Asserts agency-level routing lands on the right side of a contested boundary."
+  },
+  {
+    "id": "boundary-menlo-vs-paloalto-65",
+    "latitude": 37.4305,
+    "longitude": -122.191,
+    "issueType": "STREETLIGHT_OUTAGE",
+    "expectedAgencyName": "Menlo Park ACT",
+    "note": "ROBUSTNESS — boundary point on the Menlo Park / Palo Alto seam (reused from routing-cases contested-menlo-vs-paloalto). It falls inside Menlo Park, so a Menlo Park agency is correct (routing is ambiguous: ACT + SeeClickFix both cover streetlights, and Menlo Park ACT is in the candidate set). Asserts agency-level routing lands on the Menlo Park side of a contested boundary."
   }
 ]
